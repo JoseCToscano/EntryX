@@ -32,14 +32,15 @@ export function CalendarDatePicker({
   }, [date]);
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn("grid gap-2")}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             className={cn(
-              "h-10 w-[260px] justify-start text-left font-normal",
+              "h-9 w-full justify-start text-left font-normal",
               !date && "text-muted-foreground",
+              className,
             )}
           >
             <CalendarIcon className="ml-2 mr-2 h-4 w-4" />

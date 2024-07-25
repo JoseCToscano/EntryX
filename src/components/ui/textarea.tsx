@@ -18,10 +18,15 @@ export interface TextareaProps
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  (
-    { className, id, errors, registerOptions, required, register, ...props },
-    ref,
-  ) => {
+  ({
+    className,
+    id,
+    errors,
+    registerOptions,
+    required,
+    register,
+    ...props
+  }) => {
     return (
       <textarea
         id={id}
@@ -32,7 +37,6 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           errors && errors[id] && "focus:border-rose-500",
           className,
         )}
-        ref={ref}
         {...props}
       />
     );

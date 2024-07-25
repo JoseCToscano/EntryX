@@ -82,8 +82,8 @@ model Event {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  organizerId String
-  organizer   User     @relation(fields: [organizerId], references: [id])
+  organizerId String?
+  organizer   User?    @relation(fields: [organizerId], references: [id])
 
   @@index([organizerId])
 }

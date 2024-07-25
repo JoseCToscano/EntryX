@@ -10,7 +10,7 @@ export const eventsRouter = createTRPCRouter({
   getToddos: publicProcedure.query(() => {
     return [1, 2, 3, 4];
   }),
-  create: protectedProcedure
+  create: publicProcedure
     .input(
       z.object({
         name: z.string().min(1),
@@ -25,7 +25,7 @@ export const eventsRouter = createTRPCRouter({
         venue: input.venue,
         description: input.description,
         date: input.date,
-        organizerId: ctx.session.user.id,
+        // organizerId: ctx.session.user.id,
       });
       return ctx.db.event.create({
         data: {
@@ -33,7 +33,7 @@ export const eventsRouter = createTRPCRouter({
           venue: input.venue,
           description: input.description,
           date: input.date,
-          organizerId: ctx.session.user.id,
+          // organizerId: ctx.session.user.id,
         },
       });
     }),

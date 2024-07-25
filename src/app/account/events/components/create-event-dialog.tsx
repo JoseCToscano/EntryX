@@ -1,5 +1,5 @@
 "use client";
-import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { api } from "~/trpc/react";
@@ -17,29 +17,57 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
-import { useEffect, useState } from "react";
 
 dayjs.extend(utc);
 
+interface INewEvent {
+  name: string;
+  date?: Date;
+  venue: string;
+  description: string;
+}
+
 export default function CreateEventDialog() {
-  const [a,setA] = useState(1);
   function onSuccess() {
+    console.log("Event registered successfully");
     toast.success("Event registered successfully");
     reset();
   }
 
   function onError() {
+    console.log("Failed to register! Please try again later");
     return ({ message }: { message?: string }) => {
       if (message) {
+        console.log("message:", message);
         toast.error(message);
       } else {
+        console.log("Failed to register! Please try again later");
         toast.error("Failed to register! Please try again later");
       }
     };
   }
   const createEvent = api.event.create.useMutation({
     onSuccess,
-    onError,
+    onError: ({ data, message }) => {
+      console.log("data:", data);
+      console.log("message:", message);
+      const errorMessage = data?.zodError?.fieldErrors;
+      if (errorMessage) {
+        toast.error(errorMessage?.description);
+      } else {
+        if (data?.code === "INTERNAL_SERVER_ERROR") {
+          toast.error("We are facing some issues. Please try again later");
+        } else if (data?.code === "BAD_REQUEST") {
+          toast.error("Invalid request. Please try again later");
+        } else if (data?.code === "UNAUTHORIZED") {
+          toast.error("Unauthorized request. Please try again later");
+        } else if (message) {
+          toast.error(message);
+        } else {
+          toast.error("Failed to register! Please try again later");
+        }
+      }
+    },
   });
 
   // void api.post.getLatest.prefetch();
@@ -47,11 +75,9 @@ export default function CreateEventDialog() {
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
-    getValues,
     setValue,
-  } = useForm<FieldValues>({
+  } = useForm<INewEvent>({
     defaultValues: {
       name: "",
       date: "",
@@ -60,22 +86,15 @@ export default function CreateEventDialog() {
     },
   });
 
-  const onSubmit: SubmitHandler<FieldValues> = (data) => {
-    console.log('data:', data);
+  const onSubmit: SubmitHandler<INewEvent> = (data) => {
+    console.log("data:", data);
     createEvent.mutate({
-      name: data.name as string,
+      name: data.name,
       date: dayjs.utc(data.date as string).toDate(),
-      venue: data.venue as string,
-      description: data.description as string,
+      venue: data.venue,
+      description: data.description,
     });
   };
-
-  useEffect(()=>{
-    console.log(errors);
-  },[errors])
-
-
-  
 
   return (
     <Dialog>
@@ -88,12 +107,12 @@ export default function CreateEventDialog() {
         <DialogHeader>
           <DialogTitle>Create New Event</DialogTitle>
         </DialogHeader>
-        <div>
-          <form className="grid gap-4">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="flex flex-col gap-2">
             <div className="grid gap-2">
-              <Label htmlFor="title">Event Title</Label>
+              <Label htmlFor="name">Event Title</Label>
               <Input
-                id="title"
+                id="name"
                 register={register}
                 errors={errors}
                 required
@@ -101,9 +120,10 @@ export default function CreateEventDialog() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
+              <Label>Date</Label>
               <CalendarDatePicker
-                onSetDate={(d) => {
+                className="h-9 rounded-md border border-input px-3"
+                onSetDate={(d: Date) => {
                   setValue("date", d);
                 }}
               />
@@ -142,16 +162,21 @@ export default function CreateEventDialog() {
               <Label htmlFor="image">Event Image</Label>
               <Input id="image" type="file" />
             </div>
-          </form>
-        </div>
-        <DialogFooter>
-          <div>
-            <Button variant="ghost">Cancel</Button>
           </div>
-          <Button type="submit" onClick={handleSubmit(onSubmit)}>
-            {createEvent.isPending ? "loading..." : "Create Event"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="mt-4">
+            <div>
+              <Button className="border-[0.5px] border-black px-2">
+                Cancel
+              </Button>
+            </div>
+            <Button
+              type="submit"
+              className="border-[0.5px] border-black bg-black px-2 text-white"
+            >
+              {createEvent.isPending ? "loading..." : "Create Event"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
