@@ -18,8 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        <ToasterProvider />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <ToasterProvider />
+          {children}
+        </TRPCReactProvider>
       </body>
     </html>
   );

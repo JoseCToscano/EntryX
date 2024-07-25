@@ -1,5 +1,8 @@
+"use client";
 import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
-import { api, HydrateClient } from "~/trpc/server";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
 import {
   Dialog,
@@ -14,11 +17,31 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
+import { useEffect } from "react";
+
+dayjs.extend(utc);
 
 export default function CreateEventDialog() {
-  const hello = await api.event.create.useMutation();
+  function onSuccess() {
+    toast.success("Event registered successfully");
+    reset();
+  }
 
-  void api.post.getLatest.prefetch();
+  function onError() {
+    return ({ message }: { message?: string }) => {
+      if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Failed to register! Please try again later");
+      }
+    };
+  }
+  const createEvent = api.event.create.useMutation({
+    onSuccess,
+    onError,
+  });
+
+  // void api.post.getLatest.prefetch();
   const {
     register,
     handleSubmit,
@@ -35,20 +58,19 @@ export default function CreateEventDialog() {
     },
   });
 
-  function onSuccess() {
-    toast.success("Event registered successfully");
-    reset();
-  }
+  const onSubmit: SubmitHandler<FieldValues> = (data) => {
+    console.log('data:', data);
+    createEvent.mutate({
+      name: data.name as string,
+      date: dayjs.utc(data.date as string).toDate(),
+      venue: data.venue as string,
+      description: data.description as string,
+    });
+  };
 
-  function onError() {
-    return ({ message }: { message?: string }) => {
-      if (message) {
-        toast.error(message);
-      } else {
-        toast.error("Failed to register! Please try again later");
-      }
-    };
-  }
+  useEffect(()=>{
+    console.log(errors);
+  },[errors])
 
   return (
     <Dialog>
@@ -65,20 +87,39 @@ export default function CreateEventDialog() {
           <form className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Event Title</Label>
-              <Input id="title" placeholder="Enter event title" />
+              <Input
+                id="title"
+                register={register}
+                errors={errors}
+                required
+                placeholder="Enter event title"
+              />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="limit">Date</Label>
-              <CalendarDatePicker />
+              <Label htmlFor="date">Date</Label>
+              <CalendarDatePicker
+                onSetDate={(d) => {
+                  setValue("date", d);
+                }}
+              />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="limit">Venue</Label>
-              <Input id="limit" type="text" placeholder="Enter venue" />
+              <Label htmlFor="venue">Venue</Label>
+              <Input
+                id="venue"
+                register={register}
+                errors={errors}
+                required
+                type="text"
+                placeholder="Enter venue"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Event Description</Label>
               <Textarea
                 id="description"
+                register={register}
+                errors={errors}
                 placeholder="Enter event description"
                 className="min-h-[100px]"
                 rows={3}
@@ -102,7 +143,9 @@ export default function CreateEventDialog() {
           <div>
             <Button variant="ghost">Cancel</Button>
           </div>
-          <Button type="submit">Create Event</Button>
+          <Button type="submit" onClick={handleSubmit(onSubmit)}>
+            {createEvent.isPending ? "loading..." : "Create Event"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -7,6 +7,9 @@ import {
 } from "~/server/api/trpc";
 
 export const eventsRouter = createTRPCRouter({
+  getToddos: publicProcedure.query(() => {
+    return [1, 2, 3, 4];
+  }),
   create: protectedProcedure
     .input(
       z.object({
@@ -17,22 +20,25 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.user.create({
+      console.log({
+        name: input.name,
+        venue: input.venue,
+        description: input.description,
+        date: input.date,
+        organizerId: ctx.session.user.id,
+      });
+      return ctx.db.event.create({
         data: {
           name: input.name,
           venue: input.venue,
           description: input.description,
           date: input.date,
-          organizerId: { connect: { id: ctx.session.user.id } },
+          organizerId: ctx.session.user.id,
         },
       });
     }),
 
   getLatest: protectedProcedure.query(async ({ ctx }) => {
-    const event = await ctx.db.user.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-
-    return event ?? null;
+    return null;
   }),
 });

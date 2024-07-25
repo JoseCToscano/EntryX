@@ -13,11 +13,23 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
+import { useEffect } from "react";
+
+interface CalendarDatePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+  onSetDate?: (date?: Date) => void;
+}
 
 export function CalendarDatePicker({
   className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+  onSetDate,
+}: CalendarDatePickerProps) {
   const [date, setDate] = React.useState<Date>();
+
+  useEffect(() => {
+    if (onSetDate) {
+      onSetDate(date);
+    }
+  }, [date]);
 
   return (
     <div className={cn("grid gap-2", className)}>
