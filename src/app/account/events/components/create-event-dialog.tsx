@@ -17,11 +17,12 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 dayjs.extend(utc);
 
 export default function CreateEventDialog() {
+  const [a,setA] = useState(1);
   function onSuccess() {
     toast.success("Event registered successfully");
     reset();
@@ -48,6 +49,7 @@ export default function CreateEventDialog() {
     reset,
     watch,
     formState: { errors },
+    getValues,
     setValue,
   } = useForm<FieldValues>({
     defaultValues: {
@@ -71,6 +73,9 @@ export default function CreateEventDialog() {
   useEffect(()=>{
     console.log(errors);
   },[errors])
+
+
+  
 
   return (
     <Dialog>

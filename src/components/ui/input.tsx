@@ -31,6 +31,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
+    console.log("regiuster", register && register(id), id)
     return (
       <input
         id={id}
