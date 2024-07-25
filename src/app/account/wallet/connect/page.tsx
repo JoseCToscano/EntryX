@@ -1,9 +1,11 @@
+"use client";
 /**
  * v0 by Vercel.
  * @see https://v0.dev/t/YC3V5HBy8Bu
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
 import { Button } from "~/components/ui/button";
+import { walletSdk } from "@stellar/typescript-wallet-sdk";
 
 export default function Component() {
   return (
@@ -17,9 +19,25 @@ export default function Component() {
           manage your digital assets.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Button className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white">
+          <Button
+            onClick={() => {
+              const wallet = new walletSdk.Wallet.TestNet();
+              const stellar = wallet.stellar();
+              const anchor = wallet.anchor({
+                homeDomain: "testanchor.stellar.org",
+                allowHttp: true,
+              });
+              anchor
+                .sep1()
+                .then((sep1) => {
+                  console.log("sep1", sep1);
+                })
+                .catch(console.error);
+            }}
+            className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white"
+          >
             <VenetianMaskIcon className="h-6 w-6" />
-            MetaMask
+            MetaMask :)
           </Button>
           <Button className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white">
             <CoinsIcon className="h-6 w-6" />

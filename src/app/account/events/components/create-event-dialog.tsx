@@ -1,3 +1,4 @@
+import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 import {
   Dialog,
   DialogTrigger,
@@ -11,8 +12,42 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
+import toast from "react-hot-toast";
+import {api} from "~/trpc/react";
 
 export default function CreateEventDialog() {
+  const createEvent = api.createClient().;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useForm<FieldValues>({
+    defaultValues: {
+      name: "",
+      date: "",
+      venue: "",
+      description: "",
+    },
+  });
+
+  function onSuccess() {
+    toast.success("Event registered successfully");
+    reset();
+  }
+
+  function onError() {
+    return ({ message }: { message?: string }) => {
+      if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Failed to register! Please try again later");
+      }
+    };
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
