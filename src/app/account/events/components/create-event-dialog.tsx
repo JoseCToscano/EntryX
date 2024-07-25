@@ -1,4 +1,6 @@
 import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
+import { api, HydrateClient } from "~/trpc/server";
+import toast from "react-hot-toast";
 import {
   Dialog,
   DialogTrigger,
@@ -12,11 +14,11 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
-import toast from "react-hot-toast";
-import {api} from "~/trpc/react";
 
 export default function CreateEventDialog() {
-  const createEvent = api.createClient().;
+  const hello = await api.event.create.useMutation();
+
+  void api.post.getLatest.prefetch();
   const {
     register,
     handleSubmit,
