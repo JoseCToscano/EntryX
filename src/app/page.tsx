@@ -77,7 +77,7 @@ function Section() {
         </div>
         <div className="relative">
           <img
-            src="/images/placeholder.png"
+            src="/images/placeholder-landing.png"
             width={600}
             height={600}
             alt="sardo.ai"
@@ -265,7 +265,7 @@ export default function Component() {
             Features
           </Link>
           <Link
-            href="#"
+            href="/account/events"
             className="text-sm font-medium underline-offset-4 hover:underline"
             prefetch={false}
           >

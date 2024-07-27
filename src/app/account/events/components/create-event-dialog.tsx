@@ -17,6 +17,10 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
+import { Icons } from "~/components/icons";
+import { TRPCClientErrorLike } from "@trpc/client";
+import { ZodError } from "zod";
+import { TRPCError } from "@trpc/server";
 
 dayjs.extend(utc);
 
@@ -28,46 +32,37 @@ interface INewEvent {
 }
 
 export default function CreateEventDialog() {
+  const ctx = api.useContext();
   function onSuccess() {
     console.log("Event registered successfully");
     toast.success("Event registered successfully");
+    void ctx.event.search.invalidate();
     reset();
   }
 
-  function onError() {
-    console.log("Failed to register! Please try again later");
-    return ({ message }: { message?: string }) => {
-      if (message) {
-        console.log("message:", message);
+  function onError({ data, message }: TRPCClientErrorLike<any>) {
+    console.log("data:", data);
+    console.log("message:", message);
+    const errorMessage = data?.zodError?.fieldErrors;
+    if (errorMessage) {
+      toast.error(errorMessage?.description);
+    } else {
+      if (data?.code === "INTERNAL_SERVER_ERROR") {
+        toast.error("We are facing some issues. Please try again later");
+      } else if (data?.code === "BAD_REQUEST") {
+        toast.error("Invalid request. Please try again later");
+      } else if (data?.code === "UNAUTHORIZED") {
+        toast.error("Unauthorized request. Please try again later");
+      } else if (message) {
         toast.error(message);
       } else {
-        console.log("Failed to register! Please try again later");
         toast.error("Failed to register! Please try again later");
       }
-    };
+    }
   }
   const createEvent = api.event.create.useMutation({
     onSuccess,
-    onError: ({ data, message }) => {
-      console.log("data:", data);
-      console.log("message:", message);
-      const errorMessage = data?.zodError?.fieldErrors;
-      if (errorMessage) {
-        toast.error(errorMessage?.description);
-      } else {
-        if (data?.code === "INTERNAL_SERVER_ERROR") {
-          toast.error("We are facing some issues. Please try again later");
-        } else if (data?.code === "BAD_REQUEST") {
-          toast.error("Invalid request. Please try again later");
-        } else if (data?.code === "UNAUTHORIZED") {
-          toast.error("Unauthorized request. Please try again later");
-        } else if (message) {
-          toast.error(message);
-        } else {
-          toast.error("Failed to register! Please try again later");
-        }
-      }
-    },
+    onError,
   });
 
   // void api.post.getLatest.prefetch();
@@ -173,7 +168,7 @@ export default function CreateEventDialog() {
               type="submit"
               className="border-[0.5px] border-black bg-black px-2 text-white"
             >
-              {createEvent.isPending ? "loading..." : "Create Event"}
+              {createEvent.isPending ? <Icons.spinner /> : "Create Event"}
             </Button>
           </DialogFooter>
         </form>

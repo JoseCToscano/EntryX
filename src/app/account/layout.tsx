@@ -92,7 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="sticky top-0 border-b">
-        <div className="flex h-16 items-center bg-white px-4 opacity-95">
+        <div className="z-50 flex h-16 items-center bg-white px-4 opacity-95">
           <TeamSwitcher />
           <MainNav className="mx-6" />
           <div className="ml-auto flex items-center space-x-4">

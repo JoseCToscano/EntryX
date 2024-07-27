@@ -60,10 +60,14 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  publicKey     String?
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
   events        Event[]
+
+  @@index([email])
+  @@index([publicKey])
 }
 
 model VerificationToken {
@@ -84,6 +88,27 @@ model Event {
   updatedAt   DateTime @updatedAt
   organizerId String?
   organizer   User?    @relation(fields: [organizerId], references: [id])
+  Asset       Asset[]
 
   @@index([organizerId])
+}
+
+model Asset {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  address      String?
+  label        String
+  code         String
+  issuer       String
+  distributor  String
+  type         String
+  eventId      String
+  pricePerUnit Decimal
+  totalUnits   Int
+  event        Event    @relation(fields: [eventId], references: [id])
+
+  @@index([code, issuer])
+  @@index([eventId])
+  @@index([address])
 }

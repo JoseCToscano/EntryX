@@ -14,11 +14,15 @@ import {
 
 import { playlists } from "../../data/playlists";
 import { cn } from "~/lib/utils";
-import { Albums } from "~/app/account/data/albums";
+import { type Albums } from "~/app/account/data/albums";
 import dayjs from "dayjs";
+import { type Event } from "@prisma/client";
+import TicketCategoryDialog from "~/app/account/events/components/ticket-category-dialog";
+import Link from "next/link";
+import { LinkHTMLAttributes } from "react";
 
-interface AlbumArtworkProps extends React.HTMLAttributes<HTMLDivElement> {
-  album: Albums;
+interface AlbumArtworkProps extends LinkHTMLAttributes<HTMLAnchorElement> {
+  album: Albums | Event;
   aspectRatio?: "portrait" | "square";
   width?: number;
   height?: number;
@@ -37,12 +41,19 @@ export function AlbumArtwork({
   ...props
 }: AlbumArtworkProps) {
   return (
-    <div className={cn("space-y-3", className)} {...props}>
+    <Link
+      href={"/account/events/" + (album as Event).id ?? "#"}
+      className={cn("space-y-3", className)}
+      {...props}
+    >
       <ContextMenu>
         <ContextMenuTrigger>
           <div className="overflow-hidden rounded-md">
             <Image
-              src={album.cover}
+              src={
+                (album as Albums).cover ??
+                `/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`
+              }
               alt={album.name}
               width={width}
               height={height}
@@ -54,7 +65,6 @@ export function AlbumArtwork({
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-40">
-          <ContextMenuItem>Add to Library</ContextMenuItem>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Add to Playlist</ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-48">
@@ -99,20 +109,29 @@ export function AlbumArtwork({
             {dayjs(album.date).format("MMM DD")}
           </p>
         </span>
-        {showAttendance && (
+        {showAttendance && (album as Albums).attendance && (
           <p className="text-xs text-muted-foreground">
-            {album.attendance.toLocaleString("en-US", {
+            {(album as Albums).attendance.toLocaleString("en-US", {
               maximumFractionDigits: 0,
             })}{" "}
             tickets sold
           </p>
         )}
-        {showSalesPercentage && (
-          <p className="text-xs text-muted-foreground">
-            {((album.attendance / album.capacity) * 100).toFixed(1)}% sold
-          </p>
+        {showSalesPercentage &&
+          (album as Albums).attendance &&
+          (album as Albums).capacity && (
+            <p className="text-xs text-muted-foreground">
+              {(
+                ((album as Albums).attendance / (album as Albums).capacity) *
+                100
+              ).toFixed(1)}
+              % sold
+            </p>
+          )}
+        {(album as Event).id && (
+          <TicketCategoryDialog eventId={(album as Event).id} />
         )}
       </div>
-    </div>
+    </Link>
   );
 }

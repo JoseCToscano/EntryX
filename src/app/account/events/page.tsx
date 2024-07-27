@@ -1,24 +1,29 @@
+"use client";
 import { type Metadata } from "next";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AlbumArtwork } from "./components/album-artwork";
+import { api } from "~/trpc/react";
 import { EmptyPlaceholder } from "./components/empty-placeholder";
 import { listenNowAlbums, madeForYouAlbums } from "../data/albums";
 
-export const metadata: Metadata = {
-  title: "Music App",
-  description: "Example music app using the components.",
-};
+// export const metadata: Metadata = {
+//   title: "Music App",
+//   description: "Example music app using the components.",
+// };
 
 import { CalendarDateRangePicker } from "./components/date-range-picker";
-import { Button } from "~/components/ui/button";
+import CreateEventDialog from "~/app/account/events/components/create-event-dialog";
+import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 
 export default function EventsPage() {
+  const { data: events, error, isLoading } = api.event.search.useQuery({});
   return (
     <>
       <div className="border-t">
-        <div className="bg-background">
+        <div className="bg-background p-4">
+          <MenuBreadcumb />
           <div className="h-full px-4 py-6 lg:px-8">
             <Tabs defaultValue="overview" className="h-full space-y-6">
               <div className="space-between flex items-center">
@@ -29,9 +34,7 @@ export default function EventsPage() {
                 <div className="ml-auto mr-4">
                   <CalendarDateRangePicker />
                 </div>
-                <Button className="border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black">
-                  Create Event
-                </Button>
+                <CreateEventDialog />
               </div>
               <TabsContent
                 value="overview"
@@ -51,6 +54,17 @@ export default function EventsPage() {
                 <div className="relative">
                   <ScrollArea>
                     <div className="flex space-x-4 pb-4">
+                      {events?.map((event) => (
+                        <AlbumArtwork
+                          key={event.name}
+                          album={event}
+                          className="w-[250px]"
+                          aspectRatio="portrait"
+                          width={300}
+                          height={300}
+                          showSalesPercentage
+                        />
+                      ))}
                       {listenNowAlbums.map((album) => (
                         <AlbumArtwork
                           key={album.name}
