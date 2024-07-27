@@ -11,6 +11,13 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { Asset } from "@prisma/client";
+import { Icons } from "~/components/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 interface ITicketCategory {
   code: string;
@@ -23,7 +30,7 @@ export const TicketTypeToAssetForm: React.FC<{
   asset?: Asset;
   onSubmitted?: () => void;
 }> = ({ eventId, asset, onSubmitted }) => {
-  const [isLocked, setIsLocked] = React.useState(asset?.address);
+  const [isLocked, setIsLocked] = React.useState(!!asset?.address);
   const ctx = api.useContext();
   function onSuccess() {
     setIsLocked(true);
@@ -55,7 +62,23 @@ export const TicketTypeToAssetForm: React.FC<{
     onSuccess: () => {
       if (onSubmitted) onSubmitted();
       void ctx.asset.list.invalidate({ eventId });
-      toast.success("Tokenized ticket saved successfully to the blockchain");
+      toast.success("Category saved successfully");
+    },
+    onError,
+  });
+  const updateTicketCategory = api.event.updateTicketCategory.useMutation({
+    onSuccess: () => {
+      if (onSubmitted) onSubmitted();
+      void ctx.asset.list.invalidate({ eventId });
+      toast.success("Category updated successfully");
+    },
+    onError,
+  });
+  const removeTicketCategory = api.event.removeTicketCategory.useMutation({
+    onSuccess: () => {
+      if (onSubmitted) onSubmitted();
+      void ctx.asset.list.invalidate({ eventId });
+      toast.success("Category removed successfully");
     },
     onError,
   });
@@ -69,20 +92,28 @@ export const TicketTypeToAssetForm: React.FC<{
     setValue,
   } = useForm<ITicketCategory>({
     defaultValues: {
-      code: asset?.code ?? "",
-      totalUnits: asset?.totalUnits ?? 0,
-      pricePerUnit: asset?.totalUnits ?? 0,
+      code: asset?.label ?? "",
+      totalUnits: asset?.totalUnits,
+      pricePerUnit: asset?.totalUnits,
     },
   });
 
   const onSubmit: SubmitHandler<ITicketCategory> = (data) => {
-    console.log("data:", data);
-    createTicketCategory.mutate({
-      code: data.code,
-      totalUnits: Number(data.totalUnits),
-      pricePerUnit: Number(data.pricePerUnit),
-      eventId,
-    });
+    if (asset?.id) {
+      updateTicketCategory.mutate({
+        id: asset.id,
+        code: data.code,
+        totalUnits: Number(data.totalUnits),
+        pricePerUnit: Number(data.pricePerUnit),
+      });
+    } else {
+      createTicketCategory.mutate({
+        code: data.code,
+        totalUnits: Number(data.totalUnits),
+        pricePerUnit: Number(data.pricePerUnit),
+        eventId,
+      });
+    }
   };
 
   const addToLedger = api.asset.addToLedger.useMutation({
@@ -96,7 +127,7 @@ export const TicketTypeToAssetForm: React.FC<{
       <TableCell className="flex flex-row items-center font-semibold">
         {isLocked && (
           <Badge className="mr-1 border-0 bg-gradient-to-br from-black to-gray-400">
-            D
+            <Icons.chain className="my-1 h-4 w-4 fill-gray-200 text-gray-200" />
           </Badge>
         )}
         <Label htmlFor="code" className="sr-only">
@@ -107,20 +138,23 @@ export const TicketTypeToAssetForm: React.FC<{
           register={register}
           disabled={isLocked}
           errors={errors}
+          required
           type="text"
           placeholder="General Admission"
-          className={cn(isLocked && "w-[50px] border-0 text-black")}
+          className={cn(isLocked && "w-[130px] border-0 px-0 text-black")}
         />
       </TableCell>
       <TableCell>
         <Label htmlFor="pricePerUnit" className="sr-only">
           Price
         </Label>
+
         <Input
           id="pricePerUnit"
           register={register}
           disabled={isLocked}
           errors={errors}
+          required
           type="number"
           defaultValue="99.99"
         />
@@ -134,48 +168,91 @@ export const TicketTypeToAssetForm: React.FC<{
           register={register}
           disabled={isLocked}
           errors={errors}
+          required
           type="number"
           defaultValue="500"
         />
       </TableCell>
       <TableCell>
-        <div className="flex h-8 flex-row items-center justify-end rounded-md border-[0.5px] border-gray-300 bg-muted">
-          <div className="flex w-full items-center justify-center gap-1 rounded-l-md py-1 text-center">
-            <p className="text-sm font-light">$0.99</p>
-          </div>
-          <div className="w-[100px] rounded-r-md bg-neutral-500 py-1 text-center opacity-70">
-            <p className="text-sm font-light">1%</p>
-          </div>
+        <div className="flex w-full items-center justify-center gap-1 rounded-l-md py-1 text-center">
+          <p className="text-sm font-light">$0.99</p>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex w-full items-center justify-center gap-1 rounded-l-md py-1 text-center">
+          <p className="text-sm font-light">1%</p>
         </div>
       </TableCell>
       <TableCell>
         {!isLocked && (
-          <Button
-            disabled={isLocked}
-            onClick={() => {
-              console.log("click");
-              if (!isLocked) void handleSubmit(onSubmit)();
-            }}
-            className="bg-blue-600"
-            variant="outline"
-            size="icon"
-          >
-            <div className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild className="">
+                <Button
+                  disabled={isLocked}
+                  onClick={() => {
+                    if (!isLocked) void handleSubmit(onSubmit)();
+                  }}
+                  variant="outline"
+                  size="icon"
+                >
+                  <Icons.save className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>
+                  Save changes: Ticket type can still be edited before locking.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
+        {/*{!isLocked && (*/}
+        {/*  <TooltipProvider>*/}
+        {/*    <Tooltip>*/}
+        {/*      <TooltipTrigger asChild className="">*/}
+        {/*        <Button*/}
+        {/*          disabled={isLocked}*/}
+        {/*          onClick={() => {*/}
+        {/*            if (!asset?.id) return;*/}
+        {/*            if (!isLocked)*/}
+        {/*              void removeTicketCategory.mutate({ id: asset?.id });*/}
+        {/*          }}*/}
+        {/*          variant="outline"*/}
+        {/*          size="icon"*/}
+        {/*        >*/}
+        {/*          <Icons.trash className="h-4 w-4 text-red-900" />*/}
+        {/*        </Button>*/}
+        {/*      </TooltipTrigger>*/}
+        {/*      <TooltipContent side="bottom">*/}
+        {/*        <p>Remove ticket type.</p>*/}
+        {/*      </TooltipContent>*/}
+        {/*    </Tooltip>*/}
+        {/*  </TooltipProvider>*/}
+        {/*)}*/}
         {asset && (
-          <Button
-            className="bg-gradient-to-br from-black to-gray-400"
-            onClick={() => {
-              void addToLedger.mutate({ assetId: asset.id });
-            }}
-            variant="outline"
-            size="icon"
-          >
-            <div className="h-4 w-4" />
-            <span className="sr-only">Delete</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild className="">
+                <Button
+                  className="group bg-gradient-to-br from-black to-gray-400 hover:from-gray-400"
+                  onClick={() => {
+                    void addToLedger.mutate({ assetId: asset.id });
+                  }}
+                  variant="outline"
+                  size="icon"
+                >
+                  <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>
+                  Lock changes into the blockchain&apos;s Ledger. This action is
+                  irreversible.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </TableCell>
     </TableRow>

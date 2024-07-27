@@ -54,7 +54,7 @@ export const assetsRouter = createTRPCRouter({
           Operation.payment({
             destination: distributorKeypair.publicKey(),
             asset: tokenizedAsset,
-            amount: input.totalUnits.toString(),
+            amount: asset.totalUnits.toString(),
           }),
         )
         .setTimeout(30)

@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -46,33 +46,13 @@ export default function AuthenticationPage() {
             entry
             <svg
               xmlns="http://www.w3.org/2000/svg"
+              width="100"
+              height="100"
               viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2 h-6 w-6"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-            <svg
-              width="200"
-              height="200"
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M100 50 L120 70 L100 90 L80 70 Z"
-                fill="none"
-                stroke="black"
-                stroke-width="10"
-              />
-              <path
-                d="M100 110 L120 130 L100 150 L80 130 Z"
-                fill="none"
-                stroke="black"
-                stroke-width="10"
+                d="M12 13.5L5 6.5H9L12 9.5L15 6.5H19L12 13.5ZM12 10.5L5 17.5H9L12 14.5L15 17.5H19L12 10.5Z"
+                fill="black"
               />
             </svg>
           </div>

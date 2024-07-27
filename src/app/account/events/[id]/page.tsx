@@ -39,6 +39,13 @@ import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import { TicketTypeToAssetForm } from "~/app/account/events/[id]/components/ticket-type-to-asset-form";
 import { api } from "~/trpc/react";
 import { ticketCategoryTemplates } from "~/app/account/events/data/ticket-category-templates";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { Icons } from "~/components/icons";
 
 export default function EventEditor() {
   // Use the useParams hook to access the dynamic parameters
@@ -163,8 +170,14 @@ export default function EventEditor() {
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Each ticket Type is represented by a Tokenized Asset on the
-                    Stellar Blockchain with a fixed price and quantity.
+                    Each ticket Type is represented by a Tokenized Asset on the{" "}
+                    <a
+                      href="https://stellar.org/"
+                      className="font-semibold underline"
+                    >
+                      Stellar
+                    </a>{" "}
+                    Blockchain with a fixed price and quantity.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -174,11 +187,38 @@ export default function EventEditor() {
                         <TableHead>Ticket Type</TableHead>
                         <TableHead>Price</TableHead>
                         <TableHead>Quantity</TableHead>
-                        <TableHead className="flex translate-y-1 flex-col gap-0.5 space-y-0.5">
-                          <p>Fixed commission + Fee</p>
-                          <span className="relative -translate-y-2 text-xs font-light">
-                            per transaction
-                          </span>
+                        <TableHead>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild className="">
+                                <span className="flex items-center justify-start">
+                                  Commission
+                                  <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Fixed commission per ticket sold</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableHead>
+                        <TableHead>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild className="">
+                                <span className="flex items-center justify-start">
+                                  Fee
+                                  <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>
+                                  Transaction-based fee, additional to Stellar
+                                  Network's fee.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
@@ -195,11 +235,6 @@ export default function EventEditor() {
                         <TicketTypeToAssetForm
                           key={formId}
                           eventId={id as string}
-                          onSubmitted={(submittedItem: number) => {
-                            setPendingForms((prev) =>
-                              prev.filter((_, i) => i !== index),
-                            );
-                          }}
                         />
                       ))}
                     </TableBody>
