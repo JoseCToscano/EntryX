@@ -11,9 +11,14 @@ import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import TransactionSteps from "~/app/events/components/transaction-steps";
 
 const UNITARY__FEE = 3; // Percentage fee
 const FIXED_UNITARY_COMMISSION = 1.99; // Fixed fee
+
+function fromXLMToUSD(xlm: number) {
+  return xlm * 0.11;
+}
 export default function Component() {
   const { data: session } = useSession();
   // Use the useParams hook to access the dynamic parameters
@@ -208,16 +213,28 @@ export default function Component() {
                 <Separator />
                 <div className="flex items-center justify-between font-bold">
                   <div>Total</div>
-                  <div>
-                    {(
-                      total +
-                      totalTickets * FIXED_UNITARY_COMMISSION
-                    ).toLocaleString("en-US", {
-                      minimumFractionDigits: 5,
-                      maximumFractionDigits: 5,
-                    })}{" "}
-                    XLM
+                  <div className="flex flex-col items-end justify-end">
+                    <div>
+                      {(
+                        total +
+                        totalTickets * FIXED_UNITARY_COMMISSION
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 5,
+                        maximumFractionDigits: 5,
+                      })}{" "}
+                      XLM
+                    </div>
+                    <div className="text-xs font-light opacity-50">
+                      approx. $
+                      {fromXLMToUSD(
+                        total + totalTickets * FIXED_UNITARY_COMMISSION,
+                      ).toFixed(2)}{" "}
+                      USD
+                    </div>
                   </div>
+                </div>
+                <div className="py-4">
+                  <TransactionSteps />
                 </div>
                 <Button size="lg" className="w-full bg-black text-white">
                   Buy Tickets
