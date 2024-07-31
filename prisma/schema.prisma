@@ -65,6 +65,7 @@ model User {
   sessions      Session[]
   posts         Post[]
   events        Event[]
+  Wallet        Wallet[]
 
   @@index([email])
   @@index([publicKey])
@@ -79,18 +80,29 @@ model VerificationToken {
 }
 
 model Event {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   date        DateTime
   venue       String
+  status      EventStatus @default(DRAFT)
+  imageUrl    String?
+  location    String?
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   organizerId String?
-  organizer   User?    @relation(fields: [organizerId], references: [id])
+  organizer   User?       @relation(fields: [organizerId], references: [id])
   Asset       Asset[]
 
   @@index([organizerId])
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  CLOSED
+  IN_PROGRESS
 }
 
 model Asset {
@@ -111,4 +123,16 @@ model Asset {
   @@index([code, issuer])
   @@index([eventId])
   @@index([address])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  address   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([address])
+  @@index([userId])
 }

@@ -1,13 +1,29 @@
+"use client";
+import React from "react";
 import { Input } from "~/components/ui/input";
+import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
-export function Search() {
+interface SearchProps {
+  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+export const Search: React.FC<SearchProps> = ({
+  className,
+  value,
+  onChange,
+}) => {
   return (
     <div>
       <Input
+        id="search"
         type="search"
         placeholder="Search..."
-        className="md:w-[100px] lg:w-[300px]"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn("md:w-[100px] lg:w-[300px]", className)}
       />
     </div>
   );
-}
+};

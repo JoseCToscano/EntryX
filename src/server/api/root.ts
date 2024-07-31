@@ -16,6 +16,8 @@ import {
 import { eventsRouter } from "~/server/api/routers/event";
 import { env } from "~/env";
 import { assetsRouter } from "~/server/api/routers/asset";
+import { stellarAccountRouter } from "~/server/api/routers/stellar-account";
+import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 /**
@@ -26,6 +28,8 @@ const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 export const appRouter = createTRPCRouter({
   post: postRouter,
   event: eventsRouter,
+  stellarOffer: stellarOfferRouter,
+  stellarAccountRouter: stellarAccountRouter,
   asset: assetsRouter,
   createStellarAccount: publicProcedure.query(async () => {
     console.log("createStellarAccount");
@@ -66,11 +70,8 @@ export const appRouter = createTRPCRouter({
   }),
   fundAccount: publicProcedure.query(async () => {
     try {
-      const issuerKeypair = Keypair.random();
-      console.log("Issuer Public Key:", issuerKeypair.publicKey());
-      console.log("Issuer Secret Key:", issuerKeypair.secret());
       const response = await fetch(
-        `https://friendbot.stellar.org?addr=${encodeURIComponent(issuerKeypair.publicKey())}`,
+        `https://friendbot.stellar.org?addr=${encodeURIComponent(env.DISTRIBUTOR_PUBLIC_KEY)}`,
       );
       response
         .json()
@@ -86,8 +87,8 @@ export const appRouter = createTRPCRouter({
     const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
     // the JS SDK uses promises for most actions, such as retrieving an account
-    const account = await server.loadAccount(env.USER_PUBLIC_KEY);
-    console.log("Balances for account: " + env.USER_PUBLIC_KEY);
+    const account = await server.loadAccount(env.DISTRIBUTOR_PUBLIC_KEY);
+    console.log("Balances for account: " + env.DISTRIBUTOR_PUBLIC_KEY);
     console.log(account);
     account.balances.forEach(function (balance) {
       console.log("Type:", balance.asset_type, ", Balance:", balance.balance);
@@ -101,7 +102,7 @@ export const appRouter = createTRPCRouter({
     // Load Distributor Account from Horizon
     const distributorKeypair = Keypair.fromSecret(env.DISTRIBUTOR_PRIVATE_KEY);
 
-    const asset = new Asset("ABC", issuerKeypair.publicKey());
+    const asset = new Asset("XXX", issuerKeypair.publicKey());
     console.log(asset);
     const transaction = new TransactionBuilder(issuerAccount, {
       fee: BASE_FEE,
@@ -132,7 +133,7 @@ export const appRouter = createTRPCRouter({
     const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
     // Define the asset to sell
-    const asset = new Asset("ABC", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
+    const asset = new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
 
     // Distributor account
     const distributorKeypair = Keypair.fromSecret(env.DISTRIBUTOR_PRIVATE_KEY);
@@ -141,7 +142,7 @@ export const appRouter = createTRPCRouter({
     const counterAsset = Asset.native();
 
     // Price
-    const price = "0.5"; // price in terms of the counter asset
+    const price = "0.01"; // price in terms of the counter asset
 
     async function createSellOffer() {
       // Load distributor account
@@ -158,7 +159,7 @@ export const appRouter = createTRPCRouter({
           Operation.manageSellOffer({
             selling: asset,
             buying: counterAsset,
-            amount: "0.01",
+            amount: "1000",
             price: price,
           }),
         )
@@ -240,7 +241,7 @@ export const appRouter = createTRPCRouter({
   }),
   searchOfferBook: publicProcedure.query(async () => {
     // Define the asset to search for
-    const asset = new Asset("ABC", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
+    const asset = new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
 
     async function searchAsset() {
       try {
@@ -270,16 +271,16 @@ export const appRouter = createTRPCRouter({
         // Ensure the user has a trustline set up for the asset before attempting to buy it
         .addOperation(
           Operation.changeTrust({
-            asset: new Asset("ABC", env.ISSUER_PUBLIC_KEY),
+            asset: new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY),
             source: userKeypair.publicKey(),
           }),
         )
         .addOperation(
           Operation.manageBuyOffer({
             selling: Asset.native(),
-            buying: new Asset("ABC", env.ISSUER_PUBLIC_KEY),
-            buyAmount: "0.01",
-            price: "0.5",
+            buying: new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY),
+            buyAmount: "1",
+            price: "0.01",
           }),
         )
         .setTimeout(180)

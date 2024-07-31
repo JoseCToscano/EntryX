@@ -120,6 +120,10 @@ export const TicketTypeToAssetForm: React.FC<{
     onError,
     onSuccess,
   });
+  const createSellOffer = api.asset.createSellOffer.useMutation({
+    onError,
+    onSuccess,
+  });
 
   return (
     <TableRow>
@@ -230,14 +234,16 @@ export const TicketTypeToAssetForm: React.FC<{
         {/*    </Tooltip>*/}
         {/*  </TooltipProvider>*/}
         {/*)}*/}
-        {asset && (
+        {asset && !isLocked && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild className="">
                 <Button
+                  disabled={isLocked}
                   className="group bg-gradient-to-br from-black to-gray-400 hover:from-gray-400"
                   onClick={() => {
-                    void addToLedger.mutate({ assetId: asset.id });
+                    if (!isLocked)
+                      void addToLedger.mutate({ assetId: asset.id });
                   }}
                   variant="outline"
                   size="icon"
@@ -250,6 +256,28 @@ export const TicketTypeToAssetForm: React.FC<{
                   Lock changes into the blockchain&apos;s Ledger. This action is
                   irreversible.
                 </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {}
+        {asset?.address && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild className="">
+                <Button
+                  className="group bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    void createSellOffer.mutate({ assetId: asset.id });
+                  }}
+                  variant="outline"
+                  size="icon"
+                >
+                  <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Create sell Offer</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

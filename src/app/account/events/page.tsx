@@ -63,17 +63,7 @@ export default function EventsPage() {
                           width={300}
                           height={300}
                           showSalesPercentage
-                        />
-                      ))}
-                      {listenNowAlbums.map((album) => (
-                        <AlbumArtwork
-                          key={album.name}
-                          album={album}
-                          className="w-[250px]"
-                          aspectRatio="portrait"
-                          width={250}
-                          height={330}
-                          showSalesPercentage
+                          href={`/accounts/events/${event.id}`}
                         />
                       ))}
                     </div>
@@ -101,6 +91,7 @@ export default function EventsPage() {
                           width={150}
                           height={150}
                           showAttendance
+                          href={`/accounts/events/#`}
                         />
                       ))}
                     </div>

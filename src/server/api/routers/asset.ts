@@ -11,10 +11,16 @@ import {
 } from "@stellar/stellar-sdk";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import { AxiosError } from "axios";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
 export const assetsRouter = createTRPCRouter({
+  getAsset: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db.asset.findUniqueOrThrow({ where: { id: input.id } });
+    }),
   list: publicProcedure
     .input(z.object({ eventId: z.string() }))
     .query(({ ctx, input }) => {
@@ -29,6 +35,7 @@ export const assetsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findUniqueOrThrow({
         where: { id: input.assetId },
       });
+      console.log(asset);
       // Create asset
       // Load Issuer Account from Horizon
       const issuerKeypair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
@@ -39,6 +46,7 @@ export const assetsRouter = createTRPCRouter({
       );
 
       const tokenizedAsset = new Asset(asset.code, issuerKeypair.publicKey());
+      console.log(tokenizedAsset);
       const transaction = new TransactionBuilder(issuerAccount, {
         fee: BASE_FEE,
         networkPassphrase: Networks.TESTNET,
@@ -54,26 +62,98 @@ export const assetsRouter = createTRPCRouter({
           Operation.payment({
             destination: distributorKeypair.publicKey(),
             asset: tokenizedAsset,
-            amount: asset.totalUnits.toString(),
+            amount: "1", // asset.totalUnits.toString(),
           }),
         )
         .setTimeout(30)
         .build();
 
       transaction.sign(issuerKeypair, distributorKeypair);
-      const res = await server.submitTransaction(transaction);
-      console.log(res);
-      if (!res.successful) {
+      console.log("transaction 1", transaction);
+      try {
+        const res = await server.submitTransaction(transaction);
+        console.log("transaction 2", transaction);
+        console.log("res", res);
+        console.log("res.successful", res.successful);
+        if (!res.successful) {
+          throw new TRPCError({
+            message: "Failed to create ticket category",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+        console.log("res.hash", res.hash);
+        return ctx.db.asset.update({
+          where: { id: input.assetId },
+          data: {
+            address: res.hash,
+          },
+        });
+      } catch (e) {
+        console.log("error : .----");
+        console.error((e as AxiosError).message);
+        console.error((e as AxiosError)?.response?.data);
+        console.error((e as AxiosError)?.response?.data?.detail);
+        console.error((e as AxiosError)?.response?.data?.title);
+        console.error((e as AxiosError)?.response?.data?.extras?.result_codes);
         throw new TRPCError({
           message: "Failed to create ticket category",
           code: "INTERNAL_SERVER_ERROR",
         });
       }
-      return ctx.db.asset.update({
+    }),
+  createSellOffer: publicProcedure
+    .input(z.object({ assetId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const asset = await ctx.db.asset.findUniqueOrThrow({
         where: { id: input.assetId },
-        data: {
-          address: res.hash,
-        },
       });
+      // Load Distributor Account from Horizon
+      // Distributor account
+      const distributorKeypair = Keypair.fromSecret(
+        env.DISTRIBUTOR_PRIVATE_KEY,
+      );
+
+      async function createSellOffer() {
+        // Load distributor account
+        const distributorAccount = await server.loadAccount(
+          distributorKeypair.publicKey(),
+        );
+
+        // Build the transaction
+        const transaction = new TransactionBuilder(distributorAccount, {
+          fee: BASE_FEE,
+          networkPassphrase: Networks.TESTNET,
+        })
+          .addOperation(
+            Operation.manageSellOffer({
+              selling: new Asset(asset.code, distributorKeypair.publicKey()),
+              buying: Asset.native(), // XLM
+              amount: asset.totalUnits.toString(),
+              price: "0.01", // asset.pricePerUnit.toString(),
+            }),
+          )
+          .setTimeout(180)
+          .build();
+
+        // Sign the transaction
+        transaction.sign(distributorKeypair);
+
+        // Submit the transaction
+        const transactionResult = await server
+          .submitTransaction(transaction)
+          .then((res) => {
+            if (!res.successful) {
+              throw new TRPCError({
+                message: "Failed to create sell offer",
+                code: "INTERNAL_SERVER_ERROR",
+              });
+            }
+            return res;
+          })
+          .catch(console.error);
+        console.log("Sell offer created successfully:", transactionResult);
+      }
+
+      await createSellOffer();
     }),
 });

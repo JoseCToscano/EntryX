@@ -28,6 +28,7 @@ interface AlbumArtworkProps extends LinkHTMLAttributes<HTMLAnchorElement> {
   height?: number;
   showAttendance?: boolean;
   showSalesPercentage?: boolean;
+  href: string;
 }
 
 export function AlbumArtwork({
@@ -38,14 +39,11 @@ export function AlbumArtwork({
   showAttendance,
   showSalesPercentage,
   className,
+  href,
   ...props
 }: AlbumArtworkProps) {
   return (
-    <Link
-      href={"/account/events/" + (album as Event).id ?? "#"}
-      className={cn("space-y-3", className)}
-      {...props}
-    >
+    <Link href={href} className={cn("space-y-3", className)} {...props}>
       <ContextMenu>
         <ContextMenuTrigger>
           <div className="overflow-hidden rounded-md">
@@ -128,9 +126,6 @@ export function AlbumArtwork({
               % sold
             </p>
           )}
-        {(album as Event).id && (
-          <TicketCategoryDialog eventId={(album as Event).id} />
-        )}
       </div>
     </Link>
   );

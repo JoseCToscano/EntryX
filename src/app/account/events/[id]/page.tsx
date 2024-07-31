@@ -29,16 +29,14 @@ import {
   TableRow,
   TableHead,
   TableBody,
-  TableCell,
 } from "~/components/ui/table";
-import { CartesianGrid, XAxis, Bar, BarChart, Line, LineChart } from "recharts";
+import { CartesianGrid, XAxis, Bar, BarChart } from "recharts";
 import { useParams } from "next/navigation";
 import { cn } from "~/lib/utils";
 import Image from "next/image";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import { TicketTypeToAssetForm } from "~/app/account/events/[id]/components/ticket-type-to-asset-form";
 import { api } from "~/trpc/react";
-import { ticketCategoryTemplates } from "~/app/account/events/data/ticket-category-templates";
 import {
   Tooltip,
   TooltipContent,
@@ -46,13 +44,18 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Icons } from "~/components/icons";
+import dayjs from "dayjs";
 
 export default function EventEditor() {
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
   const { id } = params;
-  const assets = api.asset.list.useQuery({ eventId: id }, { enabled: !!id });
+  const categories = api.asset.list.useQuery(
+    { eventId: id as string },
+    { enabled: !!id },
+  );
+  const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
   const [pendingForms, setPendingForms] = React.useState<number[]>([]);
 
   if (!id) return null;
@@ -65,13 +68,13 @@ export default function EventEditor() {
         <div className="grid auto-rows-max items-start gap-4 pt-4 md:gap-8">
           <div className="flex items-center gap-4">
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              Acme Tech Conference 2024
+              {event.data?.name}
             </h1>
             <Badge variant="outline" className="ml-auto sm:ml-0">
-              June 15-17, 2024
+              {dayjs(event.data?.date).format("MMM D, YYYY")}
             </Badge>
             <Badge variant="outline" className="ml-auto sm:ml-0">
-              San Francisco, CA
+              {event.data?.location ?? event.data?.venue}
             </Badge>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
               <Button variant="outline" size="sm">
@@ -92,18 +95,19 @@ export default function EventEditor() {
                     <div className="flex flex-row items-end justify-between gap-3">
                       <div className="flex flex-grow flex-col gap-3">
                         <div className="grid gap-3">
-                          <Label htmlFor="title">Title</Label>
+                          <Label htmlFor="name">Title</Label>
                           <Input
-                            id="title"
+                            id="name"
                             type="text"
                             className="w-full"
-                            defaultValue="Acme Tech Conference 2024"
+                            defaultValue={event.data?.name}
                           />
                         </div>
                         <div className="grid gap-3">
                           <Label htmlFor="venue">Venue</Label>
                           <Input
                             id="venue"
+                            value={event.data?.venue}
                             defaultValue="Join us for the annual Acme Tech Conference, where industry leaders and innovators come together to share their insights and shape the future of technology."
                           />
                         </div>
@@ -111,7 +115,10 @@ export default function EventEditor() {
                           <Label htmlFor="description">Description</Label>
                           <Textarea
                             id="description"
-                            defaultValue="Join us for the annual Acme Tech Conference, where industry leaders and innovators come together to share their insights and shape the future of technology."
+                            value={
+                              event.data?.description ??
+                              "Join us for the annual Acme Tech Conference, where industry leaders and innovators come together to share their insights and shape the future of technology."
+                            }
                             className="min-h-32"
                           />
                         </div>
@@ -224,7 +231,7 @@ export default function EventEditor() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assets.data?.map((asset, index) => (
+                      {categories.data?.map((asset, index) => (
                         <TicketTypeToAssetForm
                           key={index}
                           eventId={id as string}
@@ -324,8 +331,11 @@ export default function EventEditor() {
             </div>
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
               <Card x-chunk="dashboard-07-chunk-3">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Event Status</CardTitle>
+                  <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400">
+                    {event.data?.status}
+                  </Badge>
                 </CardHeader>
               </Card>
             </div>

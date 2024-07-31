@@ -30,6 +30,11 @@ function toPascalCase(str: string): string {
   return "TIX" + result.slice(0, 9);
 }
 export const eventsRouter = createTRPCRouter({
+  get: publicProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(({ ctx, input }) => {
+      return ctx.db.event.findUniqueOrThrow({ where: { id: input.id } });
+    }),
   search: publicProcedure
     .input(z.object({ orderBy: z.string().optional() }).optional())
     .query(({ ctx, input }) => {

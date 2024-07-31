@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
+import Image from "next/image";
+import { PhotoAttributes } from "~/app/account/components/photo-attributes";
 
 function Section() {
   return (
@@ -76,13 +78,22 @@ function Section() {
           </div>
         </div>
         <div className="relative">
-          <img
-            src="/images/placeholder-landing.png"
-            width={600}
-            height={600}
-            alt="sardo.ai"
-            className="mx-auto aspect-square overflow-hidden rounded-xl object-cover object-center"
-          />
+          <div>
+            <Image
+              src="/images/milad-fakurian-Di6Fcl7GCMk-unsplash.jpg"
+              width={600}
+              height={600}
+              alt="sardo.ai"
+              className="mx-auto aspect-square overflow-hidden rounded-xl object-cover object-center"
+            />
+            <PhotoAttributes
+              className="pr-6 text-neutral-200"
+              author={"Milad Fakurian"}
+              url={
+                "https://unsplash.com/photos/a-black-and-white-photo-of-a-cube-Di6Fcl7GCMk?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
+              }
+            />
+          </div>
           <div className="absolute bottom-4 left-4 rounded-md bg-background/80 px-3 py-2 text-sm font-medium">
             <ClockIcon className="mr-1 inline-block h-4 w-4" />
             <span>Launching Soon</span>
@@ -342,13 +353,19 @@ export default function Component() {
                   </li>
                 </ul>
               </div>
-              <img
-                src="/placeholder.svg"
-                width="550"
-                height="310"
-                alt="Features"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
-              />
+              <div>
+                <Image
+                  src="/images/milad-fakurian-Jv5Nbe3uLPI-unsplash.jpg"
+                  width="550"
+                  height="310"
+                  alt="Foto de Milad Fakurian en Unsplash en Unsplash"
+                  className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
+                />
+                <PhotoAttributes
+                  author="Milad Fakurian"
+                  url="https://unsplash.com/es/fotos/un-grupo-de-objetos-flotando-en-el-aire-Jv5Nbe3uLPI?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -496,82 +513,6 @@ export default function Component() {
           </div>
         </section>
       </main>
-      <footer className="w-full bg-muted p-6 md:py-12">
-        <div className="container grid max-w-7xl grid-cols-2 gap-8 text-sm sm:grid-cols-3 md:grid-cols-5">
-          <div className="grid gap-1">
-            <h3 className="font-semibold">Company</h3>
-            <Link href="#" prefetch={false}>
-              About Us
-            </Link>
-            <Link href="#" prefetch={false}>
-              Our Team
-            </Link>
-            <Link href="#" prefetch={false}>
-              Careers
-            </Link>
-            <Link href="#" prefetch={false}>
-              News
-            </Link>
-          </div>
-          <div className="grid gap-1">
-            <h3 className="font-semibold">Products</h3>
-            <Link href="#" prefetch={false}>
-              Crypto Tickets
-            </Link>
-            <Link href="#" prefetch={false}>
-              Event Management
-            </Link>
-            <Link href="#" prefetch={false}>
-              Blockchain Solutions
-            </Link>
-            <Link href="#" prefetch={false}>
-              Integrations
-            </Link>
-          </div>
-          <div className="grid gap-1">
-            <h3 className="font-semibold">Resources</h3>
-            <Link href="#" prefetch={false}>
-              Blog
-            </Link>
-            <Link href="#" prefetch={false}>
-              Documentation
-            </Link>
-            <Link href="#" prefetch={false}>
-              Support
-            </Link>
-            <Link href="#" prefetch={false}>
-              FAQs
-            </Link>
-          </div>
-          <div className="grid gap-1">
-            <h3 className="font-semibold">Legal</h3>
-            <Link href="#" prefetch={false}>
-              Privacy Policy
-            </Link>
-            <Link href="#" prefetch={false}>
-              Terms of Service
-            </Link>
-            <Link href="#" prefetch={false}>
-              Cookie Policy
-            </Link>
-          </div>
-          <div className="grid gap-1">
-            <h3 className="font-semibold">Contact</h3>
-            <Link href="#" prefetch={false}>
-              Sales
-            </Link>
-            <Link href="#" prefetch={false}>
-              Support
-            </Link>
-            <Link href="#" prefetch={false}>
-              Partnerships
-            </Link>
-            <Link href="#" prefetch={false}>
-              Press
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
