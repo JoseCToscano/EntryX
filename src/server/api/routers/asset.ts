@@ -139,19 +139,54 @@ export const assetsRouter = createTRPCRouter({
         transaction.sign(distributorKeypair);
 
         // Submit the transaction
-        const transactionResult = await server
-          .submitTransaction(transaction)
-          .then((res) => {
-            if (!res.successful) {
-              throw new TRPCError({
-                message: "Failed to create sell offer",
-                code: "INTERNAL_SERVER_ERROR",
-              });
-            }
-            return res;
-          })
-          .catch(console.error);
-        console.log("Sell offer created successfully:", transactionResult);
+        try {
+          const transactionResult = await server.submitTransaction(transaction);
+          console.log("transactionResult:", transactionResult);
+        } catch (e) {
+          console.log("error : .----");
+          console.error((e as AxiosError).message);
+          console.error((e as AxiosError)?.response?.data);
+          console.error((e as AxiosError)?.response?.data?.detail);
+          console.error((e as AxiosError)?.response?.data?.title);
+          console.error(
+            (e as AxiosError)?.response?.data?.extras?.result_codes
+              ?.transaction,
+          );
+          console.error(
+            (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
+          );
+          let message = "Failed to create buy offer";
+          if (
+            (
+              e as AxiosError
+            )?.response?.data?.extras?.result_codes?.operations?.includes(
+              "op_buy_no_trust",
+            )
+          ) {
+            message = "You need to establish trustline first";
+          } else if (
+            (
+              e as AxiosError
+            )?.response?.data?.extras?.result_codes?.operations?.includes(
+              "op_low_reserve",
+            )
+          ) {
+            message = "You don't have enough XLM to create the offer";
+          } else if (
+            (
+              e as AxiosError
+            )?.response?.data?.extras?.result_codes?.operations?.includes(
+              "op_underfunded",
+            )
+          ) {
+            message = "You don't have enough asset to create the offer";
+          }
+
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message,
+          });
+        }
       }
 
       await createSellOffer();

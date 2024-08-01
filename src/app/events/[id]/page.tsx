@@ -1,26 +1,25 @@
 "use client";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import React from "react";
+import React, { useEffect } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
-import { Label } from "~/components/ui/label";
 import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
-import TransactionSteps from "~/app/events/components/transaction-steps";
-
-const UNITARY__FEE = 3; // Percentage fee
-const FIXED_UNITARY_COMMISSION = 1.99; // Fixed fee
+import { TransactionSteps } from "~/app/events/components/transaction-steps";
+import { FIXED_UNITARY_COMMISSION } from "~/constants";
+import { isConnected } from "@stellar/freighter-api";
+import useFreighter from "~/hooks/useFreighter";
 
 function fromXLMToUSD(xlm: number) {
   return xlm * 0.11;
 }
 export default function Component() {
   const { data: session } = useSession();
+  const { hasFreighter, setHasFreighter } = useFreighter();
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
@@ -32,6 +31,10 @@ export default function Component() {
   );
 
   const [cart, setCart] = React.useState<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    isConnected().then(setHasFreighter).catch(console.error);
+  }, []);
 
   const addToCart = (categoryId: string) => {
     const currentQuantity = cart.get(categoryId) ?? 0;
@@ -66,7 +69,7 @@ export default function Component() {
     }, 0);
   }, [cart]);
 
-  if (!id) return null;
+  if (typeof id !== "string") return null;
   return (
     <div className="w-full">
       <section className="w-full bg-[url('/images/event-placeholder-3.png')] bg-cover bg-center py-20 md:py-32 lg:py-40">
@@ -234,11 +237,23 @@ export default function Component() {
                   </div>
                 </div>
                 <div className="py-4">
-                  <TransactionSteps />
+                  <TransactionSteps assets={Array.from(cart.keys())} />
                 </div>
-                <Button size="lg" className="w-full bg-black text-white">
-                  Buy Tickets
-                </Button>
+                {hasFreighter ? (
+                  <Button size="lg" className="w-full bg-black text-white">
+                    Buy Tickets
+                  </Button>
+                ) : (
+                  <a
+                    href="https://freighter.app"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Button size="lg" className="w-full bg-black text-white">
+                      Connect Wallet
+                    </Button>
+                  </a>
+                )}
               </div>
             </CardContent>
           </Card>

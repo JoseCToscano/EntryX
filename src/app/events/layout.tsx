@@ -1,25 +1,45 @@
 "use client";
-import TeamSwitcher from "~/app/account/components/team-switcher";
+import React, { useEffect } from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Search } from "~/app/account/components/search";
 import { UserNav } from "~/app/events/components/user-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { playlists } from "~/app/account/data/playlists";
 import { api } from "~/trpc/react";
-import React from "react";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
 import Footer from "~/components/components/footer";
+import useFreighter from "~/hooks/useFreighter";
+import {
+  isConnected,
+  isAllowed,
+  requestAccess,
+  getNetwork,
+} from "@stellar/freighter-api";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [searchString, setSearchString] = React.useState("");
 
+  const { publicKey, setPublicKey } = useFreighter();
+
   const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
     {
-      id: searchString,
+      id: publicKey!,
     },
-    { enabled: searchString.length === 56, refetchInterval: 5000 },
+    { enabled: !!publicKey, refetchInterval: 5000 },
   );
+
+  useEffect(() => {
+    // TODO: Take this from auth
+    isConnected()
+      .then((connected) => {
+        if (connected) {
+          requestAccess().then(setPublicKey).catch(console.error);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="sticky top-0 border-b">

@@ -18,6 +18,7 @@ import { env } from "~/env";
 import { assetsRouter } from "~/server/api/routers/asset";
 import { stellarAccountRouter } from "~/server/api/routers/stellar-account";
 import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
+import { AxiosError } from "axios";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 /**
@@ -71,7 +72,7 @@ export const appRouter = createTRPCRouter({
   fundAccount: publicProcedure.query(async () => {
     try {
       const response = await fetch(
-        `https://friendbot.stellar.org?addr=${encodeURIComponent(env.DISTRIBUTOR_PUBLIC_KEY)}`,
+        `https://friendbot.stellar.org?addr=${encodeURIComponent(env.USER_PUBLIC_KEY)}`,
       );
       response
         .json()
@@ -130,10 +131,8 @@ export const appRouter = createTRPCRouter({
     console.log(res);
   }),
   sellAsset: publicProcedure.query(async () => {
-    const server = new Horizon.Server("https://horizon-testnet.stellar.org");
-
     // Define the asset to sell
-    const asset = new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
+    const asset = new Asset("TIXALPHA", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
 
     // Distributor account
     const distributorKeypair = Keypair.fromSecret(env.DISTRIBUTOR_PRIVATE_KEY);
@@ -158,8 +157,8 @@ export const appRouter = createTRPCRouter({
         .addOperation(
           Operation.manageSellOffer({
             selling: asset,
-            buying: counterAsset,
-            amount: "1000",
+            buying: Asset.native(),
+            amount: "1",
             price: price,
           }),
         )
@@ -173,8 +172,18 @@ export const appRouter = createTRPCRouter({
       try {
         const transactionResult = await server.submitTransaction(transaction);
         console.log("Sell offer created successfully:", transactionResult);
-      } catch (error) {
-        console.error("Error creating sell offer:", JSON.stringify(error));
+      } catch (e) {
+        console.log("error : .----");
+        console.error((e as AxiosError).message);
+        console.error((e as AxiosError)?.response?.data);
+        console.error((e as AxiosError)?.response?.data?.detail);
+        console.error((e as AxiosError)?.response?.data?.title);
+        console.error(
+          (e as AxiosError)?.response?.data?.extras?.result_codes?.transaction,
+        );
+        console.error(
+          (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
+        );
       }
     }
 
@@ -241,12 +250,12 @@ export const appRouter = createTRPCRouter({
   }),
   searchOfferBook: publicProcedure.query(async () => {
     // Define the asset to search for
-    const asset = new Asset("TIXGeneralAd", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
+    const asset = new Asset("TIXALPHA", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
 
     async function searchAsset() {
       try {
         const orderbook = await server.orderbook(asset, Asset.native()).call();
-        console.log("Order book for ABC:", orderbook);
+        console.log("Order book for TIXALPHA:", orderbook);
       } catch (error) {
         console.error("Error searching for asset:", error);
       }

@@ -63,7 +63,7 @@ export default function EventsPage() {
                           width={300}
                           height={300}
                           showSalesPercentage
-                          href={`/accounts/events/${event.id}`}
+                          href={`/account/events/${event.id}`}
                         />
                       ))}
                     </div>
@@ -91,7 +91,7 @@ export default function EventsPage() {
                           width={150}
                           height={150}
                           showAttendance
-                          href={`/accounts/events/#`}
+                          href={`/account/events/#`}
                         />
                       ))}
                     </div>

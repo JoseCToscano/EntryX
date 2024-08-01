@@ -1,28 +1,171 @@
-export default function TransactionSteps() {
+"use client";
+import React, { useEffect } from "react";
+import { api } from "~/trpc/react";
+import toast from "react-hot-toast";
+import { TRPCClientErrorLike } from "@trpc/client";
+import { Icons } from "~/components/icons";
+import useFreighter from "~/hooks/useFreighter";
+import {
+  isAllowed,
+  isConnected,
+  requestAccess,
+  signTransaction,
+  setAllowed,
+} from "@stellar/freighter-api";
+import { Networks, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
+interface TransactionStepsProps {
+  assets: string[];
+}
+
+const userSignTransaction = async (
+  xdr: string,
+  network: string,
+  signWith: string,
+) => {
+  let signedTransaction = "";
+  let error = "";
+
+  try {
+    console.log('"hello from userSignTransaction"');
+    signedTransaction = await signTransaction(xdr, {
+      network,
+      accountToSign: signWith,
+    });
+    console.log("World");
+  } catch (e) {
+    console.error("Error signing transaction:", e);
+    error = e;
+  }
+
+  if (error) {
+    return error;
+  }
+
+  return signedTransaction;
+};
+
+export const TransactionSteps: React.FC<TransactionStepsProps> = ({
+  assets,
+}) => {
+  const ctx = api.useContext();
+  const { publicKey } = useFreighter();
+
+  function onError({ data, message }: TRPCClientErrorLike<any>) {
+    console.log("data:", data);
+    console.log("message:", message);
+    const errorMessage = data?.zodError?.fieldErrors;
+    if (message) {
+      toast.error(message);
+    } else if (errorMessage) {
+      toast.error(errorMessage?.description);
+    } else {
+      if (data?.code === "INTERNAL_SERVER_ERROR") {
+        toast.error("We are facing some issues. Please try again later");
+      } else if (data?.code === "BAD_REQUEST") {
+        toast.error("Invalid request. Please try again later");
+      } else if (data?.code === "UNAUTHORIZED") {
+        toast.error("Unauthorized request. Please try again later");
+      } else if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Failed to register! Please try again later");
+      }
+    }
+  }
+  const trustline =
+    api.stellarAccountRouter.createTrustlineTransaction.useMutation({
+      onError,
+    });
+
+  const submitTransaction =
+    api.stellarAccountRouter.submitTransaction.useMutation({
+      onError,
+      onSuccess: () => {
+        void ctx.stellarAccountRouter.details.invalidate();
+        toast.success("Buy offer created successfully");
+      },
+    });
+
+  const buy = api.stellarOffer.buy.useMutation({
+    onError,
+    onSuccess: () => {
+      void ctx.stellarAccountRouter.details.invalidate();
+      toast.success("Buy offer created successfully");
+    },
+  });
+
+  const establishTrustline = async (assetId: string) => {
+    try {
+      if (!(await isConnected())) {
+        await requestAccess();
+      }
+      if (!publicKey) {
+        toast.error("Public key not found");
+        return;
+      }
+      const xdr = await trustline.mutateAsync({
+        assetId,
+        userPublicKey: publicKey,
+      });
+      console.log("unsignedTransaction:", xdr);
+      console.log("publicKey:", publicKey);
+      console.log(Networks.TESTNET);
+      const signedXDR = await signTransaction(xdr, {
+        network: "TESTNET",
+        accountToSign: publicKey,
+      });
+      console.log("Signed XDR:", signedXDR);
+
+      // await submitTransaction.mutateAsync({ xdr: signedXDR });
+      toast.success("Trustline established successfully");
+    } catch (error) {
+      toast.error("Failed to establish trustline");
+      console.error("Error establishing trustline:", JSON.stringify(error));
+    }
+  };
+
   return (
     <div className="flex flex-row items-center justify-center px-6 text-xs">
-      <div className="h-32 translate-x-2.5 border-[1px] border-black" />
-      <div className="grid w-full max-w-md grid-cols-1 gap-4">
+      <div className="z-0 h-32 translate-x-2.5 border-[1px] border-black" />
+      <div className="z-10 grid w-full max-w-md grid-cols-1 gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <UserIcon className="h-3 w-3" />
-          </div>
+          <button
+            onClick={() => {
+              void establishTrustline(assets[0]);
+            }}
+            className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            {trustline.isPending ? (
+              <Icons.spinner className="h-2 w-2 animate-spin" />
+            ) : (
+              <UserIcon className="h-3 w-3" />
+            )}
+          </button>
           <div className="flex flex-1 flex-col">
             <p className="text-muted-foreground">Establishing Trustline</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <LockIcon className="h-3 w-3" />
-          </div>
+          <button
+            onClick={() => {
+              void buy.mutateAsync({ assetId: assets[0] });
+            }}
+            className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            {buy.isPending ? (
+              <Icons.spinner className="h-2 w-2 animate-spin" />
+            ) : (
+              <LockIcon className="h-3 w-3" />
+            )}
+          </button>
           <div className="flex flex-1 flex-col">
-            <p className="text-muted-foreground">
+            <div className="text-muted-foreground">
               Creating buy offer for the asset.
-            </p>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <CreditCardIcon className="h-3 w-3" />
           </div>
           <div className="flex flex-1 flex-col">
@@ -30,7 +173,7 @@ export default function TransactionSteps() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <SettingsIcon className="h-3 w-3" />
           </div>
           <div className="flex flex-1 flex-col">
@@ -38,7 +181,7 @@ export default function TransactionSteps() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <CheckIcon className="h-3 w-3" />
           </div>
           <div className="flex flex-1 flex-col">
@@ -51,9 +194,9 @@ export default function TransactionSteps() {
       </div>
     </div>
   );
-}
+};
 
-function CheckIcon(props) {
+const CheckIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -70,9 +213,9 @@ function CheckIcon(props) {
       <path d="M20 6 9 17l-5-5" />
     </svg>
   );
-}
+};
 
-function CreditCardIcon(props) {
+const CreditCardIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -90,9 +233,9 @@ function CreditCardIcon(props) {
       <line x1="2" x2="22" y1="10" y2="10" />
     </svg>
   );
-}
+};
 
-function LockIcon(props) {
+const LockIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -110,9 +253,9 @@ function LockIcon(props) {
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
-}
+};
 
-function SettingsIcon(props) {
+const SettingsIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -130,9 +273,9 @@ function SettingsIcon(props) {
       <circle cx="12" cy="12" r="3" />
     </svg>
   );
-}
+};
 
-function UserIcon(props) {
+const UserIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -150,24 +293,4 @@ function UserIcon(props) {
       <circle cx="12" cy="7" r="4" />
     </svg>
   );
-}
-
-function XIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
+};

@@ -5,48 +5,148 @@
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
 import { Button } from "~/components/ui/button";
-import { walletSdk } from "@stellar/typescript-wallet-sdk";
+import {
+  isConnected,
+  isAllowed,
+  requestAccess,
+  getNetwork,
+} from "@stellar/freighter-api";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import useFreighter from "~/hooks/useFreighter";
+import { api } from "~/trpc/react";
+import Image from "next/image";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
+import Link from "next/link";
+
+const WalletBreadcrumb: React.FC = () => {
+  return (
+    <Breadcrumb className="hidden md:flex">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link href="/account/wallet" prefetch={false}>
+              Wallet
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link href="/account/wallet/connect" prefetch={false}>
+              Freighter
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+};
 
 export default function Component() {
+  const [hasFreighter, setHasFreighter] = useState(false);
+  const [network, setNetwork] = useState("");
+  const { setPublicKey, publicKey } = useFreighter();
+
+  const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
+    {
+      id: publicKey!,
+    },
+    { enabled: !!publicKey, refetchInterval: 5000 },
+  );
+
+  useEffect(() => {
+    isConnected().then(setHasFreighter).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (hasFreighter) {
+      void getPublicKey();
+      getNetwork().then(setNetwork).catch(console.error);
+    }
+  }, [hasFreighter]);
+
+  const getPublicKey = async () => {
+    const network = await getNetwork();
+    requestAccess()
+      .then((key) => {
+        setPublicKey(key);
+        toast.success("Connected to Freighter: " + network);
+      })
+      .catch(() => {
+        toast.error("Failed to connect to Freighter");
+      });
+  };
+
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-md text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Connect Wallet
-        </h1>
-        <p className="mt-4 text-muted-foreground">
-          Connect your crypto wallet to access decentralized applications and
-          manage your digital assets.
-        </p>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Button
-            onClick={() => {
-              const wallet = new walletSdk.Wallet.TestNet();
-              const stellar = wallet.stellar();
-              const anchor = wallet.anchor({
-                homeDomain: "testanchor.stellar.org",
-                allowHttp: true,
-              });
-              anchor
-                .sep1()
-                .then((sep1) => {
-                  console.log("sep1", sep1);
-                })
-                .catch(console.error);
-            }}
-            className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white"
-          >
-            <VenetianMaskIcon className="h-6 w-6" />
-            MetaMask :)
-          </Button>
-          <Button className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white">
-            <CoinsIcon className="h-6 w-6" />
-            Coinbase Wallet
-          </Button>
-          <Button className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white sm:col-span-2">
-            <WalletIcon className="h-6 w-6" />
-            Trust Wallet
-          </Button>
+    <div className="p-4">
+      <WalletBreadcrumb />
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-md text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            {hasFreighter ? "Freighter" : "Connect"} Wallet
+          </h1>
+          {hasFreighter ? (
+            <p className="mt-4 text-muted-foreground">
+              Connected to Freighter. You can now access decentralized
+              applications and manage your digital assets.
+            </p>
+          ) : (
+            <p className="mt-4 text-muted-foreground">
+              Connect your crypto wallet to access decentralized applications
+              and manage your digital assets.
+            </p>
+          )}
+          {isLoading && (
+            <div className="mt-6 flex items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
+            </div>
+          )}
+          <p className="mt-4 flex flex-row items-center justify-center gap-1 text-center text-xl font-semibold">
+            <Image
+              width={20}
+              height={20}
+              src={"/icons/stellar-xlm-logo.svg"}
+              alt={"Stellar XLM icon"}
+            />
+            XLM: {data?.xlm?.balance ?? "-"}
+          </p>
+          {network && (
+            <p className="text-sm font-light text-muted-foreground">
+              {network}
+            </p>
+          )}
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {hasFreighter ? (
+              <Button
+                onClick={getPublicKey}
+                className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white sm:col-span-2"
+              >
+                <WalletIcon className="h-6 w-6" />
+                Use Freighter
+              </Button>
+            ) : (
+              <a
+                href="https://freighter.app"
+                target="_blank"
+                className="flex h-10 items-center justify-center gap-2 rounded-md border-[0.5px] border-black hover:bg-black hover:text-white sm:col-span-2"
+              >
+                <WalletIcon className="h-6 w-6" />
+                Install Freighter
+              </a>
+            )}
+
+            <Button className="flex items-center justify-center gap-2 border-[0.5px] border-black hover:bg-black hover:text-white sm:col-span-2">
+              <WalletIcon className="h-6 w-6" />
+              LOBSTR
+            </Button>
+          </div>
         </div>
       </div>
     </div>

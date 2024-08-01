@@ -10,6 +10,7 @@ import { api } from "~/trpc/react";
 import React from "react";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
+import useFreighter from "~/hooks/useFreighter";
 
 const Footer = () => (
   <footer className="bottom-0 flex w-full flex-col items-center justify-center bg-muted p-6 md:py-12">
@@ -95,12 +96,13 @@ const Footer = () => (
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [searchString, setSearchString] = React.useState("");
+  const { publicKey } = useFreighter();
 
   const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
     {
-      id: searchString,
+      id: publicKey!,
     },
-    { enabled: searchString.length === 56, refetchInterval: 5000 },
+    { enabled: !!publicKey, refetchInterval: 5000 },
   );
   return (
     <div className="flex min-h-screen flex-col">
