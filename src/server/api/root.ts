@@ -262,6 +262,8 @@ export const appRouter = createTRPCRouter({
     }
 
     await searchAsset();
+    const offers = await server.offers().selling(asset).call();
+    console.log("offers", offers);
   }),
   createBuyOffer: publicProcedure.query(async () => {
     console.log("createBuyOffer");

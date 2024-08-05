@@ -1,8 +1,3 @@
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/L3HRyFOavtW
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -22,7 +17,7 @@ import {
   CardFooter,
 } from "~/components/ui/card";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { FIXED_UNITARY_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
@@ -31,9 +26,11 @@ import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
 import { isConnected, signTransaction } from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
+import dayjs from "dayjs";
+import { plurify } from "~/lib/utils";
 
 function fromXLMToUSD(xlm: number) {
-  return xlm * 0.11;
+  return xlm * 0.09;
 }
 
 const SecondaryMarket: React.FC = () => {
@@ -48,6 +45,14 @@ const SecondaryMarket: React.FC = () => {
     date: "",
     price: "",
   });
+
+  const items = api.event.marketplace.useQuery(
+    { id: id as string },
+    {
+      enabled: !!id,
+    },
+  );
+
   const tickets = [
     {
       id: 1,
@@ -86,22 +91,24 @@ const SecondaryMarket: React.FC = () => {
     },
   ];
   const filteredTickets = useMemo(() => {
-    return tickets.filter((ticket) => {
+    return items.data?.filter(({ offer, ...asset }) => {
       const eventMatch = filterOptions.event
-        ? ticket.event.toLowerCase().includes(filterOptions.event.toLowerCase())
+        ? asset.event?.name
+            .toLowerCase()
+            .includes(filterOptions.event.toLowerCase())
         : true;
       const dateMatch = filterOptions.date
-        ? ticket.date.toLowerCase().includes(filterOptions.date.toLowerCase())
+        ? String(asset.event?.date ?? "")
+            .toLowerCase()
+            .includes(filterOptions.date.toLowerCase())
         : true;
       const priceMatch = filterOptions.price
-        ? ticket.price <= parseFloat(filterOptions.price)
+        ? Number(offer.price) <= parseFloat(filterOptions.price)
         : true;
-      const searchMatch = searchTerm
-        ? ticket.event.toLowerCase().includes(searchTerm.toLowerCase())
-        : true;
-      return eventMatch && dateMatch && priceMatch && searchMatch;
+
+      return eventMatch && dateMatch && priceMatch;
     });
-  }, [searchTerm, filterOptions]);
+  }, [items.data, filterOptions]);
 
   const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
   const [cart, setCart] = React.useState<Map<string, number>>(new Map());
@@ -129,15 +136,15 @@ const SecondaryMarket: React.FC = () => {
     isConnected().then(setHasFreighter).catch(console.error);
   }, []);
 
-  const addToCart = (categoryId: string) => {
-    const currentQuantity = cart.get(categoryId) ?? 0;
-    setCart((prev) => new Map(prev.set(categoryId, currentQuantity + 1)));
+  const addToCart = (assetId: string) => {
+    const currentQuantity = cart.get(assetId) ?? 0;
+    setCart((prev) => new Map(prev.set(assetId, currentQuantity + 1)));
   };
 
-  const removeFromCart = (categoryId: string) => {
-    const currentQuantity = cart.get(categoryId) ?? 0;
+  const removeFromCart = (assetId: string) => {
+    const currentQuantity = cart.get(assetId) ?? 0;
     if (currentQuantity > 0) {
-      setCart((prev) => new Map(prev.set(categoryId, currentQuantity - 1)));
+      setCart((prev) => new Map(prev.set(assetId, currentQuantity - 1)));
     }
   };
 
@@ -152,7 +159,7 @@ const SecondaryMarket: React.FC = () => {
       const xdr = await purchase.mutateAsync({
         assetId: assetKey,
         userPublicKey: publicKey,
-        unitsToBuy: asset,
+        unitsToSell: 1,
       });
       const signedTransaction = await signTransaction(xdr, {
         network: "TESTNET",
@@ -181,15 +188,15 @@ const SecondaryMarket: React.FC = () => {
   return (
     <div className="w-full p-4">
       <MenuBreadcumb id={id as string} actionSection="Secondary market" />
-      <div className="container mx-auto grid grid-cols-1 items-start gap-12 px-4 py-12 md:grid-cols-[1fr_400px] md:gap-16 md:px-6 lg:px-8">
+      <div className="container mx-auto grid grid-cols-1 items-start gap-12 px-4 py-12 md:grid-cols-[1fr_350px] md:gap-16 md:px-6 lg:px-8">
         <div className="space-y-8">
-          <div className="mb-8 px-4 md:px-6 lg:px-8">
+          <div className="mb-8">
             <h2 className="text-3xl font-bold">Secondary Market</h2>
             <p className="text-muted-foreground">
               Buy and sell tickets for your favorite events.
             </p>
           </div>
-          <div className="mb-8 px-4 md:px-6 lg:px-8">
+          <div className="mb-8">
             <div className="mb-4 flex items-center">
               <Input
                 id="event-filter"
@@ -273,30 +280,48 @@ const SecondaryMarket: React.FC = () => {
               </DropdownMenu>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {filteredTickets.map((ticket) => (
-                <Card key={ticket.id} className="h-full">
+              {(() => {
+                console.log("items", filteredTickets);
+                return null;
+              })()}
+              {filteredTickets?.map(({ event, offer, ...asset }) => (
+                <Card
+                  key={offer.id}
+                  className="h-full bg-gradient-to-br from-white to-primary-foreground hover:scale-[1.01]"
+                >
                   <CardHeader>
-                    <CardTitle>{ticket.event}</CardTitle>
-                    <CardDescription>{ticket.date}</CardDescription>
+                    <CardTitle>{event.name}</CardTitle>
+                    <CardDescription>
+                      {dayjs(event.date).format("MMM D, YYYY")}
+                      <div className="text-xs text-muted-foreground">
+                        {event.venue}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {event.location}
+                      </div>
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-muted-foreground">
-                        {ticket.location}
-                      </div>
-                      <div className="font-bold">
-                        ${ticket.price.toFixed(2)}
-                      </div>
-                    </div>
+                    <p>
+                      {parseInt(offer.amount)}{" "}
+                      {plurify("ticket", parseInt(offer.amount))}
+                    </p>
+                    <span className="text-2xl font-bold">
+                      $
+                      {Number(offer.price).toLocaleString("en-US", {
+                        maximumFractionDigits: 2,
+                        maximumSignificantDigits: 2,
+                      })}
+                    </span>
                   </CardContent>
                   <CardFooter className="">
                     <Button
                       onClick={() => {
-                        addToCart(ticket.id.toString());
+                        if (offer.id) addToCart(offer.id);
                       }}
                       className="group w-full border-[1.5px] border-black py-4"
                     >
-                      Buy Ticket
+                      Make offer
                       <Icons.expandingArrow className="ml-2 h-4 w-4" />
                     </Button>
                   </CardFooter>

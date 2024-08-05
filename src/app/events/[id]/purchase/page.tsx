@@ -18,9 +18,11 @@ import toast from "react-hot-toast";
 import TicketCard from "~/app/events/components/ticket-card";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
+import { Icons } from "~/components/icons";
+import Link from "next/link";
 
 function fromXLMToUSD(xlm: number) {
-  return xlm * 0.11;
+  return xlm * 0.09;
 }
 
 export default function Purchase() {
@@ -106,6 +108,11 @@ export default function Purchase() {
     }
   };
 
+  const secondaryItems = api.event.marketplaceCount.useQuery(
+    { id: id as string },
+    { enabled: !!id },
+  );
+
   const categories = React.useMemo(() => {
     return new Map(
       ticketCategories.data?.map((category) => [category.id, category]) ?? [],
@@ -154,6 +161,23 @@ export default function Purchase() {
                   removeFromCart={removeFromCart}
                 />
               ))}
+              <Card className="rounded-lg bg-background p-4 shadow-sm">
+                <h3 className="text-lg font-bold">
+                  Buy on secondary market
+                  <p className="text-xs font-light">
+                    Available tickets: {secondaryItems.data ?? 0}
+                  </p>
+                </h3>
+                {/* <p className="text-muted-foreground">Desc...</p> */}
+                <div className="flex w-full items-center justify-end">
+                  <Link href={`/events/${id}/secondary-market`}>
+                    <Button className="group w-48 border-[1px] border-black bg-black text-sm text-white hover:bg-white hover:text-black">
+                      Go to marketplace
+                      <Icons.expandingArrow className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
             </div>
           </div>
         </div>

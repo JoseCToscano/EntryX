@@ -15,7 +15,7 @@ import { Icons } from "~/components/icons";
 import { FIXED_UNITARY_COMMISSION } from "~/constants";
 
 function fromXLMToUSD(xlm: number) {
-  return xlm * 0.11;
+  return xlm * 0.09;
 }
 
 export default function Component() {
@@ -81,27 +81,31 @@ export default function Component() {
               {event.data?.description}
             </p>
           </div>
-          <div>
-            <h2 className="my-4 text-2xl font-bold">Your tickets</h2>
-            <div className="overflow-x-hidden">
-              <ScrollArea>
-                <div className="flex max-w-[30vw] space-x-4 p-2 pb-4">
-                  {myTickets.data?.map((ticket) => (
-                    <TicketCard
-                      key={ticket.id}
-                      eventId={id}
-                      numOfEntries={Number(ticket.balance.balance)}
-                      id={ticket.id}
-                      title={ticket.label}
-                      location={"SoFi Stadium"}
-                      date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
-                    />
-                  ))}{" "}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+          {myTickets.data && myTickets.data?.length > 0 && (
+            <div>
+              <h2 className="my-4 text-2xl font-bold">Your tickets</h2>
+              <div className="overflow-x-hidden">
+                <ScrollArea>
+                  <div className="flex max-w-[30vw] space-x-4 p-2 pb-4">
+                    {myTickets.data?.map((ticket) => (
+                      <TicketCard
+                        key={ticket.id}
+                        eventId={id}
+                        numOfEntries={Number(ticket.balance.balance)}
+                        id={ticket.id}
+                        title={ticket.label}
+                        location={event?.data?.location ?? ""}
+                        venue={event?.data?.venue ?? ""}
+                        date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
+                        sellingLiabilities={parseInt(ticket.sellingLiabilities)}
+                      />
+                    ))}{" "}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="space-y-8">
           <Card>
@@ -146,7 +150,7 @@ export default function Component() {
                   >
                     <Button
                       size="lg"
-                      className="group w-full bg-black text-white"
+                      className="group w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                     >
                       Buy Tickets
                       <Icons.expandingArrow className="h-4 w-4" />

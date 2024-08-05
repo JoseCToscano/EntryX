@@ -229,4 +229,68 @@ export const stellarOfferRouter = createTRPCRouter({
         .build();
       return transaction.toXDR();
     }),
+  _sell: publicProcedure
+    .input(
+      z.object({
+        assetId: z.string().min(1),
+        userPublicKey: z.string().min(1),
+        unitsToSell: z.number().int().positive(),
+        desiredPrice: z.number().positive().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      // User account
+      const userAccount = await server.loadAccount(input.userPublicKey);
+
+      const asset = await ctx.db.asset.findUniqueOrThrow({
+        where: {
+          id: input.assetId,
+        },
+      });
+
+      const availableBalance = userAccount.balances.find(
+        (b) => b.asset_code === asset.code && b.asset_issuer === asset.issuer,
+      );
+      console.log(
+        "availableBalance:",
+        availableBalance,
+        "input.unitsToSell:",
+        input.unitsToSell,
+      );
+      if (!availableBalance) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Asset not found in user account",
+        });
+      }
+      const availableToSell =
+        Number(availableBalance.balance) -
+        Number(availableBalance.selling_liabilities);
+      if (availableToSell < input.unitsToSell) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient balance",
+        });
+      }
+
+      const ledgerAsset = new Asset(asset.code, asset.issuer);
+
+      // Ensure the user has a trustline set up for the asset before attempting to buy it
+      // Build the transaction
+      const transaction = new TransactionBuilder(userAccount, {
+        fee: BASE_FEE,
+        networkPassphrase: Networks.TESTNET,
+      })
+        .addOperation(
+          Operation.manageSellOffer({
+            buying: Asset.native(),
+            selling: ledgerAsset,
+            amount: input.unitsToSell.toString(),
+            price: input.desiredPrice ? input.desiredPrice.toString() : "0.01",
+          }),
+        )
+        .setTimeout(standardTimebounds)
+        .build();
+      return transaction.toXDR();
+    }),
 });

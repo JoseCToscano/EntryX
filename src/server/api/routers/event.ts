@@ -77,8 +77,112 @@ export const eventsRouter = createTRPCRouter({
         return {
           ...asset,
           balance,
+          sellingLiabilities: balance.selling_liabilities,
         };
       });
+    }),
+  ticket: publicProcedure
+    .input(
+      z.object({
+        eventId: z.string().min(1),
+        assetId: z.string().min(1),
+        userPublicKey: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // const event = await ctx.db.event.findUniqueOrThrow({
+      //   where: { id: input.eventId },
+      // });
+      const account = await server.loadAccount(input.userPublicKey);
+      const myTicketCodes = account.balances
+        .filter((b) => {
+          // TODO
+          return (
+            b.asset_issuer === env.ISSUER_PUBLIC_KEY && Number(b.balance) > 0
+          );
+        })
+        .map((b) => b.asset_code);
+      const asset = await ctx.db.asset.findFirst({
+        where: {
+          id: input.assetId,
+          eventId: input.eventId,
+          code: { in: myTicketCodes },
+        },
+      });
+
+      if (!asset) {
+        return null;
+      }
+
+      const walletAsset = account.balances.find(
+        (b) => b.asset_code === asset.code,
+      );
+
+      if (!walletAsset) {
+        return null;
+      }
+
+      return {
+        asset,
+        balance: walletAsset.balance,
+        sellingLiabilities: walletAsset.selling_liabilities ?? 0,
+      };
+    }),
+  marketplace: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const assets = await ctx.db.asset.findMany({
+        where: {
+          eventId: input.id,
+        },
+        include: { event: true },
+      });
+
+      const marketplaceItems = await Promise.all(
+        assets.map(async (a) => {
+          const offers = await server
+            .offers()
+            .selling(new Asset(a.code, a.issuer))
+            .call();
+          return offers.records
+            .filter((o) => o.seller !== a.distributor)
+            .map((o) => ({
+              ...a,
+              offer: o,
+            }));
+        }),
+      );
+      const items = marketplaceItems.flat();
+      console.log("items:", items);
+      return items;
+    }),
+  marketplaceCount: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const assets = await ctx.db.asset.findMany({
+        where: {
+          eventId: input.id,
+        },
+        include: { event: true },
+      });
+
+      const marketplaceItems = await Promise.all(
+        assets.map(async (a) => {
+          const offers = await server
+            .offers()
+            .selling(new Asset(a.code, a.issuer))
+            .call();
+          return offers.records
+            .filter((o) => o.seller !== a.distributor)
+            .map((o) => ({
+              ...a,
+              offer: o,
+            }));
+        }),
+      );
+      return marketplaceItems.flat().reduce((acc, item) => {
+        return acc + parseInt(item.offer.amount);
+      }, 0);
     }),
   search: publicProcedure
     .input(z.object({ orderBy: z.string().optional() }).optional())
