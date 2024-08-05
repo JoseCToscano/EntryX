@@ -17,33 +17,6 @@ interface TransactionStepsProps {
   assets: string[];
 }
 
-const userSignTransaction = async (
-  xdr: string,
-  network: string,
-  signWith: string,
-) => {
-  let signedTransaction = "";
-  let error = "";
-
-  try {
-    console.log('"hello from userSignTransaction"');
-    signedTransaction = await signTransaction(xdr, {
-      network,
-      accountToSign: signWith,
-    });
-    console.log("World");
-  } catch (e) {
-    console.error("Error signing transaction:", e);
-    error = e;
-  }
-
-  if (error) {
-    return error;
-  }
-
-  return signedTransaction;
-};
-
 export const TransactionSteps: React.FC<TransactionStepsProps> = ({
   assets,
 }) => {
@@ -82,17 +55,48 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
       onError,
       onSuccess: () => {
         void ctx.stellarAccountRouter.details.invalidate();
-        toast.success("Buy offer created successfully");
+        toast.success("Transaction sent to blockchain successfully");
       },
     });
 
   const buy = api.stellarOffer.buy.useMutation({
     onError,
-    onSuccess: () => {
-      void ctx.stellarAccountRouter.details.invalidate();
-      toast.success("Buy offer created successfully");
-    },
   });
+
+  /**
+   * Create a buy offer for the asset
+   * @param assetId
+   */
+  const createBuyOffer = async (assetId: string) => {
+    try {
+      console.log("Buying asset:", assetId);
+      if (!(await isConnected())) {
+        await requestAccess();
+      }
+      if (!publicKey) {
+        toast.error("Public key not found");
+        return;
+      }
+      const xdr = await buy.mutateAsync({
+        assetId,
+        userPublicKey: publicKey,
+        unitsToBuy: 1,
+      });
+      const signedXDR = await signTransaction(xdr, {
+        network: "TESTNET",
+        accountToSign: publicKey,
+      });
+      console.log("Signed XDR:", signedXDR);
+
+      const res = await submitTransaction.mutateAsync({ xdr: signedXDR });
+      void ctx.asset.availability.invalidate();
+      console.log("Transaction submitted successfully:", res);
+      toast.success("Offer created successfully");
+    } catch (error) {
+      toast.error("Failed to send buy offer");
+      console.error("Error sending buy offer:", JSON.stringify(error));
+    }
+  };
 
   const establishTrustline = async (assetId: string) => {
     try {
@@ -107,16 +111,12 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
         assetId,
         userPublicKey: publicKey,
       });
-      console.log("unsignedTransaction:", xdr);
-      console.log("publicKey:", publicKey);
-      console.log(Networks.TESTNET);
       const signedXDR = await signTransaction(xdr, {
         network: "TESTNET",
         accountToSign: publicKey,
       });
-      console.log("Signed XDR:", signedXDR);
 
-      // await submitTransaction.mutateAsync({ xdr: signedXDR });
+      await submitTransaction.mutateAsync({ xdr: signedXDR });
       toast.success("Trustline established successfully");
     } catch (error) {
       toast.error("Failed to establish trustline");
@@ -148,7 +148,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
-              void buy.mutateAsync({ assetId: assets[0] });
+              void createBuyOffer(assets[0]);
             }}
             className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
           >

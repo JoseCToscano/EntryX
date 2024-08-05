@@ -16,6 +16,8 @@ import {
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 
+const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+
 function toPascalCase(str: string): string {
   // Split the string into words
   const words = str.split(" ");
@@ -34,6 +36,49 @@ export const eventsRouter = createTRPCRouter({
     .input(z.object({ id: z.string().min(1) }))
     .query(({ ctx, input }) => {
       return ctx.db.event.findUniqueOrThrow({ where: { id: input.id } });
+    }),
+  myTickets: publicProcedure
+    .input(
+      z.object({
+        eventId: z.string().min(1),
+        userPublicKey: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // const event = await ctx.db.event.findUniqueOrThrow({
+      //   where: { id: input.eventId },
+      // });
+      const account = await server.loadAccount(input.userPublicKey);
+      const myTicketCodes = account.balances
+        .filter((b) => {
+          // TODO
+          return (
+            b.asset_issuer === env.ISSUER_PUBLIC_KEY && Number(b.balance) > 0
+          );
+        })
+        .map((b) => b.asset_code);
+      console.log("myTicketCodes:", myTicketCodes);
+      const assets = await ctx.db.asset.findMany({
+        where: {
+          eventId: input.eventId,
+          code: { in: myTicketCodes },
+        },
+      });
+      console.log(assets);
+
+      const thisEventsTickets = new Map(assets.map((a) => [a.code, a]));
+
+      const assetsInWallet = account.balances.filter((balance) =>
+        thisEventsTickets.has(balance.asset_code),
+      );
+
+      return assetsInWallet.map((balance) => {
+        const asset = thisEventsTickets.get(balance.asset_code);
+        return {
+          ...asset,
+          balance,
+        };
+      });
     }),
   search: publicProcedure
     .input(z.object({ orderBy: z.string().optional() }).optional())

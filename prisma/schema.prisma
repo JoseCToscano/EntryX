@@ -80,19 +80,20 @@ model VerificationToken {
 }
 
 model Event {
-  id          String      @id @default(cuid())
-  name        String
-  date        DateTime
-  venue       String
-  status      EventStatus @default(DRAFT)
-  imageUrl    String?
-  location    String?
-  description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  organizerId String?
-  organizer   User?       @relation(fields: [organizerId], references: [id])
-  Asset       Asset[]
+  id             String      @id @default(cuid())
+  name           String
+  date           DateTime
+  venue          String
+  status         EventStatus @default(DRAFT)
+  imageUrl       String?
+  location       String?
+  description    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  organizerId    String?
+  distributorKey String?
+  organizer      User?       @relation(fields: [organizerId], references: [id])
+  Asset          Asset[]
 
   @@index([organizerId])
 }
@@ -117,6 +118,7 @@ model Asset {
   type         String
   eventId      String
   pricePerUnit Decimal
+  status       String   @default("ACTIVE")
   totalUnits   Int
   event        Event    @relation(fields: [eventId], references: [id])
 

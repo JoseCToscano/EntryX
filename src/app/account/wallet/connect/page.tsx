@@ -108,15 +108,23 @@ export default function Component() {
               <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
             </div>
           )}
-          <p className="mt-4 flex flex-row items-center justify-center gap-1 text-center text-xl font-semibold">
-            <Image
-              width={20}
-              height={20}
-              src={"/icons/stellar-xlm-logo.svg"}
-              alt={"Stellar XLM icon"}
-            />
-            XLM: {data?.xlm?.balance ?? "-"}
-          </p>
+
+          {data?.balances?.map(({ balance, asset_type, asset_code }) => (
+            <p
+              key={asset_type}
+              className="mt-4 flex flex-row items-center justify-center gap-1 text-center text-xl font-semibold"
+            >
+              {asset_type === "native" && (
+                <Image
+                  width={20}
+                  height={20}
+                  src={"/icons/stellar-xlm-logo.svg"}
+                  alt={"Stellar XLM icon"}
+                />
+              )}
+              {asset_code}: {balance ?? "-"}
+            </p>
+          ))}
           {network && (
             <p className="text-sm font-light text-muted-foreground">
               {network}

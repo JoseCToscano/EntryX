@@ -120,7 +120,7 @@ export const TicketTypeToAssetForm: React.FC<{
     onError,
     onSuccess,
   });
-  const createSellOffer = api.asset.createSellOffer.useMutation({
+  const createSellOffer = api.stellarOffer.sell.useMutation({
     onError,
     onSuccess,
   });

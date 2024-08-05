@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type AxiosError } from "axios";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   Asset,
@@ -11,8 +12,8 @@ import {
 } from "@stellar/stellar-sdk";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
-import { AxiosError } from "axios";
 
+const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
 export const assetsRouter = createTRPCRouter({
@@ -23,11 +24,36 @@ export const assetsRouter = createTRPCRouter({
     }),
   list: publicProcedure
     .input(z.object({ eventId: z.string() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.asset.findMany({
-        where: { eventId: input.eventId },
-        orderBy: { createdAt: "asc" },
+    .query(async ({ ctx, input }) => {
+      const event = await ctx.db.event.findFirstOrThrow({
+        where: { id: input.eventId },
+        include: {
+          Asset: true,
+        },
       });
+
+      const { distributorKey } = event;
+      console.log("distributorKey:", distributorKey, event);
+      if (!distributorKey) return [];
+
+      return event.Asset;
+    }),
+  availability: publicProcedure
+    .input(z.object({ assetId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const asset = await ctx.db.asset.findUniqueOrThrow({
+        where: { id: input.assetId },
+      });
+      let availability = 0;
+      const sellOffers = await server
+        .orderbook(new Asset(asset.code, asset.issuer), Asset.native())
+        .call();
+      if (sellOffers) {
+        availability = sellOffers.asks.reduce((acc, { amount }) => {
+          return acc + Number(amount);
+        }, 0);
+      }
+      return availability;
     }),
   addToLedger: publicProcedure
     .input(z.object({ assetId: z.string() }))
@@ -41,9 +67,6 @@ export const assetsRouter = createTRPCRouter({
       const issuerKeypair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
       const issuerAccount = await server.loadAccount(issuerKeypair.publicKey());
       // Load Distributor Account from Horizon
-      const distributorKeypair = Keypair.fromSecret(
-        env.DISTRIBUTOR_PRIVATE_KEY,
-      );
 
       const tokenizedAsset = new Asset(asset.code, issuerKeypair.publicKey());
       console.log(tokenizedAsset);
@@ -55,21 +78,23 @@ export const assetsRouter = createTRPCRouter({
         .addOperation(
           Operation.changeTrust({
             asset: tokenizedAsset,
-            source: distributorKeypair.publicKey(),
+            source: asset.distributor,
           }),
         )
         .addOperation(
           Operation.payment({
-            destination: distributorKeypair.publicKey(),
+            destination: asset.distributor,
             asset: tokenizedAsset,
-            amount: "1", // asset.totalUnits.toString(),
+            amount: asset.totalUnits.toString(),
           }),
         )
-        .setTimeout(30)
+        .setTimeout(standardTimebounds)
         .build();
 
+      const distributorKeypair = Keypair.fromSecret(
+        env.DISTRIBUTOR_PRIVATE_KEY,
+      );
       transaction.sign(issuerKeypair, distributorKeypair);
-      console.log("transaction 1", transaction);
       try {
         const res = await server.submitTransaction(transaction);
         console.log("transaction 2", transaction);

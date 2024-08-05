@@ -9,7 +9,10 @@ import {
 import Link from "next/link";
 import { api } from "~/trpc/react";
 
-export const MenuBreadcumb: React.FC<{ id?: string }> = ({ id }) => {
+export const MenuBreadcumb: React.FC<{
+  id?: string;
+  actionSection?: string;
+}> = ({ id, actionSection }) => {
   const { data: event, isLoading } = api.event.get.useQuery(
     { id: id ?? "" },
     { enabled: !!id },
@@ -27,8 +30,22 @@ export const MenuBreadcumb: React.FC<{ id?: string }> = ({ id }) => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{isLoading ? "..." : event?.name}</BreadcrumbPage>
+            <BreadcrumbLink asChild>
+              {isLoading ? (
+                "..."
+              ) : (
+                <Link href={`/events/${id}`}>{event?.name}</Link>
+              )}
+            </BreadcrumbLink>
           </BreadcrumbItem>
+          {actionSection && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{actionSection}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     </header>

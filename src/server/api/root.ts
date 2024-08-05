@@ -250,12 +250,12 @@ export const appRouter = createTRPCRouter({
   }),
   searchOfferBook: publicProcedure.query(async () => {
     // Define the asset to search for
-    const asset = new Asset("TIXALPHA", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
+    const asset = new Asset("TIXWOOP", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key
 
     async function searchAsset() {
       try {
         const orderbook = await server.orderbook(asset, Asset.native()).call();
-        console.log("Order book for TIXALPHA:", orderbook);
+        console.log("Order book for TIXWOOP:", orderbook);
       } catch (error) {
         console.error("Error searching for asset:", error);
       }

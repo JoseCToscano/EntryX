@@ -50,6 +50,7 @@
     "lucide-react": "^0.416.0",
     "next": "^14.2.4",
     "next-auth": "^4.24.7",
+    "qrcode": "^1.5.3",
     "react": "^18.3.1",
     "react-day-picker": "^9.0.3",
     "react-dom": "^18.3.1",
@@ -66,6 +67,7 @@
   "devDependencies": {
     "@types/eslint": "^8.56.10",
     "@types/node": "^20.14.10",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.1.1",

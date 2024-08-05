@@ -62,7 +62,7 @@ export default function EventEditor() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40 p-4">
-      <MenuBreadcumb id={id} />
+      <MenuBreadcumb id={id as string} />
 
       <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
         <div className="grid auto-rows-max items-start gap-4 pt-4 md:gap-8">
@@ -221,7 +221,7 @@ export default function EventEditor() {
                               <TooltipContent side="bottom">
                                 <p>
                                   Transaction-based fee, additional to Stellar
-                                  Network's fee.
+                                  Network&lsquo;s fee.
                                 </p>
                               </TooltipContent>
                             </Tooltip>
