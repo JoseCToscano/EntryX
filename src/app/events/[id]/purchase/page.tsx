@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { useParams } from "next/navigation";
@@ -23,14 +23,10 @@ function fromXLMToUSD(xlm: number) {
   return xlm * 0.11;
 }
 
-const steps = {
-  overview: 0,
-  purchase: 1,
-};
-
 export default function Purchase() {
   const router = useRouter();
   const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
+  const [processStep, setProcessStep] = useState(1);
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
@@ -83,9 +79,11 @@ export default function Purchase() {
       toast.error("Please connect your wallet");
       return;
     }
+    // Todo: Do it for all assets
     const [assetKey] = cart.keys();
     const asset = cart.get(assetKey);
     if (assetKey && asset) {
+      setProcessStep(2);
       const xdr = await purchase.mutateAsync({
         assetId: assetKey,
         userPublicKey: publicKey,
@@ -95,12 +93,14 @@ export default function Purchase() {
         network: "TESTNET",
         accountToSign: publicKey,
       });
+      setProcessStep(3);
       const result = await submitTransaction.mutateAsync({
         xdr: signedTransaction,
       });
+      setProcessStep(4);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       void ctx.asset.availability.invalidate();
-      console.log(result);
-      void router.push(`/events/${id}`);
+      // void router.push(`/events/${id}`);
     } else {
       toast.error("Please select a ticket to purchase");
     }
@@ -146,6 +146,7 @@ export default function Purchase() {
             <div className="grid gap-4">
               {ticketCategories.data?.map((category) => (
                 <TicketCategoryCard
+                  processStep={processStep}
                   key={category.id}
                   category={category}
                   cart={cart}
@@ -220,15 +221,24 @@ export default function Purchase() {
                   </div>
                 </div>
                 <div className="py-4">
-                  <TransactionSteps assets={Array.from(cart.keys())} />
+                  <TransactionSteps
+                    assets={Array.from(cart.keys())}
+                    processStep={processStep}
+                  />
                 </div>
                 {hasFreighter ? (
                   <Button
-                    onClick={handlePurchase}
+                    onClick={() => {
+                      if (processStep === 4) {
+                        void router.push(`/events/${id}`);
+                      } else {
+                        void handlePurchase();
+                      }
+                    }}
                     size="lg"
                     className="w-full bg-black text-white"
                   >
-                    Buy Tickets
+                    {processStep === 4 ? "Go to Wallet" : "Buy Tickets"}
                   </Button>
                 ) : (
                   <a

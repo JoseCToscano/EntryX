@@ -12,13 +12,15 @@ import {
   signTransaction,
   setAllowed,
 } from "@stellar/freighter-api";
-import { Networks, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
+import { cn } from "~/lib/utils";
 interface TransactionStepsProps {
   assets: string[];
+  processStep?: number;
 }
 
 export const TransactionSteps: React.FC<TransactionStepsProps> = ({
   assets,
+  processStep,
 }) => {
   const ctx = api.useContext();
   const { publicKey } = useFreighter();
@@ -49,6 +51,12 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
     api.stellarAccountRouter.createTrustlineTransaction.useMutation({
       onError,
     });
+
+  const { data: hasTrustline, isLoading: isTrustlineLoading } =
+    api.stellarAccountRouter.hasTrustline.useQuery(
+      { id: publicKey as string, assetId: assets.at(0)! },
+      { enabled: !!publicKey && assets.length > 0 },
+    );
 
   const submitTransaction =
     api.stellarAccountRouter.submitTransaction.useMutation({
@@ -126,69 +134,101 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
 
   return (
     <div className="flex flex-row items-center justify-center px-6 text-xs">
-      <div className="z-0 h-32 translate-x-2.5 border-[1px] border-black" />
+      <div className="z-0 h-28 translate-x-2.5 border-[1px] border-black" />
       <div className="z-10 grid w-full max-w-md grid-cols-1 gap-4">
         <div className="flex items-center gap-4">
           <button
+            disabled={hasTrustline}
             onClick={() => {
               void establishTrustline(assets[0]);
             }}
-            className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
-          >
-            {trustline.isPending ? (
-              <Icons.spinner className="h-2 w-2 animate-spin" />
-            ) : (
-              <UserIcon className="h-3 w-3" />
+            className={cn(
+              "flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground",
+              hasTrustline &&
+                "border-green-500 bg-green-500 p-0 text-green-500",
             )}
-          </button>
-          <div className="flex flex-1 flex-col">
-            <p className="text-muted-foreground">Establishing Trustline</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              void createBuyOffer(assets[0]);
-            }}
-            className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
           >
-            {buy.isPending ? (
+            {hasTrustline ? (
+              <Icons.checkCircleFill className="h-4 w-4 text-green-500" />
+            ) : trustline.isPending || isTrustlineLoading ? (
               <Icons.spinner className="h-2 w-2 animate-spin" />
             ) : (
               <LockIcon className="h-3 w-3" />
             )}
           </button>
           <div className="flex flex-1 flex-col">
+            <p className="text-muted-foreground">
+              {hasTrustline ? "Existing trustline" : "Establishing Trustline"}
+            </p>
+          </div>
+        </div>
+        {/* STEP 2: OFFER */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              void createBuyOffer(assets[0]);
+            }}
+            className={cn(
+              "flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground",
+              processStep &&
+                processStep > 2 &&
+                "border-green-500 bg-green-500 p-0 text-green-500",
+            )}
+          >
+            {processStep && processStep > 2 ? (
+              <Icons.checkCircleFill className="h-4 w-4 text-green-500" />
+            ) : processStep === 2 ? (
+              <Icons.spinner className="h-2 w-2 animate-spin" />
+            ) : (
+              <CreditCardIcon className="h-3 w-3" />
+            )}
+          </button>
+          <div className="flex flex-1 flex-col">
             <div className="text-muted-foreground">
-              Creating buy offer for the asset.
+              {processStep && processStep > 2
+                ? "Existing offer"
+                : "Processing offer"}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <CreditCardIcon className="h-3 w-3" />
-          </div>
-          <div className="flex flex-1 flex-col">
-            <p className="text-muted-foreground">Processing offer</p>
-          </div>
-        </div>
+        {/* Step 3: Transaction */}
         <div className="flex items-center gap-4">
           <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <SettingsIcon className="h-3 w-3" />
-          </div>
-          <div className="flex flex-1 flex-col">
-            <p className="text-muted-foreground">Executing the transaction</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <CheckIcon className="h-3 w-3" />
+            {processStep && processStep > 3 ? (
+              <Icons.checkCircleFill className="h-4 w-4 text-green-500" />
+            ) : processStep && processStep === 3 ? (
+              <Icons.spinner className="h-2 w-2 animate-spin" />
+            ) : (
+              <SettingsIcon className="h-3 w-3" />
+            )}
           </div>
           <div className="flex flex-1 flex-col">
             <p className="text-muted-foreground">
-              You&apos;re all set! You can now access your tickets on your{" "}
-              <a href="/wallet">wallet</a>
+              {processStep && processStep === 3
+                ? "Executing the transaction"
+                : "Transactional processing"}
             </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            {processStep && processStep > 3 ? (
+              <Icons.checkCircleFill className="h-4 w-4 text-green-500" />
+            ) : (
+              <CheckIcon className="h-3 w-3" />
+            )}
+          </div>
+          <div className="flex flex-1 flex-col">
+            {processStep && processStep > 3 ? (
+              <p className="text-muted-foreground">
+                You can now access your tickets on your wallet
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Waiting for the transaction to be confirmed on the blockchain
+              </p>
+            )}
           </div>
         </div>
       </div>

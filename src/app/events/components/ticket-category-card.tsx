@@ -10,9 +10,11 @@ interface TicketCategoryCardProps {
   cart: Map<string, number>;
   addToCart: (id: string) => void;
   removeFromCart: (id: string) => void;
+  processStep: number;
 }
 const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   category,
+  processStep,
   addToCart,
   removeFromCart,
   cart,
@@ -46,26 +48,28 @@ const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
             maximumSignificantDigits: 2,
           })}
         </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => removeFromCart(category.id)}
-          >
-            -
-          </Button>
-          <span>{cart.get(category.id) ?? 0}</span>
-          <Button
-            disabled={!availability?.data}
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (availability.data! > 1) addToCart(category.id);
-            }}
-          >
-            +
-          </Button>
-        </div>
+        {processStep === 1 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => removeFromCart(category.id)}
+            >
+              -
+            </Button>
+            <span>{cart.get(category.id) ?? 0}</span>
+            <Button
+              disabled={!availability?.data}
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (availability.data! > 1) addToCart(category.id);
+              }}
+            >
+              +
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

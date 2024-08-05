@@ -30,6 +30,20 @@ export const stellarAccountRouter = createTRPCRouter({
         ),
       };
     }),
+  hasTrustline: publicProcedure
+    .input(z.object({ id: z.string(), assetId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      // the JS SDK uses promises for most actions, such as retrieving an account
+      const account = await server.loadAccount(input.id);
+      const asset = await ctx.db.asset.findUniqueOrThrow({
+        where: { id: input.assetId },
+      });
+      return !!account.balances.find(
+        (balance) =>
+          balance.asset_code === asset.code &&
+          balance.asset_issuer === asset.issuer,
+      );
+    }),
   submitTransaction: publicProcedure
     .input(z.object({ xdr: z.string().min(1) }))
     .mutation(async ({ input }) => {
