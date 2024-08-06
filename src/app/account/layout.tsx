@@ -7,9 +7,11 @@ import { Sidebar } from "~/app/account/components/sidebar";
 import { playlists } from "~/app/account/data/playlists";
 import Link from "next/link";
 import { api } from "~/trpc/react";
-import React from "react";
+import React, { useEffect } from "react";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
+import { getPublicKey } from "@stellar/freighter-api";
+
 import useFreighter from "~/hooks/useFreighter";
 
 const Footer = () => (
@@ -96,7 +98,7 @@ const Footer = () => (
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [searchString, setSearchString] = React.useState("");
-  const { publicKey } = useFreighter();
+  const { publicKey, setPublicKey } = useFreighter();
 
   const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
     {
@@ -104,6 +106,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     },
     { enabled: !!publicKey, refetchInterval: 5000 },
   );
+
+  useEffect(() => {
+    getPublicKey().then(setPublicKey).catch(console.error);
+  }, [setPublicKey]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="sticky top-0 border-b">

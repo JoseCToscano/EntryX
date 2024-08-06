@@ -18,18 +18,41 @@ import { TRPCError } from "@trpc/server";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
-function toPascalCase(str: string): string {
-  // Split the string into words
-  const words = str.split(" ");
+/**
+ * Issuer Accounts are limited to 4096 unique Events (HEXADECIMAL 3 bytes),
+ * each with 65,536 unique Tickets (HEXADECIMAL 4 bytes)
+ * @param eventSequence
+ * @param ticketSequence
+ * @param size
+ * MEDIUM: 3 event-bytes + 4 bytes (4096 unique tickets)
+ * LARGE: 3 event-bytes + 5 bytes (65,536 unique tickets)
+ * X-LARGE: 3 bytes + 6 bytes (16,777,216 unique tickets)
+ */
+function createUniqueAssetCode(
+  eventSequence: number,
+  ticketSequence: number,
+  size: "medium" | "large" | "x-large",
+): string {
+  // All assets start with ENTRY
+  let code = "ENTRY";
+  let uniqueTciketsSize = 4;
+  if (size === "large") {
+    code = "ENTR";
+    uniqueTciketsSize = 5;
+  } else if (size === "x-large") {
+    code = "TIX";
+    uniqueTciketsSize = 6;
+  }
 
-  // Capitalize the first letter of each word and join them together
-  const result = words
-    .map((word) => {
-      // Capitalize the first letter and concatenate with the rest of the word
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join("");
-  return "TIX" + result.slice(0, 9);
+  // Add event sequence number in HEX
+  code += eventSequence.toString(16).toUpperCase().padStart(3, "X");
+  // Add sequence number in HEX
+  code += ticketSequence
+    .toString(16)
+    .toUpperCase()
+    .padStart(uniqueTciketsSize, "0");
+
+  return code;
 }
 export const eventsRouter = createTRPCRouter({
   get: publicProcedure
@@ -198,13 +221,24 @@ export const eventsRouter = createTRPCRouter({
         code: z.string().min(1),
         totalUnits: z.number().min(1),
         pricePerUnit: z.number().min(1),
+        size: z.enum(["medium", "large", "x-large"]).default("medium"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const event = await ctx.db.event.findUniqueOrThrow({
+        where: { id: input.eventId },
+        select: {
+          _count: {
+            select: {
+              Asset: true,
+            },
+          },
+        },
+      });
       return ctx.db.asset.create({
         data: {
           label: input.code,
-          code: toPascalCase(input.code),
+          code: createUniqueAssetCode(1, event._count.Asset + 1, input.size),
           type: "ticket",
           pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
           totalUnits: input.totalUnits,
@@ -237,7 +271,6 @@ export const eventsRouter = createTRPCRouter({
         where: { id: input.id },
         data: {
           label: input.code,
-          code: toPascalCase(input.code),
           type: "ticket",
           pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
           totalUnits: input.totalUnits,
@@ -282,6 +315,7 @@ export const eventsRouter = createTRPCRouter({
           venue: input.venue,
           description: input.description,
           date: input.date,
+          distributorKey: env.DISTRIBUTOR_PUBLIC_KEY,
           // organizerId: ctx.session.user.id,
         },
       });

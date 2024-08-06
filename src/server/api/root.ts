@@ -103,7 +103,7 @@ export const appRouter = createTRPCRouter({
     // Load Distributor Account from Horizon
     const distributorKeypair = Keypair.fromSecret(env.DISTRIBUTOR_PRIVATE_KEY);
 
-    const asset = new Asset("XXX", issuerKeypair.publicKey());
+    const asset = new Asset("XXX123", issuerKeypair.publicKey());
     console.log(asset);
     const transaction = new TransactionBuilder(issuerAccount, {
       fee: BASE_FEE,
@@ -126,8 +126,11 @@ export const appRouter = createTRPCRouter({
       .setTimeout(30)
       .build();
 
-    transaction.sign(issuerKeypair, distributorKeypair);
-    const res = await server.submitTransaction(transaction);
+    transaction.sign(issuerKeypair);
+    const xdr = transaction.toXDR();
+    const tx = TransactionBuilder.fromXDR(xdr, Networks.TESTNET);
+    tx.sign(distributorKeypair);
+    const res = await server.submitTransaction(tx);
     console.log(res);
   }),
   sellAsset: publicProcedure.query(async () => {

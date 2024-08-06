@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { useRouter } from "next/navigation";
 
 dayjs.extend(utc);
 
@@ -43,6 +44,8 @@ interface INewEvent {
 
 export default function CreateEventDialog() {
   const ctx = api.useContext();
+  const router = useRouter();
+
   function onSuccess() {
     console.log("Event registered successfully");
     toast.success("Event registered successfully");
@@ -85,20 +88,21 @@ export default function CreateEventDialog() {
   } = useForm<INewEvent>({
     defaultValues: {
       name: "",
-      date: "",
       venue: "",
       description: "",
     },
   });
 
-  const onSubmit: SubmitHandler<INewEvent> = (data) => {
+  const onSubmit: SubmitHandler<INewEvent> = async (data) => {
     console.log("data:", data);
-    createEvent.mutate({
+    const { id } = await createEvent.mutateAsync({
       name: data.name,
       date: dayjs.utc(data.date as string).toDate(),
       venue: data.venue,
       description: data.description,
     });
+    await ctx.event.search.invalidate();
+    await router.push(`/account/events/${id}`);
   };
 
   return (
@@ -169,6 +173,7 @@ export default function CreateEventDialog() {
                         <Input
                           id="date"
                           type="date"
+                          register={register}
                           className="w-full"
                           placeholder="2024-10-15"
                         />
@@ -193,6 +198,7 @@ export default function CreateEventDialog() {
                       />
                     </div>
                   </div>
+                  <Button onClick={handleSubmit(onSubmit)}>Create Event</Button>
                 </CardContent>
               </Card>
 

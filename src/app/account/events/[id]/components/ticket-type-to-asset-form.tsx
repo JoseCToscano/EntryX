@@ -18,6 +18,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import {
+  getPublicKey,
+  signTransaction,
+  signAuthEntry,
+} from "@stellar/freighter-api";
+import { Server } from "@stellar/stellar-sdk/lib/horizon";
 
 interface ITicketCategory {
   code: string;
@@ -31,6 +37,7 @@ export const TicketTypeToAssetForm: React.FC<{
   onSubmitted?: () => void;
 }> = ({ eventId, asset, onSubmitted }) => {
   const [isLocked, setIsLocked] = React.useState(!!asset?.address);
+  const [loadingSignature, setLoadingSignature] = React.useState(false);
   const ctx = api.useContext();
   function onSuccess() {
     setIsLocked(true);
@@ -94,7 +101,7 @@ export const TicketTypeToAssetForm: React.FC<{
     defaultValues: {
       code: asset?.label ?? "",
       totalUnits: asset?.totalUnits,
-      pricePerUnit: asset?.totalUnits,
+      pricePerUnit: asset?.pricePerUnit,
     },
   });
 
@@ -118,12 +125,40 @@ export const TicketTypeToAssetForm: React.FC<{
 
   const addToLedger = api.asset.addToLedger.useMutation({
     onError,
+  });
+  const tokenize = api.stellarAccountRouter.submitTransaction.useMutation({
+    onError,
     onSuccess,
   });
   const createSellOffer = api.stellarOffer.sell.useMutation({
     onError,
     onSuccess,
   });
+
+  async function saveInLedger() {
+    if (!asset?.id) return;
+    const publicKey = await getPublicKey();
+    if (!publicKey) toast.error("Error getting public key");
+    setLoadingSignature(true);
+    console.log("publicKey", publicKey);
+    const xdr = await addToLedger.mutateAsync({
+      assetId: asset?.id,
+      distributorKey: publicKey,
+    });
+    console.log("xdr", xdr, "signed with ", publicKey);
+    const signedXDR = await signTransaction(xdr, {
+      network: "TESTNET",
+      accountToSign: publicKey,
+    }).catch(() => setLoadingSignature(false));
+    console.log("signedXDR", signedXDR);
+    if (signedXDR) {
+      const result = await tokenize.mutateAsync({
+        xdr: signedXDR,
+      });
+      console.log(result);
+    }
+    setLoadingSignature(false);
+  }
 
   return (
     <TableRow>
@@ -242,13 +277,16 @@ export const TicketTypeToAssetForm: React.FC<{
                   disabled={isLocked}
                   className="group bg-gradient-to-br from-black to-gray-400 hover:from-gray-400"
                   onClick={() => {
-                    if (!isLocked)
-                      void addToLedger.mutate({ assetId: asset.id });
+                    if (!isLocked) void saveInLedger();
                   }}
                   variant="outline"
                   size="icon"
                 >
-                  <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  {loadingSignature ? (
+                    <Icons.spinner className="h-4 w-4 animate-spin fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  ) : (
+                    <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">

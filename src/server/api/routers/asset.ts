@@ -55,26 +55,59 @@ export const assetsRouter = createTRPCRouter({
       }
       return availability;
     }),
-  addToLedger: publicProcedure
-    .input(z.object({ assetId: z.string() }))
+  addTrustline: publicProcedure
+    .input(z.object({ assetId: z.string(), distributorKey: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const asset = await ctx.db.asset.findUniqueOrThrow({
         where: { id: input.assetId },
       });
-      console.log(asset);
-      // Create asset
-      // Load Issuer Account from Horizon
-      const issuerKeypair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
-      const issuerAccount = await server.loadAccount(issuerKeypair.publicKey());
-      // Load Distributor Account from Horizon
 
-      const tokenizedAsset = new Asset(asset.code, issuerKeypair.publicKey());
-      console.log(tokenizedAsset);
-      const transaction = new TransactionBuilder(issuerAccount, {
+      if (asset.distributor !== input.distributorKey) {
+        throw new TRPCError({
+          message: "Access denied",
+          code: "UNAUTHORIZED",
+        });
+      }
+
+      const distributorAccount = await server.loadAccount(asset.distributor);
+      const tokenizedAsset = new Asset(asset.code, asset.issuer);
+
+      const transaction = new TransactionBuilder(distributorAccount, {
         fee: BASE_FEE,
         networkPassphrase: Networks.TESTNET,
       })
         // Establish trustline between distributor and asset
+        .addOperation(
+          Operation.changeTrust({
+            asset: tokenizedAsset,
+          }),
+        )
+        .setTimeout(standardTimebounds)
+        .build();
+      return transaction.toXDR();
+    }),
+  addToLedger: publicProcedure
+    .input(z.object({ assetId: z.string(), distributorKey: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const asset = await ctx.db.asset.findUniqueOrThrow({
+        where: { id: input.assetId },
+      });
+
+      if (asset.distributor !== input.distributorKey) {
+        throw new TRPCError({
+          message: "Access denied",
+          code: "UNAUTHORIZED",
+        });
+      }
+
+      // Load Issuer Account from Horizon
+      const issuerAccount = await server.loadAccount(asset.issuer);
+
+      const tokenizedAsset = new Asset(asset.code, asset.issuer);
+      const transaction = new TransactionBuilder(issuerAccount, {
+        fee: BASE_FEE,
+        networkPassphrase: Networks.TESTNET,
+      })
         .addOperation(
           Operation.changeTrust({
             asset: tokenizedAsset,
@@ -83,46 +116,81 @@ export const assetsRouter = createTRPCRouter({
         )
         .addOperation(
           Operation.payment({
+            source: asset.issuer,
             destination: asset.distributor,
-            asset: tokenizedAsset,
             amount: asset.totalUnits.toString(),
+            asset: tokenizedAsset,
           }),
         )
         .setTimeout(standardTimebounds)
         .build();
+      transaction.sign(Keypair.fromSecret(env.ISSUER_PRIVATE_KEY));
 
-      const distributorKeypair = Keypair.fromSecret(
-        env.DISTRIBUTOR_PRIVATE_KEY,
-      );
-      transaction.sign(issuerKeypair, distributorKeypair);
+      return transaction.toXDR();
+    }),
+  tokenize: publicProcedure
+    .input(z.object({ id: z.string(), xdr: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
       try {
-        const res = await server.submitTransaction(transaction);
-        console.log("transaction 2", transaction);
-        console.log("res", res);
-        console.log("res.successful", res.successful);
-        if (!res.successful) {
-          throw new TRPCError({
-            message: "Failed to create ticket category",
-            code: "INTERNAL_SERVER_ERROR",
+        const transaction = TransactionBuilder.fromXDR(
+          input.xdr,
+          Networks.TESTNET,
+        );
+
+        const transactionResult = await server.submitTransaction(transaction);
+
+        console.log("Transaction submitted successfully:", transactionResult);
+        if (transactionResult.successful) {
+          await ctx.db.asset.update({
+            where: { id: input.id },
+            data: {
+              address: transactionResult.hash,
+            },
           });
         }
-        console.log("res.hash", res.hash);
-        return ctx.db.asset.update({
-          where: { id: input.assetId },
-          data: {
-            address: res.hash,
-          },
-        });
+        return transactionResult;
       } catch (e) {
         console.log("error : .----");
         console.error((e as AxiosError).message);
         console.error((e as AxiosError)?.response?.data);
         console.error((e as AxiosError)?.response?.data?.detail);
         console.error((e as AxiosError)?.response?.data?.title);
-        console.error((e as AxiosError)?.response?.data?.extras?.result_codes);
+        console.error(
+          (e as AxiosError)?.response?.data?.extras?.result_codes?.transaction,
+        );
+        console.error(
+          (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
+        );
+        let message = "Failed to tokenize asset";
+        if (
+          (
+            e as AxiosError
+          )?.response?.data?.extras?.result_codes?.operations?.includes(
+            "op_buy_no_trust",
+          )
+        ) {
+          message = "You need to establish trustline first";
+        } else if (
+          (
+            e as AxiosError
+          )?.response?.data?.extras?.result_codes?.operations?.includes(
+            "op_low_reserve",
+          )
+        ) {
+          message = "You don't have enough XLM to create the tokenized asset";
+        } else if (
+          (
+            e as AxiosError
+          )?.response?.data?.extras?.result_codes?.operations?.includes(
+            "op_bad_auth",
+          )
+        ) {
+          message =
+            "You are not authorized to perform transactions on this asset";
+        }
         throw new TRPCError({
-          message: "Failed to create ticket category",
           code: "INTERNAL_SERVER_ERROR",
+          message,
         });
       }
     }),

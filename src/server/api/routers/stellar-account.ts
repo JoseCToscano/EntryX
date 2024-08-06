@@ -93,6 +93,14 @@ export const stellarAccountRouter = createTRPCRouter({
           )
         ) {
           message = "You are not authorized to create the offer";
+        } else if (
+          (
+            e as AxiosError
+          )?.response?.data?.extras?.result_codes?.operations?.includes(
+            "tx_bad_auth",
+          )
+        ) {
+          message = "Invalid transaction authorization: Missing signature(s)";
         }
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

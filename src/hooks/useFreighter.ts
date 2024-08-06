@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import { useEffect, useState } from "react";
-import { isConnected } from "@stellar/freighter-api";
 
 type FrighterStore = {
   publicKey?: string;
