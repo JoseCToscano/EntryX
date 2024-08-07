@@ -1,16 +1,7 @@
-"use client";
 import React from "react";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import { plurify } from "~/lib/utils";
 import Link from "next/link";
-import { api } from "~/trpc/react";
-import toast from "react-hot-toast";
-import {
-  getPublicKey,
-  isConnected,
-  signTransaction,
-} from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 
 interface TicketCardProps {
@@ -34,42 +25,9 @@ const TicketCard: React.FC<TicketCardProps> = ({
   numOfEntries,
   sellingLiabilities,
 }) => {
-  const ctx = api.useContext();
   const generateQrCode = (data: string) => {
     const size = "100x100";
-    const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
-    return url;
-  };
-
-  const sell = api.stellarOffer._sell.useMutation({
-    onError: (e) => toast.error("Error on sell"),
-  });
-
-  const ledger = api.stellarAccountRouter.submitTransaction.useMutation({
-    onSuccess: () =>
-      toast.success("Transaction sent to blockchain successfully"),
-    onError: (e) => toast.error("Error on ledger"),
-  });
-
-  const handleSell = async () => {
-    const isWalletConnected = await isConnected();
-    if (!isWalletConnected) {
-      toast.error("Please connect your wallet");
-    }
-    const userPublicKey = await getPublicKey();
-    if (!userPublicKey) toast.error("Error getting public key");
-    const xdr = await sell.mutateAsync({
-      assetId: id,
-      unitsToSell: 1,
-      userPublicKey,
-    });
-    const signedXDR = await signTransaction(xdr, {
-      network: "TESTNET",
-      accountToSign: userPublicKey,
-    });
-    const result = await ledger.mutateAsync({ xdr: signedXDR });
-    void ctx.event.myTickets.invalidate({ eventId });
-    console.log(result);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
   };
 
   return (
@@ -107,14 +65,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
               className="rounded-md"
               style={{ aspectRatio: "200/200", objectFit: "cover" }}
             />
-            <Button
-              onClick={handleSell}
-              variant="outline"
-              size="sm"
-              className="border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
-            >
-              {sell.isPending || ledger.isPending ? "..." : "Manage Ticket"}
-            </Button>
           </div>
         </CardContent>
       </Link>

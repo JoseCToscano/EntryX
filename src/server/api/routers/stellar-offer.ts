@@ -94,99 +94,6 @@ export const stellarOfferRouter = createTRPCRouter({
         .build();
       return transaction.toXDR();
     }),
-  sell: publicProcedure
-    .input(
-      z.object({
-        assetId: z.string().min(1),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const asset = await ctx.db.asset.findUniqueOrThrow({
-        where: {
-          id: input.assetId,
-        },
-      });
-      const ledgerAsset = new Asset(asset.code, asset.issuer);
-      // User account
-      const userAccount = await server.loadAccount(env.DISTRIBUTOR_PUBLIC_KEY);
-      console.log("same keys?: ", env.DISTRIBUTOR_PUBLIC_KEY === asset.issuer);
-      // Ensure the user has a trustline set up for the asset before attempting to buy it
-      // Build the transaction
-      const transaction = new TransactionBuilder(userAccount, {
-        fee: BASE_FEE,
-        networkPassphrase: Networks.TESTNET,
-      })
-        .addOperation(
-          Operation.changeTrust({
-            asset: ledgerAsset,
-            source: env.DISTRIBUTOR_PUBLIC_KEY,
-          }),
-        )
-        .addOperation(
-          Operation.manageSellOffer({
-            buying: Asset.native(),
-            selling: ledgerAsset,
-            amount: asset.totalUnits.toString(),
-            price: "0.01",
-          }),
-        )
-        .setTimeout(standardTimebounds)
-        .build();
-
-      // TODO: sign on client-side: Distributor account
-      const distributorKeypair = Keypair.fromSecret(
-        env.DISTRIBUTOR_PRIVATE_KEY,
-      );
-
-      transaction.sign(distributorKeypair);
-      const txresult = await server
-        .submitTransaction(transaction)
-        .catch((e) => {
-          console.log("error : .----");
-          console.error((e as AxiosError).message);
-          console.error((e as AxiosError)?.response?.data);
-          console.error((e as AxiosError)?.response?.data?.detail);
-          console.error((e as AxiosError)?.response?.data?.title);
-          console.error(
-            (e as AxiosError)?.response?.data?.extras?.result_codes
-              ?.transaction,
-          );
-          console.error(
-            (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
-          );
-          let message = "Failed to create buy offer";
-          if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "op_buy_no_trust",
-            )
-          ) {
-            message = "You need to establish trustline first";
-          } else if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "op_low_reserve",
-            )
-          ) {
-            message = "You don't have enough XLM to create the offer";
-          } else if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "tx_bad_auth",
-            )
-          ) {
-            message = "You are not authorized to create the offer";
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message,
-          });
-        });
-      console.log("transactionResult:", txresult);
-    }),
   purchase: publicProcedure
     .input(
       z.object({
@@ -222,14 +129,14 @@ export const stellarOfferRouter = createTRPCRouter({
             selling: Asset.native(),
             buying: ledgerAsset,
             buyAmount: input.unitsToBuy.toString(),
-            price: "0.01",
+            price: asset.pricePerUnit.toString(),
           }),
         )
         .setTimeout(standardTimebounds)
         .build();
       return transaction.toXDR();
     }),
-  _sell: publicProcedure
+  sell: publicProcedure
     .input(
       z.object({
         assetId: z.string().min(1),
@@ -286,7 +193,9 @@ export const stellarOfferRouter = createTRPCRouter({
             buying: Asset.native(),
             selling: ledgerAsset,
             amount: input.unitsToSell.toString(),
-            price: input.desiredPrice ? input.desiredPrice.toString() : "0.01",
+            price: input.desiredPrice
+              ? input.desiredPrice.toString()
+              : asset.pricePerUnit.toString(),
           }),
         )
         .setTimeout(standardTimebounds)

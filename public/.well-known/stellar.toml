@@ -1,0 +1,33 @@
+# Example stellar.toml
+
+NETWORK_PASSPHRASE="Test SDF Network ; September 2015" # Use the testnet passphrase for testing
+VERSION="1.0.0"
+
+# ISSUER INFORMATION
+FEDERATION_SERVER="https://localhost:3000/federation"
+AUTH_SERVER="https://localhost:3000/auth"
+TRANSFER_SERVER="https://localhost:3000/transfer"
+ACCOUNTS=[
+    "GISSUERACCOUNTPUBLICKEY" # Replace with your issuer account's public key
+]
+ORG_NAME="Your Organization Name"
+ORG_URL="https://localhost:3000"
+ORG_LOGO="https://localhost:3000/logo.png" # Update with a local image URL if needed
+ORG_DESCRIPTION="Description of your organization and its mission"
+ORG_PHYSICAL_ADDRESS="123 Main Street, Anytown, Country"
+ORG_TWITTER="yourorg"
+ORG_GITHUB="yourorg"
+
+# ASSET DETAILS
+[[CURRENCIES]]
+code="MYASSET"
+issuer="GISSUERACCOUNTPUBLICKEY" # Replace with your issuer account's public key
+status="live"
+display_decimals=2
+name="My Asset Name"
+desc="A detailed description of what this asset represents"
+conditions="Any special conditions or requirements"
+image="https://localhost:3000/myasset.png" # Update with a local image URL if needed
+fixed_number=1000000
+max_number=10000000
+anchor_asset_type="crypto"

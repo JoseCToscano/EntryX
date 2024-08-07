@@ -217,8 +217,9 @@ export const eventsRouter = createTRPCRouter({
   addTicketCategory: publicProcedure
     .input(
       z.object({
+        distributorPublicKey: z.string().min(1),
         eventId: z.string().min(1),
-        code: z.string().min(1),
+        label: z.string().min(1),
         totalUnits: z.number().min(1),
         pricePerUnit: z.number().min(1),
         size: z.enum(["medium", "large", "x-large"]).default("medium"),
@@ -237,14 +238,14 @@ export const eventsRouter = createTRPCRouter({
       });
       return ctx.db.asset.create({
         data: {
-          label: input.code,
+          label: input.label,
           code: createUniqueAssetCode(1, event._count.Asset + 1, input.size),
           type: "ticket",
           pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
           totalUnits: input.totalUnits,
           eventId: input.eventId,
           issuer: env.ISSUER_PUBLIC_KEY,
-          distributor: env.DISTRIBUTOR_PUBLIC_KEY,
+          distributor: input.distributorPublicKey,
         },
       });
     }),
@@ -252,7 +253,7 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string().min(1),
-        code: z.string().min(1),
+        label: z.string().min(1),
         totalUnits: z.number().min(1),
         pricePerUnit: z.number().min(1),
       }),
@@ -270,12 +271,9 @@ export const eventsRouter = createTRPCRouter({
       return ctx.db.asset.update({
         where: { id: input.id },
         data: {
-          label: input.code,
-          type: "ticket",
-          pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
+          label: input.label,
           totalUnits: input.totalUnits,
-          issuer: env.ISSUER_PUBLIC_KEY,
-          distributor: env.DISTRIBUTOR_PUBLIC_KEY,
+          pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
         },
       });
     }),

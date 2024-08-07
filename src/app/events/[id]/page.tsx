@@ -110,7 +110,7 @@ export default function Component() {
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Tickets</CardTitle>
+              <CardTitle>Purchase Tickets</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function Component() {
                       size="lg"
                       className="group w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                     >
-                      Buy Tickets
+                      Proceed to ticket selection
                       <Icons.expandingArrow className="h-4 w-4" />
                     </Button>
                   </a>

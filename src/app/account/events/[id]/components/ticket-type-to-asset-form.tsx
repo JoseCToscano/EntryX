@@ -21,6 +21,7 @@ import {
 import {
   getPublicKey,
   signTransaction,
+  isAllowed,
   signAuthEntry,
 } from "@stellar/freighter-api";
 import { Server } from "@stellar/stellar-sdk/lib/horizon";
@@ -38,6 +39,7 @@ export const TicketTypeToAssetForm: React.FC<{
 }> = ({ eventId, asset, onSubmitted }) => {
   const [isLocked, setIsLocked] = React.useState(!!asset?.address);
   const [loadingSignature, setLoadingSignature] = React.useState(false);
+  const [loadingIPO, setLoadingIPO] = React.useState(false);
   const ctx = api.useContext();
   function onSuccess() {
     setIsLocked(true);
@@ -126,38 +128,80 @@ export const TicketTypeToAssetForm: React.FC<{
   const addToLedger = api.asset.addToLedger.useMutation({
     onError,
   });
-  const tokenize = api.stellarAccountRouter.submitTransaction.useMutation({
+  const tokenize = api.asset.tokenize.useMutation({
     onError,
     onSuccess,
   });
-  const createSellOffer = api.stellarOffer.sell.useMutation({
+  const submitXDR = api.stellarAccountRouter.submitTransaction.useMutation({
     onError,
     onSuccess,
+  });
+  const publishIPO = api.stellarOffer.sell.useMutation({
+    onError,
   });
 
   async function saveInLedger() {
-    if (!asset?.id) return;
-    const publicKey = await getPublicKey();
-    if (!publicKey) toast.error("Error getting public key");
-    setLoadingSignature(true);
-    console.log("publicKey", publicKey);
-    const xdr = await addToLedger.mutateAsync({
-      assetId: asset?.id,
-      distributorKey: publicKey,
-    });
-    console.log("xdr", xdr, "signed with ", publicKey);
-    const signedXDR = await signTransaction(xdr, {
-      network: "TESTNET",
-      accountToSign: publicKey,
-    }).catch(() => setLoadingSignature(false));
-    console.log("signedXDR", signedXDR);
-    if (signedXDR) {
+    try {
+      if (!asset?.id) return;
+      const isallowed = await isAllowed();
+      if (!isallowed) {
+        toast.error("Freighter wallet missing or not allowed");
+        return;
+      }
+      const publicKey = await getPublicKey();
+      if (!publicKey) toast.error("Error getting public key");
+      setLoadingSignature(true);
+
+      const xdr = await addToLedger.mutateAsync({
+        assetId: asset?.id,
+        distributorKey: publicKey,
+      });
+      const signedXDR = await signTransaction(xdr, {
+        network: "TESTNET",
+        accountToSign: publicKey,
+      });
       const result = await tokenize.mutateAsync({
+        xdr: signedXDR,
+        code: asset.code,
+      });
+      console.log(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingSignature(false);
+    }
+  }
+
+  async function IPO() {
+    try {
+      if (!asset) return;
+      const isallowed = await isAllowed();
+      if (!isallowed) {
+        toast.error("Freighter wallet missing or not allowed");
+        return;
+      }
+      const publicKey = await getPublicKey();
+      if (!publicKey) toast.error("Error getting public key");
+      setLoadingIPO(true);
+
+      const xdr = await publishIPO.mutateAsync({
+        assetId: asset.id,
+        userPublicKey: publicKey,
+        unitsToSell: asset.totalUnits,
+      });
+      const signedXDR = await signTransaction(xdr, {
+        network: "TESTNET",
+        accountToSign: publicKey,
+      });
+      const result = await submitXDR.mutateAsync({
         xdr: signedXDR,
       });
       console.log(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingIPO(false);
     }
-    setLoadingSignature(false);
   }
 
   return (
@@ -283,7 +327,7 @@ export const TicketTypeToAssetForm: React.FC<{
                   size="icon"
                 >
                   {loadingSignature ? (
-                    <Icons.spinner className="h-4 w-4 animate-spin fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                    <Icons.spinner className="h-4 w-4 animate-spin text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
                   ) : (
                     <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
                   )}
@@ -305,13 +349,15 @@ export const TicketTypeToAssetForm: React.FC<{
               <TooltipTrigger asChild className="">
                 <Button
                   className="group bg-blue-600 hover:bg-blue-700"
-                  onClick={() => {
-                    void createSellOffer.mutate({ assetId: asset.id });
-                  }}
+                  onClick={IPO}
                   variant="outline"
                   size="icon"
                 >
-                  <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  {loadingIPO ? (
+                    <Icons.spinner className="h-4 w-4 animate-spin text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  ) : (
+                    <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">

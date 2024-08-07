@@ -29,6 +29,7 @@ export default function Purchase() {
   const router = useRouter();
   const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
   const [processStep, setProcessStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
@@ -77,34 +78,42 @@ export default function Purchase() {
   };
 
   const handlePurchase = async () => {
-    if (!publicKey) {
-      toast.error("Please connect your wallet");
-      return;
-    }
-    // Todo: Do it for all assets
-    const [assetKey] = cart.keys();
-    const asset = cart.get(assetKey);
-    if (assetKey && asset) {
-      setProcessStep(2);
-      const xdr = await purchase.mutateAsync({
-        assetId: assetKey,
-        userPublicKey: publicKey,
-        unitsToBuy: asset,
-      });
-      const signedTransaction = await signTransaction(xdr, {
-        network: "TESTNET",
-        accountToSign: publicKey,
-      });
-      setProcessStep(3);
-      const result = await submitTransaction.mutateAsync({
-        xdr: signedTransaction,
-      });
-      setProcessStep(4);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      void ctx.asset.availability.invalidate();
-      // void router.push(`/events/${id}`);
-    } else {
-      toast.error("Please select a ticket to purchase");
+    +setLoading(true);
+    try {
+      if (!publicKey) {
+        toast.error("Please connect your wallet");
+        return;
+      }
+      // Todo: Do it for all assets
+      const [assetKey] = cart.keys();
+      const asset = cart.get(assetKey);
+      if (assetKey && asset) {
+        setProcessStep(2);
+        const xdr = await purchase.mutateAsync({
+          assetId: assetKey,
+          userPublicKey: publicKey,
+          unitsToBuy: asset,
+        });
+        const signedTransaction = await signTransaction(xdr, {
+          network: "TESTNET",
+          accountToSign: publicKey,
+        });
+        setProcessStep(3);
+        const result = await submitTransaction.mutateAsync({
+          xdr: signedTransaction,
+        });
+        setProcessStep(4);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        void ctx.asset.availability.invalidate();
+        // void router.push(`/events/${id}`);
+      } else {
+        toast.error("Please select a ticket to purchase");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLoading(false);
     }
   };
 
@@ -244,14 +253,17 @@ export default function Purchase() {
                     </div>
                   </div>
                 </div>
-                <div className="py-4">
-                  <TransactionSteps
-                    assets={Array.from(cart.keys())}
-                    processStep={processStep}
-                  />
-                </div>
+                {loading && (
+                  <div className="py-4">
+                    <TransactionSteps
+                      assets={Array.from(cart.keys())}
+                      processStep={processStep}
+                    />
+                  </div>
+                )}
                 {hasFreighter ? (
                   <Button
+                    disabled={cart.size === 0 || loading}
                     onClick={() => {
                       if (processStep === 4) {
                         void router.push(`/events/${id}`);
@@ -262,7 +274,15 @@ export default function Purchase() {
                     size="lg"
                     className="w-full bg-black text-white"
                   >
-                    {processStep === 4 ? "Go to Wallet" : "Buy Tickets"}
+                    {loading ? (
+                      <Icons.spinner className="h-4 w-4 animate-spin" />
+                    ) : cart.size <= 0 ? (
+                      "Select tickets to buy"
+                    ) : processStep === 4 ? (
+                      "Go to Wallet"
+                    ) : (
+                      "Buy Tickets"
+                    )}
                   </Button>
                 ) : (
                   <a

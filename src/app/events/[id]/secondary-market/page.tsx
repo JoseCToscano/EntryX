@@ -393,6 +393,7 @@ const SecondaryMarket: React.FC = () => {
                   </div>
                   {hasFreighter ? (
                     <Button
+                      disabled={cart.size === 0}
                       onClick={handlePurchase}
                       size="lg"
                       className="w-full bg-black text-white"

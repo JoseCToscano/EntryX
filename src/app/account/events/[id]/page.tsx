@@ -45,6 +45,8 @@ import {
 } from "~/components/ui/tooltip";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
+import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
 
 export default function EventEditor() {
   // Use the useParams hook to access the dynamic parameters
@@ -57,6 +59,16 @@ export default function EventEditor() {
   );
   const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
   const [pendingForms, setPendingForms] = React.useState<number[]>([]);
+
+  const update = api.event.update.useMutation({
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to update event");
+    },
+    onSuccess: () => {
+      toast.success("Event updated successfully");
+    },
+  });
 
   if (!id) return null;
 

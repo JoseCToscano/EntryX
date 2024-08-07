@@ -104,7 +104,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     {
       id: publicKey!,
     },
-    { enabled: !!publicKey, refetchInterval: 5000 },
+    {
+      enabled: !!publicKey,
+      refetchIntervalInBackground: true,
+      refetchInterval: 5000,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
+    },
   );
 
   useEffect(() => {
