@@ -1,12 +1,10 @@
 import "~/styles/globals.css";
-
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 import React from "react";
 import { TRPCReactProvider } from "~/trpc/react";
 import ToasterProvider from "~/app/providers/toaster-provider";
-import SessionProvider from "~/app/providers/session-provider";
 
 export const metadata: Metadata = {
   title: "Entry•X",
@@ -22,7 +20,7 @@ export default function RootLayout({
       <body>
         <TRPCReactProvider>
           <ToasterProvider />
-          <SessionProvider>{children}</SessionProvider>
+          {children}
         </TRPCReactProvider>
       </body>
     </html>

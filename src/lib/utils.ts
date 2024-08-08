@@ -20,3 +20,7 @@ export function plurify(
   if (customPlural) return customPlural;
   return `${singularText}s`;
 }
+
+export const noop = () => {
+  return;
+};

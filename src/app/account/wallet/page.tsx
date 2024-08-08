@@ -25,7 +25,6 @@ export default function Component() {
                 <div className="m-6">
                   <Link
                     className="h-10 rounded-md border-2 bg-black p-2 text-white hover:bg-white hover:text-black"
-                    size="lg"
                     href="wallet/connect"
                   >
                     Connect Wallet

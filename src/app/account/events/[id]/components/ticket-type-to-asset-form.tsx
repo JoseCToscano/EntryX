@@ -23,6 +23,7 @@ import {
   signTransaction,
   isAllowed,
   signAuthEntry,
+  isConnected,
 } from "@stellar/freighter-api";
 import { Server } from "@stellar/stellar-sdk/lib/horizon";
 
@@ -107,51 +108,85 @@ export const TicketTypeToAssetForm: React.FC<{
     },
   });
 
-  const onSubmit: SubmitHandler<ITicketCategory> = (data) => {
+  const onSubmit: SubmitHandler<ITicketCategory> = async (data) => {
+    if (!(await isConnected())) {
+      toast.error("Freighter wallet missing or not allowed");
+      return;
+    }
+    const publicKey = await getPublicKey();
+    if (!publicKey) {
+      toast.error(
+        "Invalid or missing public key. Make sure your wallet is connected",
+      );
+    }
     if (asset?.id) {
       updateTicketCategory.mutate({
         id: asset.id,
-        code: data.code,
+        label: data.code,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
       });
     } else {
       createTicketCategory.mutate({
-        code: data.code,
+        label: data.code,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
         eventId,
+        size: "medium",
+        distributorPublicKey: publicKey,
       });
     }
   };
 
+  /**
+   * Transfer new Assets into ledger. From issuer account (saved in server) into
+   * the distributor account (user's account)
+   */
   const addToLedger = api.asset.addToLedger.useMutation({
     onError,
   });
+
+  /**
+   * Sends signed transaction to the server to tokenize the asset
+   */
   const tokenize = api.asset.tokenize.useMutation({
     onError,
     onSuccess,
   });
+
+  /**
+   * Generic router to submit signed transactions to the Stellar network
+   */
   const submitXDR = api.stellarAccountRouter.submitTransaction.useMutation({
     onError,
     onSuccess,
   });
+
+  /**
+   * Publishes Initial Public Offering (IPO) for the asset
+   * to be sold on the Stellar network
+   */
   const publishIPO = api.stellarOffer.sell.useMutation({
     onError,
   });
 
+  /**
+   * Signs the transaction with the user's private key
+   */
   async function saveInLedger() {
     try {
       if (!asset?.id) return;
-      const isallowed = await isAllowed();
-      if (!isallowed) {
-        toast.error("Freighter wallet missing or not allowed");
-        return;
+      const isAllowedFreighter = await isAllowed();
+      if (!isAllowedFreighter) {
+        return toast.error("Freighter wallet missing or not allowed");
       }
       const publicKey = await getPublicKey();
-      if (!publicKey) toast.error("Error getting public key");
+      if (!publicKey) {
+        return toast.error("Error getting public key");
+      }
       setLoadingSignature(true);
 
+      // Get un-signed XDR from the server
       const xdr = await addToLedger.mutateAsync({
         assetId: asset?.id,
         distributorKey: publicKey,
@@ -160,11 +195,11 @@ export const TicketTypeToAssetForm: React.FC<{
         network: "TESTNET",
         accountToSign: publicKey,
       });
-      const result = await tokenize.mutateAsync({
+      // Submit signed XDR to the server
+      await tokenize.mutateAsync({
         xdr: signedXDR,
         code: asset.code,
       });
-      console.log(result);
     } catch (e) {
       console.error(e);
     } finally {
@@ -172,6 +207,10 @@ export const TicketTypeToAssetForm: React.FC<{
     }
   }
 
+  /**
+   * Publishes Initial Public Offering (IPO) for the asset
+   * @constructor
+   */
   async function IPO() {
     try {
       if (!asset) return;
