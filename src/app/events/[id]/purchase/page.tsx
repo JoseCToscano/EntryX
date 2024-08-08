@@ -1,33 +1,23 @@
 "use client";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import React, { useEffect, useMemo, useState } from "react";
-import { Badge } from "~/components/ui/badge";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
-import dayjs from "dayjs";
-import { useSession } from "next-auth/react";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import { FIXED_UNITARY_COMMISSION } from "~/constants";
-import { isConnected, signTransaction } from "@stellar/freighter-api";
-import useFreighter from "~/hooks/useFreighter";
 import TicketCategoryCard from "~/app/events/components/ticket-category-card";
 import toast from "react-hot-toast";
-import TicketCard from "~/app/events/components/ticket-card";
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
-
-function fromXLMToUSD(xlm: number) {
-  return xlm * 0.09;
-}
-
+import { useWallet } from "~/hooks/useWallet";
+import { fromXLMToUSD } from "~/lib/utils";
 export default function Purchase() {
   const router = useRouter();
-  const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
+  const { publicKey, signXDR, hasFreighter } = useWallet();
   const [processStep, setProcessStep] = useState(1);
   const [loading, setLoading] = useState(false);
   // Use the useParams hook to access the dynamic parameters
@@ -61,10 +51,6 @@ export default function Purchase() {
     },
   });
 
-  useEffect(() => {
-    isConnected().then(setHasFreighter).catch(console.error);
-  }, []);
-
   const addToCart = (categoryId: string) => {
     const currentQuantity = cart.get(categoryId) ?? 0;
     setCart((prev) => new Map(prev.set(categoryId, currentQuantity + 1)));
@@ -78,14 +64,16 @@ export default function Purchase() {
   };
 
   const handlePurchase = async () => {
-    +setLoading(true);
+    setLoading(true);
     try {
       if (!publicKey) {
-        toast.error("Please connect your wallet");
-        return;
+        return toast.error("Please connect your wallet");
       }
       // Todo: Do it for all assets
       const [assetKey] = cart.keys();
+      if (!assetKey) {
+        return toast.error("Please select a ticket to purchase");
+      }
       const asset = cart.get(assetKey);
       if (assetKey && asset) {
         setProcessStep(2);
@@ -94,18 +82,14 @@ export default function Purchase() {
           userPublicKey: publicKey,
           unitsToBuy: asset,
         });
-        const signedTransaction = await signTransaction(xdr, {
-          network: "TESTNET",
-          accountToSign: publicKey,
-        });
+        const signedTransaction = await signXDR(xdr);
         setProcessStep(3);
-        const result = await submitTransaction.mutateAsync({
+        await submitTransaction.mutateAsync({
           xdr: signedTransaction,
         });
         setProcessStep(4);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         void ctx.asset.availability.invalidate();
-        // void router.push(`/events/${id}`);
       } else {
         toast.error("Please select a ticket to purchase");
       }

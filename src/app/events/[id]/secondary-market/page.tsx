@@ -27,11 +27,7 @@ import toast from "react-hot-toast";
 import { isConnected, signTransaction } from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
-import { plurify } from "~/lib/utils";
-
-function fromXLMToUSD(xlm: number) {
-  return xlm * 0.09;
-}
+import { fromXLMToUSD, plurify } from "~/lib/utils";
 
 const SecondaryMarket: React.FC = () => {
   // Use the useParams hook to access the dynamic parameters

@@ -1,3 +1,4 @@
+"use client";
 import { type Metadata } from "next";
 /**
  * v0 by Vercel.
@@ -14,13 +15,27 @@ import {
   TableBody,
   TableCell,
 } from "~/components/ui/table";
-
-export const metadata: Metadata = {
-  title: "Music App",
-  description: "Example music app using the components.",
-};
+import { api } from "~/trpc/react";
+import { useWallet } from "~/hooks/useWallet";
+import { Icons } from "~/components/icons";
+import dayjs from "dayjs";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Component() {
+  const { publicKey } = useWallet();
+  const router = useRouter();
+
+  const analytics = api.analytics.sales.useQuery(
+    { publicKey: publicKey! },
+    { enabled: !!publicKey },
+  );
+
+  const myEvents = api.event.myEvents.useQuery(
+    { publicKey: publicKey! },
+    { enabled: !!publicKey },
+  );
+
   return (
     <div className="mb-24 grid gap-6 p-6 md:p-10">
       <div className="flex items-center justify-between">
@@ -42,7 +57,13 @@ export default function Component() {
             <CardTitle>Tickets Sold</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">1,234</div>
+            <div className="text-4xl font-bold">
+              {analytics.isLoading ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                analytics.data?.sales
+              )}
+            </div>
             <div className="text-sm text-muted-foreground">
               +15% from last month
             </div>
@@ -53,7 +74,19 @@ export default function Component() {
             <CardTitle>Earnings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">$125,678</div>
+            <div className="text-4xl font-bold">
+              {" "}
+              {analytics.isLoading ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : analytics.data?.earnings ? (
+                `$${analytics.data?.earnings.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`
+              ) : (
+                "-"
+              )}
+            </div>
             <div className="text-sm text-muted-foreground">
               +20% from last month
             </div>
@@ -86,6 +119,22 @@ export default function Component() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {myEvents.data?.map((event) => (
+                <TableRow
+                  className="cursor-pointer"
+                  key={event.id}
+                  onClick={() =>
+                    void router.push(`/account/events/${event.id}`)
+                  }
+                >
+                  <TableCell>{event.name}</TableCell>
+                  <TableCell>
+                    {dayjs(event.date).format("MMMM D, YYYY")}
+                  </TableCell>
+                  <TableCell>$5,678</TableCell>
+                  <TableCell>81%</TableCell>
+                </TableRow>
+              ))}
               <TableRow>
                 <TableCell>Music Festival</TableCell>
                 <TableCell>June 1, 2024</TableCell>

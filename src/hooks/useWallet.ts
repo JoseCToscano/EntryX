@@ -36,6 +36,7 @@ export const useWallet = () => {
     isConnected()
       .then((connected) => {
         if (connected) {
+          setHasFreighter(true);
           // Request access, if not already allowed
           isAllowed()
             .then((allowed) => {
@@ -53,6 +54,7 @@ export const useWallet = () => {
             })
             .catch(() => toast.error("Error requesting Freighter Wallet"));
         } else {
+          setHasFreighter(false);
           toast.error("Freighter extension not installed");
         }
       })

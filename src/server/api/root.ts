@@ -19,6 +19,7 @@ import { assetsRouter } from "~/server/api/routers/asset";
 import { stellarAccountRouter } from "~/server/api/routers/stellar-account";
 import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
 import { AxiosError } from "axios";
+import { analyticsRouter } from "~/server/api/routers/analytics";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 /**
@@ -28,6 +29,7 @@ const server = new Horizon.Server("https://horizon-testnet.stellar.org");
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
+  analytics: analyticsRouter,
   event: eventsRouter,
   stellarOffer: stellarOfferRouter,
   stellarAccountRouter: stellarAccountRouter,

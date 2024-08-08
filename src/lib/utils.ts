@@ -24,3 +24,7 @@ export function plurify(
 export const noop = () => {
   return;
 };
+
+export function fromXLMToUSD(xlm: number) {
+  return xlm * 0.09;
+}

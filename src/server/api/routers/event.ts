@@ -55,6 +55,19 @@ function createUniqueAssetCode(
   return code;
 }
 export const eventsRouter = createTRPCRouter({
+  myEvents: publicProcedure
+    .input(
+      z.object({
+        publicKey: z.string().min(1),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      return ctx.db.event.findMany({
+        where: {
+          distributorKey: input.publicKey,
+        },
+      });
+    }),
   get: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(({ ctx, input }) => {

@@ -27,7 +27,7 @@ const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   return (
     <Card className="rounded-lg bg-background p-4 shadow-sm">
       <h3 className="text-lg font-bold">
-        {category.label} {category.id}
+        {category.label} {category.code}
         <p className="text-xs font-light">
           Available tickets:{" "}
           {availability.isLoading && (

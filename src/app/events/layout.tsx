@@ -1,44 +1,19 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Search } from "~/app/account/components/search";
 import { UserNav } from "~/app/events/components/user-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { playlists } from "~/app/account/data/playlists";
-import { api } from "~/trpc/react";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
 import Footer from "~/components/components/footer";
-import useFreighter from "~/hooks/useFreighter";
-import {
-  isConnected,
-  isAllowed,
-  requestAccess,
-  getNetwork,
-} from "@stellar/freighter-api";
+import { useWallet } from "~/hooks/useWallet";
+import { Badge } from "~/components/ui/badge";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [searchString, setSearchString] = React.useState("");
-
-  const { publicKey, setPublicKey } = useFreighter();
-
-  const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
-    {
-      id: publicKey!,
-    },
-    { enabled: !!publicKey, refetchInterval: 5000 },
-  );
-
-  useEffect(() => {
-    // TODO: Take this from auth
-    isConnected()
-      .then((connected) => {
-        if (connected) {
-          requestAccess().then(setPublicKey).catch(console.error);
-        }
-      })
-      .catch(console.error);
-  }, []);
+  const { account, network, isLoading } = useWallet();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -52,8 +27,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               { name: "Settings", href: "/account/settings" },
             ]}
           />
+          <Search value={searchString} onChange={setSearchString} />
           <div className="ml-auto flex items-center space-x-4">
-            <Search value={searchString} onChange={setSearchString} />
             {isLoading ? (
               <Icons.spinner className="animate-spin" />
             ) : (
@@ -64,16 +39,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   src={"/icons/stellar-xlm-logo.svg"}
                   alt={"Stellar XLM icon"}
                 />
-                XLM: {data?.xlm?.balance ?? "-"}
+                XLM: {account?.xlm?.balance ?? "-"}
+                <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
+                  {network}
+                </Badge>
               </span>
             )}
             <UserNav />
           </div>
         </div>
       </div>
-      <div className="grid lg:grid-cols-5">
+      <div className="grid lg:grid-cols-7">
         <Sidebar playlists={playlists} className="hidden lg:block" />
-        <div className="col-span-3 lg:col-span-4 lg:border-l">
+        <div className="col-span-5 lg:col-span-6 lg:border-l">
           {children}
           <Footer />
         </div>

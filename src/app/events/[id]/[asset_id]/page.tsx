@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { plurify } from "~/lib/utils";
+import { fromXLMToUSD, plurify } from "~/lib/utils";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
@@ -27,9 +27,6 @@ import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
 
-function fromXLMToUSD(xlm: number) {
-  return xlm * 0.09;
-}
 const TicketCard: React.FC = () => {
   const { publicKey } = useFreighter();
   const params = useParams();

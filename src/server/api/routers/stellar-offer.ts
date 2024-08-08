@@ -114,27 +114,32 @@ export const stellarOfferRouter = createTRPCRouter({
 
       // Ensure the user has a trustline set up for the asset before attempting to buy it
       // Build the transaction
-      const transaction = new TransactionBuilder(userAccount, {
+      let transaction = new TransactionBuilder(userAccount, {
         fee: BASE_FEE,
         networkPassphrase: Networks.TESTNET,
-      })
-        .addOperation(
+      });
+
+      if (
+        !userAccount.balances.find(
+          (b) => b.asset_code === asset.code && b.asset_issuer === asset.issuer,
+        )
+      ) {
+        transaction = transaction.addOperation(
           Operation.changeTrust({
             asset: ledgerAsset,
             source: input.userPublicKey,
           }),
-        )
-        .addOperation(
-          Operation.manageBuyOffer({
-            selling: Asset.native(),
-            buying: ledgerAsset,
-            buyAmount: input.unitsToBuy.toString(),
-            price: asset.pricePerUnit.toString(),
-          }),
-        )
-        .setTimeout(standardTimebounds)
-        .build();
-      return transaction.toXDR();
+        );
+      }
+      transaction = transaction.addOperation(
+        Operation.manageBuyOffer({
+          selling: Asset.native(),
+          buying: ledgerAsset,
+          buyAmount: input.unitsToBuy.toString(),
+          price: asset.pricePerUnit.toString(),
+        }),
+      );
+      return transaction.setTimeout(standardTimebounds).build().toXDR();
     }),
   sell: publicProcedure
     .input(

@@ -1,25 +1,20 @@
 "use client";
 import { Button } from "~/components/ui/button";
-import React, { useEffect } from "react";
+import React from "react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
-import { isConnected } from "@stellar/freighter-api";
-import useFreighter from "~/hooks/useFreighter";
 import TicketCard from "~/app/events/components/ticket-card";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Icons } from "~/components/icons";
-import { FIXED_UNITARY_COMMISSION } from "~/constants";
-
-function fromXLMToUSD(xlm: number) {
-  return xlm * 0.09;
-}
+import { useWallet } from "~/hooks/useWallet";
+import { fromXLMToUSD } from "~/lib/utils";
 
 export default function Component() {
-  const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
+  const { publicKey, hasFreighter } = useWallet();
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
@@ -31,13 +26,9 @@ export default function Component() {
   );
 
   const myTickets = api.event.myTickets.useQuery(
-    { eventId: id as string, userPublicKey: publicKey as string },
+    { eventId: id as string, userPublicKey: publicKey! },
     { enabled: !!id && !!publicKey },
   );
-
-  useEffect(() => {
-    isConnected().then(setHasFreighter).catch(console.error);
-  }, []);
 
   const categories = React.useMemo(() => {
     return new Map(
@@ -92,12 +83,14 @@ export default function Component() {
                         key={ticket.id}
                         eventId={id}
                         numOfEntries={Number(ticket.balance.balance)}
-                        id={ticket.id}
-                        title={ticket.label}
+                        id={ticket.id!}
+                        title={ticket.label!}
                         location={event?.data?.location ?? ""}
                         venue={event?.data?.venue ?? ""}
                         date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
-                        sellingLiabilities={parseInt(ticket.sellingLiabilities)}
+                        sellingLiabilities={parseInt(
+                          ticket.sellingLiabilities as string,
+                        )}
                       />
                     ))}{" "}
                   </div>

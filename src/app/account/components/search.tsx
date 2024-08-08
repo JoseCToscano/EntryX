@@ -22,7 +22,7 @@ export const Search: React.FC<SearchProps> = ({
         placeholder="Search..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn("md:w-[100px] lg:w-[300px]", className)}
+        className={cn("md:w-[100px] lg:w-[500px]", className)}
       />
     </div>
   );

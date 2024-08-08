@@ -1,20 +1,12 @@
 "use client";
-import { type Metadata } from "next";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AlbumArtwork } from "./components/album-artwork";
 import { api } from "~/trpc/react";
 import { EmptyPlaceholder } from "./components/empty-placeholder";
-import { listenNowAlbums, madeForYouAlbums } from "../data/albums";
-
-// export const metadata: Metadata = {
-//   title: "Music App",
-//   description: "Example music app using the components.",
-// };
-
+import { madeForYouAlbums } from "../data/albums";
 import { CalendarDateRangePicker } from "./components/date-range-picker";
-import CreateEventDialog from "~/app/account/events/components/create-event-dialog";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import Link from "next/link";
 

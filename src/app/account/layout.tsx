@@ -58,9 +58,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-          <div className="grid lg:grid-cols-5">
+          <div className="grid lg:grid-cols-7">
             <Sidebar playlists={playlists} className="hidden lg:block" />
-            <div className="col-span-3 lg:col-span-4 lg:border-l">
+            <div className="col-span-5 lg:col-span-6 lg:border-l">
               {children}
               <Footer />
             </div>
