@@ -16,6 +16,7 @@ import { listenNowAlbums, madeForYouAlbums } from "../data/albums";
 import { CalendarDateRangePicker } from "./components/date-range-picker";
 import CreateEventDialog from "~/app/account/events/components/create-event-dialog";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
+import Link from "next/link";
 
 export default function EventsPage() {
   const { data: events, error, isLoading } = api.event.search.useQuery({});
@@ -34,7 +35,9 @@ export default function EventsPage() {
                 <div className="ml-auto mr-4">
                   <CalendarDateRangePicker />
                 </div>
-                <CreateEventDialog />
+                <Link className="h-10" href="/account/events/new">
+                  Create New Event
+                </Link>
               </div>
               <TabsContent
                 value="overview"
