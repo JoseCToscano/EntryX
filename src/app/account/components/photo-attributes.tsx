@@ -8,7 +8,7 @@ export const PhotoAttributes: React.FC<{
   return (
     <p
       className={cn(
-        "w-full -translate-y-4 bg-none pr-2 text-right text-[8px] font-light text-neutral-400 opacity-60",
+        "w-full -translate-y-4 bg-none pr-2 text-right text-[10px] font-light text-neutral-400 opacity-60",
         className,
       )}
     >

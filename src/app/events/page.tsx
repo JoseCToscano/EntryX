@@ -1,15 +1,13 @@
 "use client";
 import React from "react";
 import { api } from "~/trpc/react";
-import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { CalendarDateRangePicker } from "~/app/account/events/components/date-range-picker";
-import CreateEventDialog from "~/app/account/events/components/create-event-dialog";
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { AlbumArtwork } from "~/app/account/events/components/album-artwork";
 import { listenNowAlbums, madeForYouAlbums } from "~/app/account/data/albums";
-import { EmptyPlaceholder } from "~/app/account/events/components/empty-placeholder";
+import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
+import { Skeleton } from "~/components/ui/skeleton";
+import { Ticket } from "lucide-react";
 
 const EventsPage: React.FC = () => {
   const { data: events, error, isLoading } = api.event.search.useQuery({});
@@ -32,6 +30,10 @@ const EventsPage: React.FC = () => {
           <div className="relative">
             <ScrollArea>
               <div className="flex space-x-4 pb-4">
+                {isLoading &&
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TciketSkeleton key={i} />
+                  ))}
                 {events?.map((event) => (
                   <AlbumArtwork
                     key={event.name}
@@ -42,18 +44,6 @@ const EventsPage: React.FC = () => {
                     height={300}
                     showSalesPercentage
                     href={`/events/${event.id}`}
-                  />
-                ))}
-                {listenNowAlbums.map((album) => (
-                  <AlbumArtwork
-                    key={album.name}
-                    album={album}
-                    className="w-[250px]"
-                    aspectRatio="portrait"
-                    width={250}
-                    height={330}
-                    showSalesPercentage
-                    href={`/account/events/#`}
                   />
                 ))}
               </div>

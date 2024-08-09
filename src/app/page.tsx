@@ -87,7 +87,7 @@ function Section() {
               className="mx-auto aspect-square overflow-hidden rounded-xl object-cover object-center"
             />
             <PhotoAttributes
-              className="pr-6 text-neutral-200"
+              className="pr-10 text-neutral-200"
               author={"Milad Fakurian"}
               url={
                 "https://unsplash.com/photos/a-black-and-white-photo-of-a-cube-Di6Fcl7GCMk?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
@@ -269,16 +269,9 @@ export default function Component() {
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link
-            href="#"
+            href="/events"
             className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
-          >
-            Features
-          </Link>
-          <Link
-            href="/account/events"
-            className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
+            prefetch={true}
           >
             Events
           </Link>

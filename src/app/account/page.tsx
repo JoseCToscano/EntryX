@@ -1,5 +1,4 @@
 "use client";
-import { type Metadata } from "next";
 /**
  * v0 by Vercel.
  * @see https://v0.dev/t/IWvCvVPjv8O
@@ -20,7 +19,6 @@ import { useWallet } from "~/hooks/useWallet";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function Component() {
   const { publicKey } = useWallet();
@@ -173,7 +171,7 @@ export default function Component() {
   );
 }
 
-function DownloadIcon(props) {
+const DownloadIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -192,9 +190,9 @@ function DownloadIcon(props) {
       <line x1="12" x2="12" y1="15" y2="3" />
     </svg>
   );
-}
+};
 
-function SettingsIcon(props) {
+const SettingsIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -212,24 +210,4 @@ function SettingsIcon(props) {
       <circle cx="12" cy="12" r="3" />
     </svg>
   );
-}
-
-function XIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
+};

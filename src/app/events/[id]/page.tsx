@@ -2,7 +2,13 @@
 import { Button } from "~/components/ui/button";
 import React from "react";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "~/components/ui/card";
 import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
@@ -29,12 +35,6 @@ export default function Component() {
     { eventId: id as string, userPublicKey: publicKey! },
     { enabled: !!id && !!publicKey },
   );
-
-  const categories = React.useMemo(() => {
-    return new Map(
-      ticketCategories.data?.map((category) => [category.id, category]) ?? [],
-    );
-  }, [ticketCategories.data]);
 
   if (typeof id !== "string") return null;
   return (
@@ -104,6 +104,7 @@ export default function Component() {
           <Card>
             <CardHeader>
               <CardTitle>Purchase Tickets</CardTitle>
+              <CardDescription>Available ticket categories</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -145,7 +146,9 @@ export default function Component() {
                       size="lg"
                       className="group w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                     >
-                      Proceed to ticket selection
+                      {!!myTickets.data?.length
+                        ? "Purchase additional Tickets"
+                        : "Proceed to ticket selection"}
                       <Icons.expandingArrow className="h-4 w-4" />
                     </Button>
                   </a>

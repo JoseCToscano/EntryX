@@ -10,7 +10,6 @@ import {
 } from "@stellar/freighter-api";
 import toast from "react-hot-toast";
 import { api } from "~/trpc/react";
-import { noop } from "~/lib/utils";
 
 export const useWallet = () => {
   const [hasFreighter, setHasFreighter] = useState<boolean>(false);
@@ -33,64 +32,75 @@ export const useWallet = () => {
   );
 
   useEffect(() => {
-    isConnected()
-      .then((connected) => {
-        if (connected) {
-          setHasFreighter(true);
-          // Request access, if not already allowed
-          isAllowed()
-            .then((allowed) => {
-              if (allowed) {
-                setIsFreighterAllowed(true);
-                // Fetch network
-                getNetwork()
-                  .then((network) => setNetwork(network))
-                  .catch(() => toast.error("Error getting network"));
-                // Fetch public key
-                getPublicKey()
-                  .then((k) => setPublicKey(k))
-                  .catch(() => toast.error("Error getting public key"));
-              }
-            })
-            .catch(() => toast.error("Error requesting Freighter Wallet"));
-        } else {
-          setHasFreighter(false);
-          toast.error("Freighter extension not installed");
-        }
-      })
-      .catch(() => toast.error("Error connecting Wallet"));
-
     const fetchWalletData = () => {
       isConnected()
         .then((connected) => {
           if (connected) {
+            setHasFreighter(true);
             // Request access, if not already allowed
             isAllowed()
               .then((allowed) => {
                 setIsFreighterAllowed(allowed);
                 if (allowed) {
+                  setIsFreighterAllowed(true);
                   // Fetch network
                   getNetwork()
                     .then((network) => setNetwork(network))
                     .catch(() => toast.error("Error getting network"));
                   // Fetch public key
                   getPublicKey()
-                    .then((k) => setPublicKey(k))
+                    .then((k) => {
+                      if (k) setPublicKey(k);
+                    })
                     .catch(() => toast.error("Error getting public key"));
+                } else {
+                  setIsFreighterAllowed(false);
                 }
               })
               .catch(() => toast.error("Error requesting Freighter Wallet"));
           } else {
-            toast.error("Freighter extension not installed");
+            console.log("is not connected");
+            setHasFreighter(false);
           }
         })
         .catch(() => toast.error("Error connecting Wallet"));
     };
+    fetchWalletData();
 
     const intervalId = setInterval(fetchWalletData, 5000); // Polling every 5 seconds
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
+
+  async function connect() {
+    setAllowed()
+      .then((allowed) => {
+        if (allowed) {
+          setIsFreighterAllowed(true);
+          // Fetch network
+          getNetwork()
+            .then((network) => setNetwork(network))
+            .catch(() => toast.error("Error getting network"));
+          // Fetch public key
+          requestAccess()
+            .then((k) => {
+              if (k) {
+                setPublicKey(k);
+              } else {
+                setPublicKey(undefined);
+              }
+            })
+            .catch(() => toast.error("Error getting public key"));
+        } else {
+          setIsFreighterAllowed(false);
+        }
+      })
+      .catch(() => toast.error("Error requesting Freighter Wallet"));
+  }
+
+  useEffect(() => {
+    console.log("hasFreighter", hasFreighter);
+  }, [hasFreighter]);
 
   async function signXDR(xdr: string) {
     if (!isFreighterAllowed) {
@@ -118,5 +128,6 @@ export const useWallet = () => {
     signXDR,
     hasFreighter,
     isFreighterAllowed,
+    connect,
   };
 };

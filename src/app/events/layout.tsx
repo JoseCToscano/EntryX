@@ -4,7 +4,6 @@ import { MainNav } from "~/app/account/components/main-nav";
 import { Search } from "~/app/account/components/search";
 import { UserNav } from "~/app/events/components/user-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
-import { playlists } from "~/app/account/data/playlists";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
 import Footer from "~/components/components/footer";
@@ -23,8 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="mx-6"
             sections={[
               { name: "Events", href: "/events" },
-              { name: "Wallet", href: "/account/wallet" },
-              { name: "Settings", href: "/account/settings" },
+              { name: "Wallet", href: "/wallet" },
             ]}
           />
           <Search value={searchString} onChange={setSearchString} />
@@ -40,9 +38,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   alt={"Stellar XLM icon"}
                 />
                 XLM: {account?.xlm?.balance ?? "-"}
-                <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
-                  {network}
-                </Badge>
+                {network && (
+                  <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
+                    {network}
+                  </Badge>
+                )}
               </span>
             )}
             <UserNav />
@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="grid lg:grid-cols-7">
-        <Sidebar playlists={playlists} className="hidden lg:block" />
+        <Sidebar className="hidden lg:block" />
         <div className="col-span-5 lg:col-span-6 lg:border-l">
           {children}
           <Footer />

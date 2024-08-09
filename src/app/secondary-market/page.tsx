@@ -22,6 +22,7 @@ import {
   CardFooter,
 } from "~/components/ui/card";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
+import { Separator } from "~/components/ui/separator";
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,119 +86,132 @@ export default function Component() {
     });
   }, [searchTerm, filterOptions]);
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-      <MenuBreadcumb />
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold">Secondary Market</h2>
-        <p className="text-muted-foreground">
-          Buy and sell tickets for your favorite events.
-        </p>
-      </div>
-      <div className="mb-8">
-        <div className="mb-4 flex items-center">
-          <Input
-            id="event-filter"
-            type="text"
-            placeholder="Search events..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="mr-4 flex-1"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FilterIcon className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-4">
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="event-filter"
-                    className="mb-2 block font-medium"
-                  >
-                    Event
-                  </label>
-                  <Input
-                    id="event-filter"
-                    type="text"
-                    placeholder="Search events..."
-                    value={filterOptions.event}
-                    onChange={(e) =>
-                      setFilterOptions((prev) => ({
-                        ...prev,
-                        event: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="date-filter"
-                    className="mb-2 block font-medium"
-                  >
-                    Date
-                  </label>
-                  <Input
-                    id="date-filter"
-                    type="text"
-                    placeholder="Search dates..."
-                    value={filterOptions.date}
-                    onChange={(e) =>
-                      setFilterOptions((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="price-filter"
-                    className="mb-2 block font-medium"
-                  >
-                    Price
-                  </label>
-                  <Input
-                    id="price-filter"
-                    type="number"
-                    placeholder="Max price..."
-                    value={filterOptions.price}
-                    onChange={(e) =>
-                      setFilterOptions((prev) => ({
-                        ...prev,
-                        price: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <div className="border-t">
+      <div className="bg-background p-4">
+        <div className="h-full px-4 py-6 lg:px-8">
+          {/*<MenuBreadcumb actionSection="Secondary Market" />*/}
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Secondary Market
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Buy and sell tickets from other users.
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <div className="mb-4 flex items-center">
+              <Input
+                id="event-filter"
+                type="text"
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mr-4 flex-1"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FilterIcon className="mr-2 h-4 w-4" />
+                    Filters
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="event-filter"
+                        className="mb-2 block font-medium"
+                      >
+                        Event
+                      </label>
+                      <Input
+                        id="event-filter"
+                        type="text"
+                        placeholder="Search events..."
+                        value={filterOptions.event}
+                        onChange={(e) =>
+                          setFilterOptions((prev) => ({
+                            ...prev,
+                            event: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="date-filter"
+                        className="mb-2 block font-medium"
+                      >
+                        Date
+                      </label>
+                      <Input
+                        id="date-filter"
+                        type="text"
+                        placeholder="Search dates..."
+                        value={filterOptions.date}
+                        onChange={(e) =>
+                          setFilterOptions((prev) => ({
+                            ...prev,
+                            date: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="price-filter"
+                        className="mb-2 block font-medium"
+                      >
+                        Price
+                      </label>
+                      <Input
+                        id="price-filter"
+                        type="number"
+                        placeholder="Max price..."
+                        value={filterOptions.price}
+                        onChange={(e) =>
+                          setFilterOptions((prev) => ({
+                            ...prev,
+                            price: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {filteredTickets.map((ticket) => (
+                <Card key={ticket.id} className="h-full">
+                  <CardHeader>
+                    <CardTitle>{ticket.event}</CardTitle>
+                    <CardDescription>{ticket.date}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-muted-foreground">
+                        {ticket.location}
+                      </div>
+                      <div className="font-bold">
+                        ${ticket.price.toFixed(2)}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full">Buy Ticket</Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button>List Your Tickets</Button>
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredTickets.map((ticket) => (
-            <Card key={ticket.id} className="h-full">
-              <CardHeader>
-                <CardTitle>{ticket.event}</CardTitle>
-                <CardDescription>{ticket.date}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-muted-foreground">{ticket.location}</div>
-                  <div className="font-bold">${ticket.price.toFixed(2)}</div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full">Buy Ticket</Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <Button>List Your Tickets</Button>
       </div>
     </div>
   );

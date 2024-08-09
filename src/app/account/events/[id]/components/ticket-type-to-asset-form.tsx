@@ -188,7 +188,7 @@ export const TicketTypeToAssetForm: React.FC<{
 
       // Get un-signed XDR from the server
       const xdr = await addToLedger.mutateAsync({
-        assetId: asset?.id,
+        assetId: asset.id,
         distributorKey: publicKey,
       });
       const signedXDR = await signTransaction(xdr, {
@@ -198,7 +198,7 @@ export const TicketTypeToAssetForm: React.FC<{
       // Submit signed XDR to the server
       await tokenize.mutateAsync({
         xdr: signedXDR,
-        code: asset.code,
+        id: asset.id,
       });
     } catch (e) {
       console.error(e);

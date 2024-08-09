@@ -4,6 +4,7 @@ import React from "react";
 import { type Asset } from "@prisma/client";
 import { api } from "~/trpc/react";
 import { Icons } from "~/components/icons";
+import { Skeleton } from "~/components/ui/skeleton";
 
 interface TicketCategoryCardProps {
   category: Asset;
@@ -12,7 +13,7 @@ interface TicketCategoryCardProps {
   removeFromCart: (id: string) => void;
   processStep: number;
 }
-const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
+export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   category,
   processStep,
   addToCart,
@@ -75,4 +76,6 @@ const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   );
 };
 
-export default TicketCategoryCard;
+export const TicketCategorySkeleton: React.FC = () => {
+  return <Skeleton className="h-28 w-full" />;
+};

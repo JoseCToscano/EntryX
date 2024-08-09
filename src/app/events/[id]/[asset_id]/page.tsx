@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -19,16 +19,16 @@ import {
 } from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
-import useFreighter from "~/hooks/useFreighter";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
+import { useWallet } from "~/hooks/useWallet";
 
 const TicketCard: React.FC = () => {
-  const { publicKey } = useFreighter();
+  const { publicKey } = useWallet();
   const params = useParams();
   const { id: eventId, asset_id } = params;
   const ctx = api.useContext();
@@ -125,6 +125,14 @@ const TicketCard: React.FC = () => {
       setSellAmount((p) => p - 1);
     }
   };
+
+  useEffect(() => {
+    console.log({
+      eventId,
+      asset_id,
+      ticket: ticket.data,
+    });
+  }, [eventId, asset_id, ticket.data]);
 
   if (!asset_id || !eventId) return null;
 

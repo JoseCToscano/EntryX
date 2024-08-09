@@ -31,8 +31,8 @@ const TicketCard: React.FC<TicketCardProps> = ({
   };
 
   return (
-    <Card className="w-full min-w-60 max-w-xl bg-gradient-to-br from-white to-primary-foreground hover:scale-[1.01]">
-      <Link href={`/events/${eventId}/${id}`}>
+    <Card className="w-full min-w-60 max-w-24 bg-gradient-to-br from-white to-primary-foreground hover:scale-[1.01]">
+      <Link href={`/events/${eventId}/${id}`} prefetch={true}>
         <CardHeader className="p-4">
           <div className="flex w-full items-center gap-2 font-semibold">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">

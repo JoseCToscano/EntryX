@@ -8,7 +8,10 @@ import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import { FIXED_UNITARY_COMMISSION } from "~/constants";
-import TicketCategoryCard from "~/app/events/components/ticket-category-card";
+import {
+  TicketCategoryCard,
+  TicketCategorySkeleton,
+} from "~/app/events/components/ticket-category-card";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
@@ -144,6 +147,10 @@ export default function Purchase() {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Ticket Options</h2>
             <div className="grid gap-4">
+              {ticketCategories.isLoading &&
+                Array.from({ length: 2 }).map((_, i) => (
+                  <TicketCategorySkeleton key={i} />
+                ))}
               {ticketCategories.data?.map((category) => (
                 <TicketCategoryCard
                   processStep={processStep}

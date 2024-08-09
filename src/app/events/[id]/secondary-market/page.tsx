@@ -28,6 +28,7 @@ import { isConnected, signTransaction } from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
 import { fromXLMToUSD, plurify } from "~/lib/utils";
+import { useWallet } from "~/hooks/useWallet";
 
 const SecondaryMarket: React.FC = () => {
   // Use the useParams hook to access the dynamic parameters
@@ -106,7 +107,7 @@ const SecondaryMarket: React.FC = () => {
     });
   }, [items.data, filterOptions]);
 
-  const { hasFreighter, setHasFreighter, publicKey } = useFreighter();
+  const { hasFreighter, publicKey } = useWallet();
   const [cart, setCart] = React.useState<Map<string, number>>(new Map());
   const ctx = api.useContext();
 
@@ -127,10 +128,6 @@ const SecondaryMarket: React.FC = () => {
       console.error(e);
     },
   });
-
-  useEffect(() => {
-    isConnected().then(setHasFreighter).catch(console.error);
-  }, []);
 
   const addToCart = (assetId: string) => {
     const currentQuantity = cart.get(assetId) ?? 0;

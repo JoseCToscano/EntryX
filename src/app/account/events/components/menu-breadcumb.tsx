@@ -8,8 +8,8 @@ import {
 } from "~/components/ui/breadcrumb";
 import Link from "next/link";
 
-export const MenuBreadcumb: React.FC<{ id?: string; isNew?: boolean }> = ({
-  id,
+export const MenuBreadcumb: React.FC<{ name?: string; isNew?: boolean }> = ({
+  name,
   isNew,
 }) => {
   return (
@@ -31,10 +31,10 @@ export const MenuBreadcumb: React.FC<{ id?: string; isNew?: boolean }> = ({
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {(id ?? isNew) && <BreadcrumbSeparator />}
-          {id && (
+          {(name ?? isNew) && <BreadcrumbSeparator />}
+          {name && (
             <BreadcrumbItem>
-              <BreadcrumbPage>Edit Event</BreadcrumbPage>
+              <BreadcrumbPage>{name}</BreadcrumbPage>
             </BreadcrumbItem>
           )}
           {isNew && (

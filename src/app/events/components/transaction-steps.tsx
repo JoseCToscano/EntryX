@@ -13,6 +13,7 @@ import {
   setAllowed,
 } from "@stellar/freighter-api";
 import { cn } from "~/lib/utils";
+import { useWallet } from "~/hooks/useWallet";
 interface TransactionStepsProps {
   assets: string[];
   processStep?: number;
@@ -23,7 +24,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
   processStep,
 }) => {
   const ctx = api.useContext();
-  const { publicKey } = useFreighter();
+  const { publicKey } = useWallet();
 
   function onError({ data, message }: TRPCClientErrorLike<any>) {
     console.log("data:", data);
