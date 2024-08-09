@@ -8,14 +8,11 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-import { CalendarDatePicker } from "~/app/account/events/components/date-picker";
-import { Icons } from "~/components/icons";
-import { TRPCClientErrorLike } from "@trpc/client";
+import { type TRPCClientErrorLike } from "@trpc/client";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
@@ -23,15 +20,8 @@ import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import { Badge } from "~/components/ui/badge";
 import Image from "next/image";
 import { cn } from "~/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
 import { useRouter } from "next/navigation";
+import { useWallet } from "~/hooks/useWallet";
 
 dayjs.extend(utc);
 
@@ -42,9 +32,10 @@ interface INewEvent {
   description: string;
 }
 
-export default function CreateEventDialog() {
+export default function CreateEvent() {
   const ctx = api.useContext();
   const router = useRouter();
+  const { publicKey } = useWallet();
 
   function onSuccess() {
     console.log("Event registered successfully");
@@ -94,15 +85,16 @@ export default function CreateEventDialog() {
   });
 
   const onSubmit: SubmitHandler<INewEvent> = async (data) => {
-    console.log("data:", data);
+    if (!publicKey) return toast.error("Please connect your wallet");
     const { id } = await createEvent.mutateAsync({
       name: data.name,
-      date: dayjs.utc(data.date as string).toDate(),
+      date: dayjs.utc(data.date).toDate(),
       venue: data.venue,
       description: data.description,
+      publicKey,
     });
     await ctx.event.search.invalidate();
-    await router.push(`/account/events/${id}`);
+    router.push(`/account/events/${id}`);
   };
 
   return (

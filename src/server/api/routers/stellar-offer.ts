@@ -9,9 +9,11 @@ import {
   Operation,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
+import { Asset as AssetDB } from "@prisma/client";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import { type AxiosError } from "axios";
+import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
 
 const maxFeePerOperation = "100000";
 const horizonUrl = "https://horizon-testnet.stellar.org";
@@ -97,48 +99,96 @@ export const stellarOfferRouter = createTRPCRouter({
   purchase: publicProcedure
     .input(
       z.object({
-        assetId: z.string().min(1),
         userPublicKey: z.string().min(1),
-        unitsToBuy: z.number().int().positive(),
+        items: z.array(
+          z.object({
+            assetId: z.string().min(1),
+            unitsToBuy: z.number().int().positive(),
+          }),
+        ),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const asset = await ctx.db.asset.findUniqueOrThrow({
+      const cart = new Map<string, number>(
+        input.items.map((p) => [p.assetId, p.unitsToBuy]),
+      );
+
+      // Fetch the assets to be purchased
+      const assets = await ctx.db.asset.findMany({
         where: {
-          id: input.assetId,
+          id: {
+            in: Array.from(cart.keys()),
+          },
         },
       });
-      const ledgerAsset = new Asset(asset.code, asset.issuer);
-      // User account
+
+      if (assets.length !== cart.size) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid items in cart",
+        });
+      }
+
+      // User's Stellar account
       const userAccount = await server.loadAccount(input.userPublicKey);
 
-      // Ensure the user has a trustline set up for the asset before attempting to buy it
-      // Build the transaction
-      let transaction = new TransactionBuilder(userAccount, {
+      const trustline = new Map<string, AssetDB>();
+
+      assets.forEach((dbAsset) => {
+        if (
+          userAccount.balances.find(
+            (b) =>
+              dbAsset.code === b.asset_code &&
+              dbAsset.issuer === b.asset_issuer,
+          )
+        ) {
+          trustline.set(dbAsset.id, dbAsset);
+        }
+      });
+
+      const emptyTransaction = new TransactionBuilder(userAccount, {
         fee: BASE_FEE,
         networkPassphrase: Networks.TESTNET,
       });
 
-      if (
-        !userAccount.balances.find(
-          (b) => b.asset_code === asset.code && b.asset_issuer === asset.issuer,
-        )
-      ) {
-        transaction = transaction.addOperation(
-          Operation.changeTrust({
-            asset: ledgerAsset,
-            source: input.userPublicKey,
+      let totalTickets = 0;
+      const transaction = assets.reduce((txBuilder, asset) => {
+        totalTickets += cart.get(asset.id)!;
+        // Add missing items to the trustline
+        if (!trustline.has(asset.id)) {
+          const ledgerAsset = new Asset(asset.code, asset.issuer);
+          txBuilder.addOperation(
+            Operation.changeTrust({
+              asset: ledgerAsset,
+              source: input.userPublicKey,
+            }),
+          );
+        }
+        // Add the purchase operation
+        return txBuilder.addOperation(
+          Operation.manageBuyOffer({
+            selling: Asset.native(),
+            buying: new Asset(asset.code, asset.issuer),
+            buyAmount: cart.get(asset.id)!.toString(),
+            price: asset.pricePerUnit.toString(),
           }),
         );
-      }
-      transaction = transaction.addOperation(
-        Operation.manageBuyOffer({
-          selling: Asset.native(),
-          buying: ledgerAsset,
-          buyAmount: input.unitsToBuy.toString(),
-          price: asset.pricePerUnit.toString(),
+      }, emptyTransaction);
+
+      // Add FIXED_UNITARY_COMMISSION operations
+      // Add SERVICE_FEE operations
+      transaction.addOperation(
+        Operation.payment({
+          source: input.userPublicKey,
+          asset: Asset.native(),
+          destination: env.ISSUER_PUBLIC_KEY,
+          amount: (
+            SERVICE_FEE +
+            totalTickets * FIXED_UNITARY_COMMISSION
+          ).toString(),
         }),
       );
+
       return transaction.setTimeout(standardTimebounds).build().toXDR();
     }),
   sell: publicProcedure

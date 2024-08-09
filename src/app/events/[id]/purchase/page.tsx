@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
-import { FIXED_UNITARY_COMMISSION } from "~/constants";
+import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
 import {
   TicketCategoryCard,
   TicketCategorySkeleton,
@@ -17,23 +17,34 @@ import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
-import { fromXLMToUSD } from "~/lib/utils";
+import { computeTransactionFees, fromXLMToUSD } from "~/lib/utils";
+import { Asset as DBAsset } from "@prisma/client";
+import { Asset, AssetType } from "@stellar/stellar-sdk";
+import { BalanceLineAsset } from "~/a";
+
 export default function Purchase() {
   const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+
+  /* State variables */
   const { publicKey, signXDR, hasFreighter } = useWallet();
   const [processStep, setProcessStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  // Use the useParams hook to access the dynamic parameters
-  const params = useParams();
-  // Extract the id from the params object
-  const { id } = params;
+  const [cart, setCart] = React.useState<
+    Map<string, { asset: DBAsset; total: number }>
+  >(new Map());
+
+  /* tRPC api calls */
   const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
   const ticketCategories = api.asset.list.useQuery(
     { eventId: id as string },
     { enabled: !!id },
   );
-
-  const [cart, setCart] = React.useState<Map<string, number>>(new Map());
+  const account = api.stellarAccountRouter.details.useQuery(
+    { id: publicKey! },
+    { enabled: !!publicKey },
+  );
   const ctx = api.useContext();
 
   const submitTransaction =
@@ -54,15 +65,23 @@ export default function Purchase() {
     },
   });
 
-  const addToCart = (categoryId: string) => {
-    const currentQuantity = cart.get(categoryId) ?? 0;
-    setCart((prev) => new Map(prev.set(categoryId, currentQuantity + 1)));
+  const addToCart = (asset: DBAsset) => {
+    const currentQuantity = cart.get(asset.id)?.total ?? 0;
+    setCart((prev) => {
+      console.log("currentQuantity", currentQuantity);
+      return new Map(prev.set(asset.id, { asset, total: currentQuantity + 1 }));
+    });
   };
 
-  const removeFromCart = (categoryId: string) => {
-    const currentQuantity = cart.get(categoryId) ?? 0;
+  const removeFromCart = (asset: DBAsset) => {
+    const currentQuantity = cart.get(asset.id)?.total ?? 0;
     if (currentQuantity > 0) {
-      setCart((prev) => new Map(prev.set(categoryId, currentQuantity - 1)));
+      setCart((prev) => {
+        return new Map(
+          prev.set(asset.id, { asset, total: currentQuantity - 1 }),
+        );
+        return prev;
+      });
     }
   };
 
@@ -72,7 +91,6 @@ export default function Purchase() {
       if (!publicKey) {
         return toast.error("Please connect your wallet");
       }
-      // Todo: Do it for all assets
       const [assetKey] = cart.keys();
       if (!assetKey) {
         return toast.error("Please select a ticket to purchase");
@@ -81,9 +99,11 @@ export default function Purchase() {
       if (assetKey && asset) {
         setProcessStep(2);
         const xdr = await purchase.mutateAsync({
-          assetId: assetKey,
           userPublicKey: publicKey,
-          unitsToBuy: asset,
+          items: Array.from(cart.entries()).map(([assetId, cartItem]) => ({
+            assetId,
+            unitsToBuy: cartItem.total,
+          })),
         });
         const signedTransaction = await signXDR(xdr);
         setProcessStep(3);
@@ -100,6 +120,7 @@ export default function Purchase() {
       console.error(e);
     } finally {
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      setProcessStep(1);
       setLoading(false);
     }
   };
@@ -115,18 +136,34 @@ export default function Purchase() {
     );
   }, [ticketCategories.data]);
 
+  const totalFees = React.useMemo(() => {
+    if (!account.data) return 0;
+    const itemsInCart = new Set(
+      Array.from(cart.entries())
+        .filter(([, { total }]) => total > 0)
+        .map(([, a]) => new Asset(a.asset.code, a.asset.issuer)),
+    );
+
+    return computeTransactionFees(
+      itemsInCart,
+      account.data.balances as BalanceLineAsset<AssetType.credit12>[],
+    );
+  }, [cart, account.data]);
+
   const total = React.useMemo(() => {
     if (!ticketCategories.data) return 0;
-    return Array.from(cart.entries()).reduce((acc, [categoryId, qty]) => {
-      const category = categories.get(categoryId);
-      const { pricePerUnit } = category ?? { pricePerUnit: 0 };
-      return acc + qty * Number(pricePerUnit);
-    }, 0);
-  }, [cart, ticketCategories.data, categories]);
+    return (
+      Array.from(cart.entries()).reduce((acc, [categoryId, item]) => {
+        const category = categories.get(categoryId);
+        const { pricePerUnit } = category ?? { pricePerUnit: 0 };
+        return acc + item.total * Number(pricePerUnit);
+      }, 0) + Number(totalFees)
+    );
+  }, [cart, ticketCategories.data, categories, totalFees]);
 
   const totalTickets = React.useMemo(() => {
-    return Array.from(cart.values()).reduce((acc, qty) => {
-      return acc + qty;
+    return Array.from(cart.values()).reduce((acc, item) => {
+      return acc + item.total;
     }, 0);
   }, [cart]);
 
@@ -189,7 +226,7 @@ export default function Purchase() {
             <CardContent>
               <div className="space-y-2">
                 {Array.from(cart.entries())
-                  .filter(([, total]) => total > 0)
+                  .filter(([, { total }]) => total > 0)
                   .map(([categoryId, qty]) => {
                     return (
                       <div
@@ -197,7 +234,7 @@ export default function Purchase() {
                         className="flex items-center justify-between"
                       >
                         <div>
-                          ({qty}) {categories.get(categoryId)?.label}
+                          ({qty.total}) {categories.get(categoryId)?.label}
                         </div>
                         <div>
                           {Number(categories.get(categoryId)?.pricePerUnit) ??
@@ -207,10 +244,6 @@ export default function Purchase() {
                       </div>
                     );
                   })}
-                <div className="flex items-center justify-between">
-                  <div>Service Fee</div>
-                  <div>{totalTickets * FIXED_UNITARY_COMMISSION} XLM</div>
-                </div>
                 <div className="flex items-center justify-between font-medium">
                   <div>Subtotal</div>
                   <div>
@@ -222,12 +255,24 @@ export default function Purchase() {
                   </div>
                 </div>
                 <Separator />
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <div>Stellar Transaction Fees</div>
+                  <div>{totalFees} XLM</div>
+                </div>
+
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <div>Service Fees & Commissions</div>
+                  <div>
+                    {SERVICE_FEE + totalTickets * FIXED_UNITARY_COMMISSION} XLM
+                  </div>
+                </div>
                 <div className="flex items-center justify-between font-bold">
                   <div>Total</div>
                   <div className="flex flex-col items-end justify-end">
                     <div>
                       {(
                         total +
+                        SERVICE_FEE +
                         totalTickets * FIXED_UNITARY_COMMISSION
                       ).toLocaleString("en-US", {
                         minimumFractionDigits: 5,
@@ -238,7 +283,9 @@ export default function Purchase() {
                     <div className="text-xs font-light opacity-50">
                       approx. $
                       {fromXLMToUSD(
-                        total + totalTickets * FIXED_UNITARY_COMMISSION,
+                        total +
+                          SERVICE_FEE +
+                          totalTickets * FIXED_UNITARY_COMMISSION,
                       ).toFixed(2)}{" "}
                       USD
                     </div>

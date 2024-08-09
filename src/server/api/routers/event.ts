@@ -313,6 +313,7 @@ export const eventsRouter = createTRPCRouter({
   create: publicProcedure
     .input(
       z.object({
+        publicKey: z.string().min(1),
         name: z.string().min(1),
         venue: z.string().min(1),
         description: z.string().min(1),
@@ -326,7 +327,7 @@ export const eventsRouter = createTRPCRouter({
           venue: input.venue,
           description: input.description,
           date: input.date,
-          distributorKey: env.DISTRIBUTOR_PUBLIC_KEY,
+          distributorKey: input.publicKey,
           // organizerId: ctx.session.user.id,
         },
       });

@@ -21,8 +21,6 @@ import {
   CardContent,
   CardFooter,
 } from "~/components/ui/card";
-import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { Separator } from "~/components/ui/separator";
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,6 +83,7 @@ export default function Component() {
       return eventMatch && dateMatch && priceMatch && searchMatch;
     });
   }, [searchTerm, filterOptions]);
+
   return (
     <div className="border-t">
       <div className="bg-background p-4">
@@ -217,7 +216,7 @@ export default function Component() {
   );
 }
 
-function FilterIcon(props) {
+const FilterIcon: React.FC<{ className?: string }> = (props) => {
   return (
     <svg
       {...props}
@@ -234,24 +233,4 @@ function FilterIcon(props) {
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   );
-}
-
-function XIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
+};

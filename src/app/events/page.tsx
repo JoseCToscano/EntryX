@@ -4,13 +4,15 @@ import { api } from "~/trpc/react";
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { AlbumArtwork } from "~/app/account/events/components/album-artwork";
-import { listenNowAlbums, madeForYouAlbums } from "~/app/account/data/albums";
+import { madeForYouAlbums } from "~/app/account/data/albums";
 import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Ticket } from "lucide-react";
 
 const EventsPage: React.FC = () => {
   const { data: events, error, isLoading } = api.event.search.useQuery({});
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <div className="border-t">
