@@ -88,9 +88,7 @@ export default function Component() {
                         location={event?.data?.location ?? ""}
                         venue={event?.data?.venue ?? ""}
                         date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
-                        sellingLiabilities={parseInt(
-                          ticket.sellingLiabilities as string,
-                        )}
+                        sellingLiabilities={parseInt(ticket.sellingLiabilities)}
                       />
                     ))}{" "}
                   </div>
