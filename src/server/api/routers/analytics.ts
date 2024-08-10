@@ -1,19 +1,7 @@
 import { z } from "zod";
-import { type AxiosError } from "axios";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import {
-  Asset,
-  BASE_FEE,
-  Horizon,
-  Keypair,
-  Networks,
-  Operation,
-  TransactionBuilder,
-} from "@stellar/stellar-sdk";
-import { env } from "~/env";
-import { TRPCError } from "@trpc/server";
+import { Horizon } from "@stellar/stellar-sdk";
 
-const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
 export const analyticsRouter = createTRPCRouter({
@@ -41,9 +29,9 @@ export const analyticsRouter = createTRPCRouter({
           event.Asset.map((asset) => [
             asset.code,
             {
-              total: asset.totalUnits,
+              total: Number(asset.totalUnits),
               inWallet: 0,
-              pricePerUnit: asset.pricePerUnit,
+              pricePerUnit: Number(asset.pricePerUnit),
             },
           ]),
         ),
@@ -52,12 +40,14 @@ export const analyticsRouter = createTRPCRouter({
       const ledgerAccount = await server.loadAccount(input.publicKey);
 
       ledgerAccount.balances.forEach((b) => {
-        const { asset_code, balance } = b;
-        if (assetCodes.has(asset_code)) {
-          const current = assetCodes.get(asset_code);
-          if (current) {
-            current.inWallet = Number(balance);
-            assetCodes.set(asset_code, current);
+        if (b.asset_type === "credit_alphanum12") {
+          const { asset_code, balance } = b;
+          if (assetCodes.has(asset_code)) {
+            const current = assetCodes.get(asset_code);
+            if (current) {
+              current.inWallet = Number(balance);
+              assetCodes.set(asset_code, current);
+            }
           }
         }
       });

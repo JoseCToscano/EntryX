@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { type AxiosError } from "axios";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   Asset,
@@ -12,6 +11,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import { handleHorizonServerError } from "~/lib/utils";
 
 const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
@@ -139,7 +139,6 @@ export const assetsRouter = createTRPCRouter({
 
         const transactionResult = await server.submitTransaction(transaction);
 
-        console.log("Transaction submitted successfully:", transactionResult);
         if (transactionResult.successful) {
           await ctx.db.asset.update({
             where: { id: input.id },
@@ -150,138 +149,7 @@ export const assetsRouter = createTRPCRouter({
         }
         return transactionResult;
       } catch (e) {
-        console.log("error : .----");
-        console.error((e as AxiosError).message);
-        console.error((e as AxiosError)?.response?.data);
-        console.error((e as AxiosError)?.response?.data?.detail);
-        console.error((e as AxiosError)?.response?.data?.title);
-        console.error(
-          (e as AxiosError)?.response?.data?.extras?.result_codes?.transaction,
-        );
-        console.error(
-          (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
-        );
-        let message = "Failed to tokenize asset";
-        if (
-          (
-            e as AxiosError
-          )?.response?.data?.extras?.result_codes?.operations?.includes(
-            "op_buy_no_trust",
-          )
-        ) {
-          message = "You need to establish trustline first";
-        } else if (
-          (
-            e as AxiosError
-          )?.response?.data?.extras?.result_codes?.operations?.includes(
-            "op_low_reserve",
-          )
-        ) {
-          message = "You don't have enough XLM to create the tokenized asset";
-        } else if (
-          (
-            e as AxiosError
-          )?.response?.data?.extras?.result_codes?.operations?.includes(
-            "op_bad_auth",
-          )
-        ) {
-          message =
-            "You are not authorized to perform transactions on this asset";
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message,
-        });
+        handleHorizonServerError(e);
       }
-    }),
-  createSellOffer: publicProcedure
-    .input(z.object({ assetId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const asset = await ctx.db.asset.findUniqueOrThrow({
-        where: { id: input.assetId },
-      });
-      // Load Distributor Account from Horizon
-      // Distributor account
-      const distributorKeypair = Keypair.fromSecret(
-        env.DISTRIBUTOR_PRIVATE_KEY,
-      );
-
-      async function createSellOffer() {
-        // Load distributor account
-        const distributorAccount = await server.loadAccount(
-          distributorKeypair.publicKey(),
-        );
-
-        // Build the transaction
-        const transaction = new TransactionBuilder(distributorAccount, {
-          fee: BASE_FEE,
-          networkPassphrase: Networks.TESTNET,
-        })
-          .addOperation(
-            Operation.manageSellOffer({
-              selling: new Asset(asset.code, distributorKeypair.publicKey()),
-              buying: Asset.native(), // XLM
-              amount: asset.totalUnits.toString(),
-              price: "0.01", // asset.pricePerUnit.toString(),
-            }),
-          )
-          .setTimeout(180)
-          .build();
-
-        // Sign the transaction
-        transaction.sign(distributorKeypair);
-
-        // Submit the transaction
-        try {
-          const transactionResult = await server.submitTransaction(transaction);
-          console.log("transactionResult:", transactionResult);
-        } catch (e) {
-          console.log("error : .----");
-          console.error((e as AxiosError).message);
-          console.error((e as AxiosError)?.response?.data);
-          console.error((e as AxiosError)?.response?.data?.detail);
-          console.error((e as AxiosError)?.response?.data?.title);
-          console.error(
-            (e as AxiosError)?.response?.data?.extras?.result_codes
-              ?.transaction,
-          );
-          console.error(
-            (e as AxiosError)?.response?.data?.extras?.result_codes?.operations,
-          );
-          let message = "Failed to create buy offer";
-          if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "op_buy_no_trust",
-            )
-          ) {
-            message = "You need to establish trustline first";
-          } else if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "op_low_reserve",
-            )
-          ) {
-            message = "You don't have enough XLM to create the offer";
-          } else if (
-            (
-              e as AxiosError
-            )?.response?.data?.extras?.result_codes?.operations?.includes(
-              "op_underfunded",
-            )
-          ) {
-            message = "You don't have enough asset to create the offer";
-          }
-
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message,
-          });
-        }
-      }
-
-      await createSellOffer();
     }),
 });

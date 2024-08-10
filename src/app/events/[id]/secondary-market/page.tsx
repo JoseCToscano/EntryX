@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
@@ -21,16 +21,15 @@ import { useParams } from "next/navigation";
 import { FIXED_UNITARY_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
-import useFreighter from "~/hooks/useFreighter";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
-import { isConnected, signTransaction } from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
 import { fromXLMToUSD, plurify } from "~/lib/utils";
 import { useWallet } from "~/hooks/useWallet";
 
 const SecondaryMarket: React.FC = () => {
+  const { signXDR, hasFreighter, isFreighterAllowed, publicKey } = useWallet();
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
   // Extract the id from the params object
@@ -107,7 +106,6 @@ const SecondaryMarket: React.FC = () => {
     });
   }, [items.data, filterOptions]);
 
-  const { hasFreighter, publicKey } = useWallet();
   const [cart, setCart] = React.useState<Map<string, number>>(new Map());
   const ctx = api.useContext();
 
@@ -138,33 +136,6 @@ const SecondaryMarket: React.FC = () => {
     const currentQuantity = cart.get(assetId) ?? 0;
     if (currentQuantity > 0) {
       setCart((prev) => new Map(prev.set(assetId, currentQuantity - 1)));
-    }
-  };
-
-  const handlePurchase = async () => {
-    if (!publicKey) {
-      toast.error("Please connect your wallet");
-      return;
-    }
-    const [assetKey] = cart.keys();
-    const asset = cart.get(assetKey);
-    if (assetKey && asset) {
-      const xdr = await purchase.mutateAsync({
-        assetId: assetKey,
-        userPublicKey: publicKey,
-        unitsToSell: 1,
-      });
-      const signedTransaction = await signTransaction(xdr, {
-        network: "TESTNET",
-        accountToSign: publicKey,
-      });
-      const result = await submitTransaction.mutateAsync({
-        xdr: signedTransaction,
-      });
-      void ctx.asset.availability.invalidate();
-      console.log(result);
-    } else {
-      toast.error("Please select a ticket to purchase");
     }
   };
 
@@ -202,7 +173,7 @@ const SecondaryMarket: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FilterIcon className="mr-2 h-4 w-4" />
+                    <Icons.filter className="mr-2 h-4 w-4" />
                     Filters
                   </Button>
                 </DropdownMenuTrigger>
@@ -308,12 +279,7 @@ const SecondaryMarket: React.FC = () => {
                     </span>
                   </CardContent>
                   <CardFooter className="">
-                    <Button
-                      onClick={() => {
-                        if (offer.id) addToCart(offer.id);
-                      }}
-                      className="group w-full border-[1.5px] border-black py-4"
-                    >
+                    <Button className="group w-full border-[1.5px] border-black py-4">
                       Make offer
                       <Icons.expandingArrow className="ml-2 h-4 w-4" />
                     </Button>
@@ -387,7 +353,6 @@ const SecondaryMarket: React.FC = () => {
                   {hasFreighter ? (
                     <Button
                       disabled={cart.size === 0}
-                      onClick={handlePurchase}
                       size="lg"
                       className="w-full bg-black text-white"
                     >
@@ -418,11 +383,7 @@ const SecondaryMarket: React.FC = () => {
                   List your tickets on the secondary market and earn money by
                   selling them to other users.
                 </p>
-                <Button
-                  onClick={handlePurchase}
-                  size="lg"
-                  className="group w-full bg-black text-white"
-                >
+                <Button size="lg" className="group w-full bg-black text-white">
                   List your Tickets
                   <Icons.expandingArrow className="ml-2 h-4 w-4" />
                 </Button>
@@ -437,44 +398,5 @@ const SecondaryMarket: React.FC = () => {
     </div>
   );
 };
-
-function FilterIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-  );
-}
-
-function XIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
 
 export default SecondaryMarket;

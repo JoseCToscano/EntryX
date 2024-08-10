@@ -28,27 +28,6 @@ export default function WallerPage() {
   const challenge = api.stellarAccountRouter.getChallenge.useMutation({
     onError: (e) => toast.error("Challenge error:" + e.message),
   });
-  const validate = api.stellarAccountRouter.validateChallenge.useMutation({
-    onError: (e) => toast.error("Validate error:", e.message),
-  });
-
-  const connect = async () => {
-    if (!publicKey) {
-      return toast.error("No public key");
-    }
-    // if (!user) {
-    //   return toast.error("No user");
-    // }
-
-    const xdr = await challenge.mutateAsync({ publicKey });
-    const signedXdr = await signXDR(xdr);
-    // const isValid = await validate.mutateAsync({
-    //   xdr: signedXdr,
-    //   publicKey,
-    //   // clerkId: user.id,
-    // });
-    // toast.success(isValid ? "Challenge validated" : "Challenge failed");
-  };
 
   if (isLoading) {
     return <Icons.spinner className="h-4 w-4 animate-spin" />;
@@ -80,12 +59,12 @@ export default function WallerPage() {
             </div>
           )}
 
-          {account?.balances?.map(({ balance, asset_type, asset_code }) => (
+          {account?.balances?.map((balance, i) => (
             <p
-              key={asset_type}
+              key={i}
               className="mt-4 flex flex-row items-center justify-center gap-1 text-center text-xl font-semibold"
             >
-              {asset_type === "native" && (
+              {balance.asset_type === "native" && (
                 <Image
                   width={20}
                   height={20}
@@ -93,7 +72,9 @@ export default function WallerPage() {
                   alt={"Stellar XLM icon"}
                 />
               )}
-              {asset_code}: {balance ?? "-"}
+              {balance.asset_type === "credit_alphanum12" && balance.balance}
+              {balance.asset_type === "credit_alphanum12" &&
+                balance.selling_liabilities}
             </p>
           ))}
           {network && (

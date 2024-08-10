@@ -1,13 +1,5 @@
 import { z } from "zod";
-import {
-  Networks,
-  Operation,
-  TransactionBuilder,
-  Horizon,
-  Keypair,
-  BASE_FEE,
-  Asset,
-} from "@stellar/stellar-sdk";
+import { Asset, Horizon } from "@stellar/stellar-sdk";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -81,32 +73,29 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // const event = await ctx.db.event.findUniqueOrThrow({
-      //   where: { id: input.eventId },
-      // });
       const account = await server.loadAccount(input.userPublicKey);
-      const myTicketCodes = account.balances
-        .filter((b) => {
-          // TODO
-          return (
-            b.asset_issuer === env.ISSUER_PUBLIC_KEY && Number(b.balance) > 0
-          );
-        })
-        .map((b) => b.asset_code);
-      console.log("myTicketCodes:", myTicketCodes);
+      const myTicketCodes = account.balances.filter((b) => {
+        return (
+          b.asset_type === "credit_alphanum12" &&
+          b.asset_issuer === env.ISSUER_PUBLIC_KEY &&
+          Number(b.balance) > 0
+        );
+      }) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
       const assets = await ctx.db.asset.findMany({
         where: {
           eventId: input.eventId,
-          code: { in: myTicketCodes },
+          code: { in: myTicketCodes.map((b) => b.asset_code) },
         },
       });
-      console.log(assets);
 
+      // { "ENTRY0010001": Asset, "ENTRY0010002": Asset }
       const thisEventsTickets = new Map(assets.map((a) => [a.code, a]));
 
-      const assetsInWallet = account.balances.filter((balance) =>
-        thisEventsTickets.has(balance.asset_code),
-      );
+      const assetsInWallet = account.balances.filter(
+        (balance) =>
+          balance.asset_type === "credit_alphanum12" &&
+          thisEventsTickets.has(balance.asset_code),
+      ) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
 
       return assetsInWallet.map((balance) => {
         const asset = thisEventsTickets.get(balance.asset_code);
@@ -126,23 +115,22 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // const event = await ctx.db.event.findUniqueOrThrow({
-      //   where: { id: input.eventId },
-      // });
       const account = await server.loadAccount(input.userPublicKey);
-      const myTicketCodes = account.balances
-        .filter((b) => {
-          // TODO
-          return (
-            b.asset_issuer === env.ISSUER_PUBLIC_KEY && Number(b.balance) > 0
-          );
-        })
-        .map((b) => b.asset_code);
+      // Get my ticket valid ticket codes for this event (event's issuer is the only issuer from env)
+      const assetsInWalletFromEventIssuer = account.balances.filter((b) => {
+        return (
+          b.asset_type === "credit_alphanum12" &&
+          b.asset_issuer === env.ISSUER_PUBLIC_KEY &&
+          Number(b.balance) > 0
+        );
+      }) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
+
+      // Assset's code is unique for this event
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.assetId,
           eventId: input.eventId,
-          code: { in: myTicketCodes },
+          code: { in: assetsInWalletFromEventIssuer.map((b) => b.asset_code) },
         },
       });
 
@@ -150,7 +138,7 @@ export const eventsRouter = createTRPCRouter({
         return null;
       }
 
-      const walletAsset = account.balances.find(
+      const walletAsset = assetsInWalletFromEventIssuer.find(
         (b) => b.asset_code === asset.code,
       );
 
@@ -222,8 +210,8 @@ export const eventsRouter = createTRPCRouter({
     }),
   search: publicProcedure
     .input(z.object({ orderBy: z.string().optional() }).optional())
-    .query(({ ctx, input }) => {
-      return ctx.db.event.findMany({
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.event.findMany({
         orderBy: { createdAt: "desc" },
       });
     }),

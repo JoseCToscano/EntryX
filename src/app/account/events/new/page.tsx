@@ -1,5 +1,5 @@
 "use client";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { api } from "~/trpc/react";
@@ -8,7 +8,6 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-import { type TRPCClientErrorLike } from "@trpc/client";
 import {
   Card,
   CardContent,
@@ -19,18 +18,11 @@ import {
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import { Badge } from "~/components/ui/badge";
 import Image from "next/image";
-import { cn } from "~/lib/utils";
+import { ClientTRPCErrorHandler, cn } from "~/lib/utils";
 import { useRouter } from "next/navigation";
 import { useWallet } from "~/hooks/useWallet";
 
 dayjs.extend(utc);
-
-interface INewEvent {
-  name: string;
-  date?: Date;
-  venue: string;
-  description: string;
-}
 
 export default function CreateEvent() {
   const ctx = api.useContext();
@@ -44,29 +36,9 @@ export default function CreateEvent() {
     reset();
   }
 
-  function onError({ data, message }: TRPCClientErrorLike<any>) {
-    console.log("data:", data);
-    console.log("message:", message);
-    const errorMessage = data?.zodError?.fieldErrors;
-    if (errorMessage) {
-      toast.error(errorMessage?.description);
-    } else {
-      if (data?.code === "INTERNAL_SERVER_ERROR") {
-        toast.error("We are facing some issues. Please try again later");
-      } else if (data?.code === "BAD_REQUEST") {
-        toast.error("Invalid request. Please try again later");
-      } else if (data?.code === "UNAUTHORIZED") {
-        toast.error("Unauthorized request. Please try again later");
-      } else if (message) {
-        toast.error(message);
-      } else {
-        toast.error("Failed to register! Please try again later");
-      }
-    }
-  }
   const createEvent = api.event.create.useMutation({
     onSuccess,
-    onError,
+    onError: ClientTRPCErrorHandler,
   });
 
   // void api.post.getLatest.prefetch();
@@ -75,8 +47,7 @@ export default function CreateEvent() {
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
-  } = useForm<INewEvent>({
+  } = useForm<FieldValues>({
     defaultValues: {
       name: "",
       venue: "",
@@ -84,13 +55,13 @@ export default function CreateEvent() {
     },
   });
 
-  const onSubmit: SubmitHandler<INewEvent> = async (data) => {
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     if (!publicKey) return toast.error("Please connect your wallet");
     const { id } = await createEvent.mutateAsync({
-      name: data.name,
-      date: dayjs.utc(data.date).toDate(),
-      venue: data.venue,
-      description: data.description,
+      name: data.name as string,
+      date: dayjs.utc(data.date as string).toDate(),
+      venue: data.venue as string,
+      description: data.description as string,
       publicKey,
     });
     await ctx.event.search.invalidate();

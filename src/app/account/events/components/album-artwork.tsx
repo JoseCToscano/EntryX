@@ -17,9 +17,8 @@ import { cn } from "~/lib/utils";
 import { type Albums } from "~/app/account/data/albums";
 import dayjs from "dayjs";
 import { type Event } from "@prisma/client";
-import TicketCategoryDialog from "~/app/account/events/components/ticket-category-dialog";
 import Link from "next/link";
-import { LinkHTMLAttributes } from "react";
+import { type LinkHTMLAttributes } from "react";
 
 interface AlbumArtworkProps extends LinkHTMLAttributes<HTMLAnchorElement> {
   album: Albums | Event;

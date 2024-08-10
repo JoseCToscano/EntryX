@@ -6,11 +6,7 @@
  */
 import React from "react";
 import { Button } from "~/components/ui/button";
-import {
-  ChartTooltipContent,
-  ChartTooltip,
-  ChartContainer,
-} from "~/components/ui/chart";
+import { ChartContainer } from "~/components/ui/chart";
 import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -388,10 +384,7 @@ const BarchartChart: React.FC<{ className?: string }> = (props) => {
             axisLine={false}
             tickFormatter={(value: string) => value.slice(0, 3)}
           />
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent hideLabel />}
-          />
+
           <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
         </BarChart>
       </ChartContainer>

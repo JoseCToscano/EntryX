@@ -2,15 +2,14 @@
 import React from "react";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
-import { TRPCClientErrorLike } from "@trpc/client";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 import { TableRow, TableCell } from "~/components/ui/table";
 import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import { cn } from "~/lib/utils";
-import { Asset } from "@prisma/client";
+import { cn, ClientTRPCErrorHandler } from "~/lib/utils";
+import { type Asset } from "@prisma/client";
 import { Icons } from "~/components/icons";
 import {
   Tooltip,
@@ -18,79 +17,37 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import {
-  getPublicKey,
-  signTransaction,
-  isAllowed,
-  signAuthEntry,
-  isConnected,
-} from "@stellar/freighter-api";
-import { Server } from "@stellar/stellar-sdk/lib/horizon";
-
-interface ITicketCategory {
-  code: string;
-  totalUnits: number;
-  pricePerUnit: number;
-}
+import { useWallet } from "~/hooks/useWallet";
 
 export const TicketTypeToAssetForm: React.FC<{
   eventId: string;
   asset?: Asset;
   onSubmitted?: () => void;
 }> = ({ eventId, asset, onSubmitted }) => {
+  const { isFreighterAllowed, isLoading, hasFreighter, publicKey, signXDR } =
+    useWallet();
+  // React state
   const [isLocked, setIsLocked] = React.useState(!!asset?.address);
   const [loadingSignature, setLoadingSignature] = React.useState(false);
   const [loadingIPO, setLoadingIPO] = React.useState(false);
   const ctx = api.useContext();
-  function onSuccess() {
-    setIsLocked(true);
-    void ctx.asset.list.invalidate({ eventId });
-    toast.success("Tokenized ticket saved successfully to the blockchain");
-  }
 
-  function onError({ data, message }: TRPCClientErrorLike<any>) {
-    console.log("data:", data);
-    console.log("message:", message);
-    const errorMessage = data?.zodError?.fieldErrors;
-    if (errorMessage) {
-      toast.error(errorMessage?.description);
-    } else {
-      if (data?.code === "INTERNAL_SERVER_ERROR") {
-        toast.error("We are facing some issues. Please try again later");
-      } else if (data?.code === "BAD_REQUEST") {
-        toast.error("Invalid request. Please try again later");
-      } else if (data?.code === "UNAUTHORIZED") {
-        toast.error("Unauthorized request. Please try again later");
-      } else if (message) {
-        toast.error(message);
-      } else {
-        toast.error("Failed to register! Please try again later");
-      }
-    }
-  }
   const createTicketCategory = api.event.addTicketCategory.useMutation({
     onSuccess: () => {
       if (onSubmitted) onSubmitted();
       void ctx.asset.list.invalidate({ eventId });
       toast.success("Category saved successfully");
     },
-    onError,
+    onError: ClientTRPCErrorHandler,
   });
+
   const updateTicketCategory = api.event.updateTicketCategory.useMutation({
     onSuccess: () => {
       if (onSubmitted) onSubmitted();
       void ctx.asset.list.invalidate({ eventId });
       toast.success("Category updated successfully");
     },
-    onError,
-  });
-  const removeTicketCategory = api.event.removeTicketCategory.useMutation({
-    onSuccess: () => {
-      if (onSubmitted) onSubmitted();
-      void ctx.asset.list.invalidate({ eventId });
-      toast.success("Category removed successfully");
-    },
-    onError,
+    onError: ClientTRPCErrorHandler,
   });
 
   // void api.post.getLatest.prefetch();
@@ -99,36 +56,33 @@ export const TicketTypeToAssetForm: React.FC<{
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
-  } = useForm<ITicketCategory>({
+  } = useForm<FieldValues>({
     defaultValues: {
-      code: asset?.label ?? "",
+      label: asset?.label ?? "",
       totalUnits: asset?.totalUnits,
-      pricePerUnit: asset?.pricePerUnit,
     },
   });
 
-  const onSubmit: SubmitHandler<ITicketCategory> = async (data) => {
-    if (!(await isConnected())) {
-      toast.error("Freighter wallet missing or not allowed");
-      return;
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
+    if (!hasFreighter || !isFreighterAllowed) {
+      return toast.error("Please connect your Freighter wallet");
     }
-    const publicKey = await getPublicKey();
     if (!publicKey) {
-      toast.error(
+      return toast.error(
         "Invalid or missing public key. Make sure your wallet is connected",
       );
     }
+
     if (asset?.id) {
       updateTicketCategory.mutate({
         id: asset.id,
-        label: data.code,
+        label: data.label as string,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
       });
     } else {
       createTicketCategory.mutate({
-        label: data.code,
+        label: data.label as string,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
         eventId,
@@ -136,6 +90,7 @@ export const TicketTypeToAssetForm: React.FC<{
         distributorPublicKey: publicKey,
       });
     }
+    reset();
   };
 
   /**
@@ -143,23 +98,31 @@ export const TicketTypeToAssetForm: React.FC<{
    * the distributor account (user's account)
    */
   const addToLedger = api.asset.addToLedger.useMutation({
-    onError,
+    onError: ClientTRPCErrorHandler,
   });
 
   /**
    * Sends signed transaction to the server to tokenize the asset
    */
   const tokenize = api.asset.tokenize.useMutation({
-    onError,
-    onSuccess,
+    onError: ClientTRPCErrorHandler,
+    onSuccess: () => {
+      setIsLocked(true);
+      void ctx.asset.list.invalidate({ eventId });
+      toast.success("Tokenized ticket saved successfully to the blockchain");
+    },
   });
 
   /**
    * Generic router to submit signed transactions to the Stellar network
    */
   const submitXDR = api.stellarAccountRouter.submitTransaction.useMutation({
-    onError,
-    onSuccess,
+    onError: ClientTRPCErrorHandler,
+    onSuccess: () => {
+      setIsLocked(true);
+      void ctx.asset.list.invalidate({ eventId });
+      toast.success("Tokenized ticket saved successfully to the blockchain");
+    },
   });
 
   /**
@@ -167,7 +130,7 @@ export const TicketTypeToAssetForm: React.FC<{
    * to be sold on the Stellar network
    */
   const publishIPO = api.stellarOffer.sell.useMutation({
-    onError,
+    onError: ClientTRPCErrorHandler,
   });
 
   /**
@@ -176,13 +139,13 @@ export const TicketTypeToAssetForm: React.FC<{
   async function saveInLedger() {
     try {
       if (!asset?.id) return;
-      const isAllowedFreighter = await isAllowed();
-      if (!isAllowedFreighter) {
-        return toast.error("Freighter wallet missing or not allowed");
+      if (!hasFreighter || !isFreighterAllowed) {
+        return toast.error("Please connect your Freighter wallet");
       }
-      const publicKey = await getPublicKey();
       if (!publicKey) {
-        return toast.error("Error getting public key");
+        return toast.error(
+          "Invalid or missing public key. Make sure your wallet is connected",
+        );
       }
       setLoadingSignature(true);
 
@@ -191,10 +154,7 @@ export const TicketTypeToAssetForm: React.FC<{
         assetId: asset.id,
         distributorKey: publicKey,
       });
-      const signedXDR = await signTransaction(xdr, {
-        network: "TESTNET",
-        accountToSign: publicKey,
-      });
+      const signedXDR = await signXDR(xdr);
       // Submit signed XDR to the server
       await tokenize.mutateAsync({
         xdr: signedXDR,
@@ -202,6 +162,7 @@ export const TicketTypeToAssetForm: React.FC<{
       });
     } catch (e) {
       console.error(e);
+      toast.error("Error saving ticket to the blockchain");
     } finally {
       setLoadingSignature(false);
     }
@@ -214,13 +175,14 @@ export const TicketTypeToAssetForm: React.FC<{
   async function IPO() {
     try {
       if (!asset) return;
-      const isallowed = await isAllowed();
-      if (!isallowed) {
-        toast.error("Freighter wallet missing or not allowed");
-        return;
+      if (!hasFreighter || !isFreighterAllowed) {
+        return toast.error("Please connect your Freighter wallet");
       }
-      const publicKey = await getPublicKey();
-      if (!publicKey) toast.error("Error getting public key");
+      if (!publicKey) {
+        return toast.error(
+          "Invalid or missing public key. Make sure your wallet is connected",
+        );
+      }
       setLoadingIPO(true);
 
       const xdr = await publishIPO.mutateAsync({
@@ -228,16 +190,20 @@ export const TicketTypeToAssetForm: React.FC<{
         userPublicKey: publicKey,
         unitsToSell: asset.totalUnits,
       });
-      const signedXDR = await signTransaction(xdr, {
-        network: "TESTNET",
-        accountToSign: publicKey,
-      });
+      const signedXDR = await signXDR(xdr);
       const result = await submitXDR.mutateAsync({
         xdr: signedXDR,
       });
-      console.log(result);
+      if (result?.successful) {
+        toast.success(
+          "Ticket offering published successfully to the blockchain",
+        );
+      } else {
+        toast.error("Error publishing ticket offering to the blockchain");
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Error publishing ticket offering to the blockchain");
     } finally {
       setLoadingIPO(false);
     }
@@ -252,11 +218,11 @@ export const TicketTypeToAssetForm: React.FC<{
             <Icons.chain className="my-1 h-4 w-4 fill-gray-200 text-gray-200" />
           </Badge>
         )}
-        <Label htmlFor="code" className="sr-only">
+        <Label htmlFor="label" className="sr-only">
           Code
         </Label>
         <Input
-          id="code"
+          id="label"
           register={register}
           disabled={isLocked}
           errors={errors}
@@ -311,7 +277,7 @@ export const TicketTypeToAssetForm: React.FC<{
             <Tooltip>
               <TooltipTrigger asChild className="">
                 <Button
-                  disabled={isLocked}
+                  disabled={isLocked || isLoading}
                   onClick={() => {
                     if (!isLocked) void handleSubmit(onSubmit)();
                   }}
@@ -357,7 +323,7 @@ export const TicketTypeToAssetForm: React.FC<{
             <Tooltip>
               <TooltipTrigger asChild className="">
                 <Button
-                  disabled={isLocked}
+                  disabled={isLocked || isLoading}
                   className="group bg-gradient-to-br from-black to-gray-400 hover:from-gray-400"
                   onClick={() => {
                     if (!isLocked) void saveInLedger();
@@ -387,6 +353,7 @@ export const TicketTypeToAssetForm: React.FC<{
             <Tooltip>
               <TooltipTrigger asChild className="">
                 <Button
+                  disabled={isLoading}
                   className="group bg-blue-600 hover:bg-blue-700"
                   onClick={IPO}
                   variant="outline"

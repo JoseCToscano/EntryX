@@ -8,8 +8,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { fromXLMToUSD, plurify } from "~/lib/utils";
-import Link from "next/link";
+import { ClientTRPCErrorHandler, fromXLMToUSD, plurify } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
 import {
@@ -36,10 +35,8 @@ const TicketCard: React.FC = () => {
   const [showTicketManagement, setShowTicketManagement] = React.useState(false);
   const [sellAmount, setSellAmount] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
-  const generateQrCode = (data: string) => {
-    const size = "200x200";
-    const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
-    return url;
+  const generateQrCode = (data: string, sizeString = "200x200") => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${sizeString}&data=${encodeURIComponent(data)}`;
   };
 
   const event = api.event.get.useQuery(
@@ -72,7 +69,7 @@ const TicketCard: React.FC = () => {
       toast.success("Transaction sent to blockchain successfully");
       setLoading(false);
     },
-    onError: (e) => toast.error("Error on ledger"),
+    onError: ClientTRPCErrorHandler,
   });
 
   const handleSell = async () => {
@@ -114,7 +111,10 @@ const TicketCard: React.FC = () => {
 
   const increaseSellAmount = () => {
     const availableTickets =
-      Number(ticket.data?.balance ?? "0") - ticket.data?.sellingLiabilities;
+      Number(ticket.data?.balance ?? "0") -
+      (ticket.data?.sellingLiabilities
+        ? Number(ticket.data?.sellingLiabilities)
+        : 0);
     if (sellAmount < availableTickets) {
       setSellAmount((p) => p + 1);
     }
@@ -140,7 +140,7 @@ const TicketCard: React.FC = () => {
 
   return (
     <div className="p-4">
-      <MenuBreadcumb id={eventId} actionSection="My Tickets" />
+      <MenuBreadcumb id={eventId as string} actionSection="My Tickets" />
       <div className="container mx-auto grid grid-cols-1 gap-12 px-4 py-12 md:grid-cols-[1fr_400px] md:gap-16 md:px-6 lg:px-8">
         {/* <div className="space-y-8"> */}
         <div className="flex min-h-screen w-full flex-col items-center justify-start space-y-8 bg-background">
@@ -159,15 +159,15 @@ const TicketCard: React.FC = () => {
               <div className="grid gap-2 text-center">
                 <h2 className="text-2xl font-bold">{asset.data?.label}</h2>
                 <div className="text-sm">
-                  {parseInt(ticket.data?.balance as string)}{" "}
-                  {plurify("ticket", parseInt(ticket.data?.balance as string))}
+                  {parseInt(ticket.data?.balance)}{" "}
+                  {plurify("ticket", parseInt(ticket.data?.balance))}
                 </div>{" "}
-                {ticket.data?.sellingLiabilities > 0 && (
+                {Number(ticket.data?.sellingLiabilities) > 0 && (
                   <div className="rounded-md bg-amber-600 px-2 text-sm text-white">
-                    {parseInt(ticket.data?.sellingLiabilities as string)}{" "}
+                    {parseInt(ticket.data?.sellingLiabilities)}{" "}
                     {plurify(
                       "ticket",
-                      parseInt(ticket.data?.sellingLiabilities as string),
+                      parseInt(ticket.data?.sellingLiabilities),
                     )}{" "}
                     on sell
                   </div>
@@ -194,7 +194,7 @@ const TicketCard: React.FC = () => {
                     Manage{" "}
                     {plurify(
                       "Ticket",
-                      parseInt(ticket.data?.sellingLiabilities as string),
+                      parseInt(ticket.data?.sellingLiabilities),
                     )}
                   </p>
                 )}

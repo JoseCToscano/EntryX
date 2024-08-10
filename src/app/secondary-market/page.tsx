@@ -21,6 +21,7 @@ import {
   CardContent,
   CardFooter,
 } from "~/components/ui/card";
+import { Icons } from "~/components/icons";
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,7 +114,7 @@ export default function Component() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FilterIcon className="mr-2 h-4 w-4" />
+                    <Icons.filter className="mr-2 h-4 w-4" />
                     Filters
                   </Button>
                 </DropdownMenuTrigger>
@@ -215,22 +216,3 @@ export default function Component() {
     </div>
   );
 }
-
-const FilterIcon: React.FC<{ className?: string }> = (props) => {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-  );
-};

@@ -1,4 +1,4 @@
-import CreateEventDialog from "./create-event-dialog";
+import { Button } from "~/components/ui/button";
 
 export function EmptyPlaceholder() {
   return (
@@ -23,7 +23,9 @@ export function EmptyPlaceholder() {
         <p className="mb-4 mt-2 text-sm text-muted-foreground">
           You have not any upcoming events. Add one below.
         </p>
-        <CreateEventDialog />
+        <Button size="sm" className="h-10">
+          Create New Event
+        </Button>
       </div>
     </div>
   );

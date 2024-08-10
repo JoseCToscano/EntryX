@@ -4,20 +4,17 @@ import {
   Asset,
   BASE_FEE,
   Horizon,
-  Keypair,
   Networks,
   Operation,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
-import { Asset as AssetDB } from "@prisma/client";
+import { type Asset as AssetDB } from "@prisma/client";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
-import { type AxiosError } from "axios";
 import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
+import { getAssetBalanceFromAccount, isInTrustline } from "~/lib/utils";
 
-const maxFeePerOperation = "100000";
 const horizonUrl = "https://horizon-testnet.stellar.org";
-const networkPassphrase = Networks.TESTNET;
 const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server(horizonUrl);
 
@@ -35,7 +32,7 @@ export const stellarOfferRouter = createTRPCRouter({
           },
         });
 
-        const ledgerAssets = await Promise.all(
+        return await Promise.all(
           event.Asset.map(async (asset) => {
             const offers = await server
               .assets()
@@ -45,19 +42,11 @@ export const stellarOfferRouter = createTRPCRouter({
             return { asset, offers };
           }),
         );
-
-        console.log(
-          "Current offers for the distributor account:",
-          ledgerAssets,
-        );
-
-        return ledgerAssets;
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Error fetching offers",
         });
-        console.error("Error fetching offers:", error);
       }
     }),
   buy: publicProcedure
@@ -135,13 +124,7 @@ export const stellarOfferRouter = createTRPCRouter({
       const trustline = new Map<string, AssetDB>();
 
       assets.forEach((dbAsset) => {
-        if (
-          userAccount.balances.find(
-            (b) =>
-              dbAsset.code === b.asset_code &&
-              dbAsset.issuer === b.asset_issuer,
-          )
-        ) {
+        if (userAccount.balances.find((b) => isInTrustline(b, dbAsset))) {
           trustline.set(dbAsset.id, dbAsset);
         }
       });
@@ -210,25 +193,22 @@ export const stellarOfferRouter = createTRPCRouter({
         },
       });
 
-      const availableBalance = userAccount.balances.find(
-        (b) => b.asset_code === asset.code && b.asset_issuer === asset.issuer,
+      const availableBalance = getAssetBalanceFromAccount(
+        userAccount.balances,
+        asset,
       );
-      console.log(
-        "availableBalance:",
-        availableBalance,
-        "input.unitsToSell:",
-        input.unitsToSell,
-      );
+
       if (!availableBalance) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Asset not found in user account",
         });
       }
-      const availableToSell =
+      const offerableUnits =
         Number(availableBalance.balance) -
         Number(availableBalance.selling_liabilities);
-      if (availableToSell < input.unitsToSell) {
+
+      if (offerableUnits < input.unitsToSell) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Insufficient balance",
@@ -237,7 +217,6 @@ export const stellarOfferRouter = createTRPCRouter({
 
       const ledgerAsset = new Asset(asset.code, asset.issuer);
 
-      // Ensure the user has a trustline set up for the asset before attempting to buy it
       // Build the transaction
       const transaction = new TransactionBuilder(userAccount, {
         fee: BASE_FEE,

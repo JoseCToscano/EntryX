@@ -18,9 +18,8 @@ import { Icons } from "~/components/icons";
 import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
 import { computeTransactionFees, fromXLMToUSD } from "~/lib/utils";
-import { Asset as DBAsset } from "@prisma/client";
-import { Asset, AssetType } from "@stellar/stellar-sdk";
-import { BalanceLineAsset } from "~/a";
+import { type Asset as DBAsset } from "@prisma/client";
+import { Asset } from "@stellar/stellar-sdk";
 
 export default function Purchase() {
   const router = useRouter();
@@ -80,7 +79,6 @@ export default function Purchase() {
         return new Map(
           prev.set(asset.id, { asset, total: currentQuantity - 1 }),
         );
-        return prev;
       });
     }
   };
@@ -144,10 +142,7 @@ export default function Purchase() {
         .map(([, a]) => new Asset(a.asset.code, a.asset.issuer)),
     );
 
-    return computeTransactionFees(
-      itemsInCart,
-      account.data.balances as BalanceLineAsset<AssetType.credit12>[],
-    );
+    return computeTransactionFees(itemsInCart, account.data.balances);
   }, [cart, account.data]);
 
   const total = React.useMemo(() => {
