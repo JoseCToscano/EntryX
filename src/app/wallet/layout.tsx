@@ -3,7 +3,6 @@ import React from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { Icons } from "~/components/icons";
-import Image from "next/image";
 import Footer from "~/components/components/footer";
 import { useWallet } from "~/hooks/useWallet";
 import { Badge } from "~/components/ui/badge";

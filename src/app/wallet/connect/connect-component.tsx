@@ -11,7 +11,7 @@ import { useWallet } from "~/hooks/useWallet";
 import { useRouter } from "next/navigation";
 
 export const ConnectWallet: React.FC = () => {
-  const { isFreighterAllowed, hasFreighter } = useWallet();
+  const { isFreighterAllowed, hasFreighter, connect } = useWallet();
   const router = useRouter();
 
   if (isFreighterAllowed) {
@@ -36,7 +36,7 @@ export const ConnectWallet: React.FC = () => {
                 <div className="m-6">
                   {hasFreighter ? (
                     <Button
-                      onClick={() => void router.push("/wallet")}
+                      onClick={connect}
                       className="h-10 rounded-md border-2 bg-black p-2 text-white hover:bg-white hover:text-black"
                     >
                       Connect Wallet

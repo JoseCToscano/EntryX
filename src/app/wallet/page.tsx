@@ -1,10 +1,9 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useWallet } from "~/hooks/useWallet";
 import { Icons } from "~/components/icons";
 
 import Link from "next/link";
-import { Button } from "~/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -22,11 +21,25 @@ import dayjs from "dayjs";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
-import { Horizon } from "@stellar/stellar-sdk";
+import { type Horizon } from "@stellar/stellar-sdk";
 import Image from "next/image";
+import { ConnectWallet } from "~/app/wallet/connect/connect-component";
+import WalletSkeleton from "~/app/wallet/components/wallet-skeleton";
 
 export default function Component() {
-  const { publicKey, account } = useWallet();
+  const { publicKey, account, isLoading, hasFreighter, isFreighterAllowed } =
+    useWallet();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Set a timeout to remove the loading spinner after 3 seconds (3000 milliseconds)
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+
+    // Cleanup the timeout if the component is unmounted
+    return () => clearTimeout(timeout);
+  }, []);
 
   const last5Operations = api.stellarAccountRouter.operations.useQuery(
     {
@@ -35,6 +48,14 @@ export default function Component() {
     },
     { enabled: !!publicKey },
   );
+
+  if (isLoading || loading) {
+    return <WalletSkeleton />;
+  }
+
+  if (!hasFreighter || !isFreighterAllowed || !publicKey) {
+    return <ConnectWallet />;
+  }
 
   return (
     <div className="flex w-full flex-col">
@@ -127,7 +148,10 @@ export default function Component() {
                     (b) => b.asset_type !== "native",
                   ) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[]
                 )?.map((asset, id) => (
-                  <div key={id} className="flex items-center justify-between">
+                  <div
+                    key={id}
+                    className="mt-2 flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gray-200 to-white text-2xl">
                         <Icons.StellarIcon />
@@ -139,7 +163,9 @@ export default function Component() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-lg font-semibold">{asset.balance}</div>
+                    <div className="text-lg font-semibold">
+                      {Number(asset.balance)}
+                    </div>
                   </div>
                 ))}
               </ScrollArea>

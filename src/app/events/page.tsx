@@ -30,7 +30,7 @@ const EventsPage: React.FC = () => {
           </div>
           <Separator className="my-4" />
           <div className="relative">
-            <ScrollArea>
+            <ScrollArea className="max-w-[90vw]">
               <div className="flex space-x-4 pb-4">
                 {isLoading &&
                   Array.from({ length: 4 }).map((_, i) => (
@@ -62,7 +62,7 @@ const EventsPage: React.FC = () => {
           </div>
           <Separator className="my-4" />
           <div className="relative">
-            <ScrollArea>
+            <ScrollArea className="max-w-[90vw]">
               <div className="flex space-x-4 pb-4">
                 {madeForYouAlbums.map((album) => (
                   <AlbumArtwork

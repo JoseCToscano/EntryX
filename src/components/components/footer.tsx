@@ -3,77 +3,44 @@ import Link from "next/link";
 
 const Footer = () => (
   <footer className="bottom-0 flex w-full flex-col items-center justify-center bg-muted p-6 md:py-12">
-    <div className="container grid max-w-7xl grid-cols-2 gap-8 text-sm sm:grid-cols-3 md:grid-cols-5">
+    <div className="container grid max-w-7xl grid-cols-2 gap-8 text-sm sm:grid-cols-3 md:grid-cols-4">
       <div className="grid gap-1">
-        <h3 className="font-semibold">Company</h3>
-        <Link href="#" prefetch={false}>
-          About Us
-        </Link>
-        <Link href="#" prefetch={false}>
-          Our Team
-        </Link>
-        <Link href="#" prefetch={false}>
-          Careers
-        </Link>
-        <Link href="#" prefetch={false}>
-          News
-        </Link>
-      </div>
-      <div className="grid gap-1">
-        <h3 className="font-semibold">Products</h3>
-        <Link href="#" prefetch={false}>
-          Wallet
-        </Link>
-        <Link href="#" prefetch={false}>
-          Swap
-        </Link>
-        <Link href="#" prefetch={false}>
-          Earn
-        </Link>
-        <Link href="#" prefetch={false}>
-          NFTs
-        </Link>
+        <h1 className="text-2xl font-semibold">Entry•X</h1>
+        <p className="text-xs font-light">
+          Entry•X is a decentralized platform designed to distribute and manage
+          digital tickets.
+        </p>
+        <p className="text-xs font-light text-muted-foreground">
+          A transparent, secure and reliable solution for event organizers and
+          ticket buyers.
+        </p>
       </div>
       <div className="grid gap-1">
         <h3 className="font-semibold">Resources</h3>
-        <Link href="#" prefetch={false}>
+        <Link href="/blog" prefetch={false}>
           Blog
         </Link>
-        <Link href="#" prefetch={false}>
-          Documentation
-        </Link>
-        <Link href="#" prefetch={false}>
+
+        <Link href="/support" prefetch={false}>
           Support
         </Link>
-        <Link href="#" prefetch={false}>
+        <Link href="/faq" prefetch={false}>
           FAQs
         </Link>
       </div>
       <div className="grid gap-1">
         <h3 className="font-semibold">Legal</h3>
-        <Link href="#" prefetch={false}>
+        <Link href="/privacy-policy" prefetch={false}>
           Privacy Policy
         </Link>
-        <Link href="#" prefetch={false}>
+        <Link href="/terms-of-service" prefetch={false}>
           Terms of Service
-        </Link>
-        <Link href="#" prefetch={false}>
-          Cookie Policy
         </Link>
       </div>
       <div className="grid gap-1">
         <h3 className="font-semibold">Connect</h3>
-        <Link href="#" prefetch={false}>
-          Twitter
-        </Link>
-        <Link href="#" prefetch={false}>
-          Discord
-        </Link>
-        <Link href="#" prefetch={false}>
-          Telegram
-        </Link>
-        <Link href="#" prefetch={false}>
-          Medium
+        <Link href="/contact" prefetch={false}>
+          Contact us
         </Link>
       </div>
     </div>
