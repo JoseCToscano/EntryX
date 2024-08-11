@@ -10,15 +10,17 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import Image from "next/image";
 import { PhotoAttributes } from "~/app/account/components/photo-attributes";
+import JoinWaitlistDialog from "~/app/_components/join-waitlist-dialog";
+import { Badge } from "~/components/ui/badge";
 
 function Section() {
   return (
     <section className="w-full bg-gradient-to-b from-white to-muted py-12 md:py-24 lg:py-32">
       <div className="container grid items-center gap-8 px-4 md:grid-cols-2 md:px-6">
         <div className="space-y-4">
-          <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm text-primary">
+          <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400">
             Beta Sign-up
-          </div>
+          </Badge>
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
             Be Among the First to Experience Secure Crypto Ticketing
           </h2>
@@ -28,11 +30,9 @@ function Section() {
             early access, exclusive perks, and the opportunity to shape the
             future of event ticketing.
           </p>
-          <div className="flex flex-col items-start gap-4 sm:flex-row">
-            <Button size="lg" className="w-full sm:w-auto">
-              Join the Waitlist
-            </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
+            <JoinWaitlistDialog />
+            <div className="flex w-full items-center gap-2 text-sm text-muted-foreground">
               <CalendarIcon className="h-4 w-4" />
               <span>Coming Soon</span>
             </div>
@@ -111,12 +111,6 @@ function Section() {
             <div className="mt-2 font-medium">
               - The entryx.me Development Team
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox id="marketing" />
-            <Label htmlFor="marketing" className="text-sm">
-              I agree to receive marketing communications.
-            </Label>
           </div>
         </div>
       </div>

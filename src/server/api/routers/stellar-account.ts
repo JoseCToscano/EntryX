@@ -16,6 +16,7 @@ import { TRPCError } from "@trpc/server";
 import {
   getAssetBalanceFromAccount,
   handleHorizonServerError,
+  shortStellarAddress,
 } from "~/lib/utils";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
@@ -102,6 +103,139 @@ export const stellarAccountRouter = createTRPCRouter({
       return assets.every(
         (asset) => !!getAssetBalanceFromAccount(account.balances, asset),
       );
+    }),
+  operations: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        limit: z.number().default(5).optional(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const ops = await server
+        .operations()
+        .forAccount(input.id)
+        .order("desc")
+        .limit(input.limit ?? 5)
+        .call();
+      return ops.records.map((op) => {
+        const operation = {
+          id: op.id,
+          created_at: op.created_at,
+          type: op.type,
+          label: `${op.type}`,
+          source: op.source_account,
+          desc: "",
+          asset_code: "",
+        };
+        switch (op.type) {
+          case Horizon.HorizonApi.OperationResponseType.createAccount:
+            operation.label = "Create account";
+            operation.desc = `Create account ${shortStellarAddress(op.account)}`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.payment:
+            operation.label = "Payment";
+            operation.desc = `Payment ${op.amount} ${op.asset_code} to ${op.to}`;
+            operation.asset_code = op.asset_code ?? "";
+            break;
+          case Horizon.HorizonApi.OperationResponseType.pathPayment:
+            operation.label = "Path payment";
+            operation.desc = `Path payment ${op.amount} ${op.asset_code} to ${op.to}`;
+            operation.asset_code = op.asset_code ?? "";
+            break;
+          case Horizon.HorizonApi.OperationResponseType.manageOffer:
+            operation.label = "Manage offer";
+            operation.desc = `${op.buying_asset_code ?? ""} for ${op.amount} ${op.selling_asset_code}`;
+            operation.asset_code =
+              op.buying_asset_code && op.selling_asset_code
+                ? `${op.buying_asset_code}<>${op.selling_asset_code}`
+                : (op.buying_asset_code ?? "");
+            break;
+          case Horizon.HorizonApi.OperationResponseType.createPassiveOffer:
+            operation.label = "Create passive offer";
+            operation.desc = `Create passive offer ${op.offer_id} ${op.buying_asset_code} for ${op.amount} ${op.selling_asset_code}`;
+            operation.asset_code =
+              op.buying_asset_code && op.selling_asset_code
+                ? `${op.buying_asset_code}<>${op.selling_asset_code}`
+                : (op.buying_asset_code ?? "");
+            break;
+          case Horizon.HorizonApi.OperationResponseType.setOptions:
+            operation.label = "Set options";
+            operation.desc = `Set options for ${shortStellarAddress(op.source_account)} ${op.home_domain}`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.changeTrust:
+            operation.label = "Change trust";
+            operation.desc = `Change trust for ${op.asset_code}`;
+            operation.asset_code = op.asset_code ?? "";
+            break;
+          case Horizon.HorizonApi.OperationResponseType.allowTrust:
+            operation.label = "Allow trust";
+            operation.desc = `Allow trust for ${op.asset_code}`;
+            operation.asset_code = op.asset_code ?? "";
+            break;
+          case Horizon.HorizonApi.OperationResponseType.accountMerge:
+            operation.label = "Account merge";
+            operation.desc = `Merge account ${op.into}`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.inflation:
+            operation.label = "Inflation";
+            operation.desc = `Inflation`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.manageData:
+            operation.label = "Manage data";
+            operation.desc = `Manage data for ${op.name}`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.bumpSequence:
+            operation.label = "Bump sequence";
+            operation.desc = `Bump sequence to ${op.bump_to}`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.createClaimableBalance:
+            operation.label = "Create claimable balance";
+            operation.desc = `Create claimable balance`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.claimClaimableBalance:
+            operation.label = "Claim claimable balance";
+            operation.desc = `Claim claimable balance`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType
+            .beginSponsoringFutureReserves:
+            operation.label = "Begin sponsoring future reserves";
+            operation.desc = `Begin sponsoring future reserves`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType
+            .endSponsoringFutureReserves:
+            operation.label = "End sponsoring future reserves";
+            operation.desc = `End sponsoring future reserves`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.revokeSponsorship:
+            operation.label = "Revoke sponsorship";
+            operation.desc = `Revoke sponsorship`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.clawback:
+          case Horizon.HorizonApi.OperationResponseType
+            .clawbackClaimableBalance:
+            operation.label = "Clawback";
+            operation.desc = `Clawback`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType.setTrustLineFlags:
+            operation.label = "Set trust line flags";
+            operation.desc = `Set trust line flags`;
+            break;
+          case Horizon.HorizonApi.OperationResponseType
+            .manageBuyOffer as Horizon.HorizonApi.OperationResponseType.manageOffer: // Horizon API is not correctly mapping manageBuyOffer
+            operation.label = "Manage buy offer";
+            operation.desc = `${op.amount} ${op.buying_asset_code} for ${op.price}`;
+            operation.asset_code =
+              op.buying_asset_code && op.selling_asset_code
+                ? `${op.buying_asset_code}<>${op.selling_asset_code}`
+                : (op.buying_asset_code ?? "");
+            break;
+          default:
+            console.log("operation", op);
+            operation.desc = `Unknown operation`;
+        }
+        return operation;
+      });
     }),
   validateSignature: publicProcedure
     .input(z.object({ xdr: z.string().min(1), publicKey: z.string() }))

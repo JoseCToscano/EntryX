@@ -236,3 +236,30 @@ export function handleHorizonServerError(error: unknown) {
     return message;
   }
 }
+
+export function shortStellarAddress(
+  longAddress: string,
+  charsToShow = 4,
+): string {
+  return (
+    longAddress.slice(0, charsToShow) + "..." + longAddress.slice(-charsToShow)
+  );
+}
+
+export function copyToClipboard(text: string, silence = false) {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      toast.success("Copied to clipboard");
+    })
+    .catch(() => {
+      if (!silence) {
+        toast.error("Failed to copy to clipboard");
+      }
+    });
+}
+
+export function generateQrCode(data: string): string {
+  const size = "100x100";
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
+}

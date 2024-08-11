@@ -27,12 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Icons.spinner className="animate-spin" />
             ) : (
               <span className="flex flex-row items-center gap-1 font-semibold">
-                <Image
-                  width={20}
-                  height={20}
-                  src={"/icons/stellar-xlm-logo.svg"}
-                  alt={"Stellar XLM icon"}
-                />
+                <Icons.StellarIcon />
                 XLM: {account?.xlm?.balance ?? "-"}
                 {network && (
                   <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">

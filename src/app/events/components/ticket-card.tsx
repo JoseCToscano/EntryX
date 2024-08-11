@@ -1,8 +1,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
-import { plurify } from "~/lib/utils";
+import { generateQrCode, plurify } from "~/lib/utils";
 import Link from "next/link";
 import { Icons } from "~/components/icons";
+import Image from "next/image";
 
 interface TicketCardProps {
   eventId: string;
@@ -25,11 +26,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
   numOfEntries,
   sellingLiabilities,
 }) => {
-  const generateQrCode = (data: string) => {
-    const size = "100x100";
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
-  };
-
   return (
     <Card className="w-full min-w-60 max-w-24 bg-gradient-to-br from-white to-primary-foreground hover:scale-[1.01]">
       <Link href={`/events/${eventId}/${id}`} prefetch={true}>
@@ -57,7 +53,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
             <div className="text-xs text-muted-foreground">{location}</div>
           </div>
           <div className="flex flex-col items-center gap-4">
-            <img
+            <Image
               src={generateQrCode(id)}
               width="100"
               height="100"
