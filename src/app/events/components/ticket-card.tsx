@@ -4,9 +4,11 @@ import { generateQrCode, plurify } from "~/lib/utils";
 import Link from "next/link";
 import { Icons } from "~/components/icons";
 import Image from "next/image";
+import { Badge } from "~/components/ui/badge";
 
 interface TicketCardProps {
   eventId: string;
+  code: string;
   id: string;
   title: string;
   date: string;
@@ -21,6 +23,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
   id,
   venue,
   location,
+  code,
   title,
   date,
   numOfEntries,
@@ -52,7 +55,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
             <div className="text-sm text-muted-foreground">{venue}</div>
             <div className="text-xs text-muted-foreground">{location}</div>
           </div>
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4">
             <Image
               src={generateQrCode(id)}
               width="100"
@@ -61,6 +64,9 @@ const TicketCard: React.FC<TicketCardProps> = ({
               className="rounded-md"
               style={{ aspectRatio: "200/200", objectFit: "cover" }}
             />
+            <Badge className="border-0 bg-gradient-to-br from-black to-gray-400">
+              {code}
+            </Badge>
           </div>
         </CardContent>
       </Link>

@@ -135,7 +135,7 @@ export const stellarAccountRouter = createTRPCRouter({
             break;
           case Horizon.HorizonApi.OperationResponseType.payment:
             operation.label = "Payment";
-            operation.desc = `Payment ${op.amount} ${op.asset_code} to ${op.to}`;
+            operation.desc = `Payment ${op.amount} ${op.asset_code ?? ""} to ${shortStellarAddress(op.to)}`;
             operation.asset_code = op.asset_code ?? "";
             break;
           case Horizon.HorizonApi.OperationResponseType.pathPayment:

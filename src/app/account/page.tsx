@@ -19,6 +19,7 @@ import { useWallet } from "~/hooks/useWallet";
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Component() {
   const { publicKey } = useWallet();
@@ -104,7 +105,7 @@ export default function Component() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Event Details</CardTitle>
+          <CardTitle>My Events</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -114,6 +115,7 @@ export default function Component() {
                 <TableHead>Date</TableHead>
                 <TableHead>Earnings</TableHead>
                 <TableHead>Occupation Rate</TableHead>
+                <TableHead>Manage</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,11 +140,21 @@ export default function Component() {
                 <TableCell>June 1, 2024</TableCell>
                 <TableCell>$45,678</TableCell>
                 <TableCell>92%</TableCell>
+                <TableCell>
+                  <Link
+                    href="#"
+                    className="flex items-center justify-center rounded-md border-[1px] border-black p-1 text-center text-blue-500"
+                  >
+                    Manage
+                    <Icons.aria className="h-4 w-4" />
+                  </Link>
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Art Exhibition</TableCell>
                 <TableCell>July 15, 2024</TableCell>
                 <TableCell>$32,456</TableCell>
+                <TableCell>78%</TableCell>
                 <TableCell>78%</TableCell>
               </TableRow>
               <TableRow>
@@ -150,17 +162,20 @@ export default function Component() {
                 <TableCell>August 20, 2024</TableCell>
                 <TableCell>$17,890</TableCell>
                 <TableCell>85%</TableCell>
+                <TableCell>85%</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Cooking Class</TableCell>
                 <TableCell>September 5, 2024</TableCell>
                 <TableCell>$9,876</TableCell>
                 <TableCell>68%</TableCell>
+                <TableCell>68%</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Dance Workshop</TableCell>
                 <TableCell>October 12, 2024</TableCell>
                 <TableCell>$20,123</TableCell>
+                <TableCell>75%</TableCell>
                 <TableCell>75%</TableCell>
               </TableRow>
             </TableBody>

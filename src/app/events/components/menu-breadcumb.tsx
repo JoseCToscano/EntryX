@@ -8,17 +8,24 @@ import {
 } from "~/components/ui/breadcrumb";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import { cn } from "~/lib/utils";
 
 export const MenuBreadcumb: React.FC<{
   id?: string;
   actionSection?: string;
-}> = ({ id, actionSection }) => {
+  className?: string;
+}> = ({ id, actionSection, className }) => {
   const { data: event, isLoading } = api.event.get.useQuery(
     { id: id ?? "" },
     { enabled: !!id },
   );
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background sm:static sm:h-auto sm:border-0 sm:bg-transparent">
+    <header
+      className={cn(
+        "sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background sm:static sm:h-auto sm:border-0 sm:bg-transparent",
+        className,
+      )}
+    >
       <Breadcrumb className="hidden md:flex">
         <BreadcrumbList>
           <BreadcrumbItem>

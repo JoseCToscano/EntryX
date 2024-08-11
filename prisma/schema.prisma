@@ -85,7 +85,7 @@ model Asset {
   distributor  String
   type         String
   eventId      String
-  pricePerUnit Decimal
+  pricePerUnit Decimal  @db.Decimal(10, 2)
   status       String   @default("ACTIVE")
   totalUnits   Int
   event        Event    @relation(fields: [eventId], references: [id])

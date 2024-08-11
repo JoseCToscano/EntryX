@@ -7,9 +7,10 @@ import Image from "next/image";
 import Footer from "~/components/components/footer";
 import { useWallet } from "~/hooks/useWallet";
 import { Badge } from "~/components/ui/badge";
+import { shortStellarAddress } from "~/lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { account, network, isLoading } = useWallet();
+  const { publicKey, network, isLoading } = useWallet();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -33,7 +34,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   src={"/icons/stellar-xlm-logo.svg"}
                   alt={"Stellar XLM icon"}
                 />
-                XLM: {account?.xlm?.balance ?? "-"}
+                {publicKey
+                  ? shortStellarAddress(publicKey)
+                  : "Wallet not connected"}
                 {network && (
                   <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
                     {network}

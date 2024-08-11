@@ -67,7 +67,6 @@ export default function Purchase() {
   const addToCart = (asset: DBAsset) => {
     const currentQuantity = cart.get(asset.id)?.total ?? 0;
     setCart((prev) => {
-      console.log("currentQuantity", currentQuantity);
       return new Map(prev.set(asset.id, { asset, total: currentQuantity + 1 }));
     });
   };
@@ -89,31 +88,25 @@ export default function Purchase() {
       if (!publicKey) {
         return toast.error("Please connect your wallet");
       }
-      const [assetKey] = cart.keys();
-      if (!assetKey) {
+      if (!cart.keys()) {
         return toast.error("Please select a ticket to purchase");
       }
-      const asset = cart.get(assetKey);
-      if (assetKey && asset) {
-        setProcessStep(2);
-        const xdr = await purchase.mutateAsync({
-          userPublicKey: publicKey,
-          items: Array.from(cart.entries()).map(([assetId, cartItem]) => ({
-            assetId,
-            unitsToBuy: cartItem.total,
-          })),
-        });
-        const signedTransaction = await signXDR(xdr);
-        setProcessStep(3);
-        await submitTransaction.mutateAsync({
-          xdr: signedTransaction,
-        });
-        setProcessStep(4);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        void ctx.asset.availability.invalidate();
-      } else {
-        toast.error("Please select a ticket to purchase");
-      }
+      setProcessStep(2);
+      const xdr = await purchase.mutateAsync({
+        userPublicKey: publicKey,
+        items: Array.from(cart.entries()).map(([assetId, cartItem]) => ({
+          assetId,
+          unitsToBuy: cartItem.total,
+        })),
+      });
+      const signedTransaction = await signXDR(xdr);
+      setProcessStep(3);
+      await submitTransaction.mutateAsync({
+        xdr: signedTransaction,
+      });
+      setProcessStep(4);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      void ctx.asset.availability.invalidate();
     } catch (e) {
       console.error(e);
     } finally {

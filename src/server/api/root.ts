@@ -18,6 +18,7 @@ import { assetsRouter } from "~/server/api/routers/asset";
 import { stellarAccountRouter } from "~/server/api/routers/stellar-account";
 import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
 import { analyticsRouter } from "~/server/api/routers/analytics";
+import { organizerRouter } from "~/server/api/routers/organizer";
 
 /**
  * This is the primary router for your server.
@@ -26,6 +27,7 @@ import { analyticsRouter } from "~/server/api/routers/analytics";
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
+  organizer: organizerRouter,
   analytics: analyticsRouter,
   event: eventsRouter,
   stellarOffer: stellarOfferRouter,

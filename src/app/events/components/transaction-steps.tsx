@@ -7,11 +7,13 @@ import { useWallet } from "~/hooks/useWallet";
 interface TransactionStepsProps {
   assets: string[];
   processStep?: number;
+  offerType?: "buy" | "sell";
 }
 
 export const TransactionSteps: React.FC<TransactionStepsProps> = ({
   assets,
   processStep,
+  offerType = "buy",
 }) => {
   const { publicKey } = useWallet();
 
@@ -30,6 +32,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
     <div className="flex flex-row items-center justify-center px-6 text-xs">
       <div className="z-0 h-28 translate-x-2.5 border-[1px] border-black" />
       <div className="z-10 grid w-full max-w-md grid-cols-1 gap-4">
+        {/* STEP 1: Manage Trustline */}
         <div className="flex items-center gap-4">
           <div
             className={cn(
@@ -48,7 +51,11 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
           </div>
           <div className="flex flex-1 flex-col">
             <p className="text-muted-foreground">
-              {hasTrustline ? "Existing trustline" : "Establishing Trustline"}
+              {offerType === "sell"
+                ? "Verifying asset ownership"
+                : hasTrustline
+                  ? "Existing trustline"
+                  : "Establishing Trustline"}
             </p>
           </div>
         </div>
@@ -72,9 +79,11 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
           </div>
           <div className="flex flex-1 flex-col">
             <div className="text-muted-foreground">
-              {processStep && processStep > 2
-                ? "Existing offer"
-                : "Processing offer"}
+              {offerType === "sell"
+                ? "Building offer"
+                : processStep && processStep > 2
+                  ? "Existing offer"
+                  : "Processing offer"}
             </div>
           </div>
         </div>

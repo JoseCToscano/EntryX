@@ -28,12 +28,13 @@ export const assetsRouter = createTRPCRouter({
       const event = await ctx.db.event.findFirstOrThrow({
         where: { id: input.eventId },
         include: {
-          Asset: true,
+          Asset: {
+            where: { address: { not: null } },
+          },
         },
       });
 
       const { distributorKey } = event;
-      console.log("distributorKey:", distributorKey, event);
       if (!distributorKey) return [];
 
       return event.Asset;

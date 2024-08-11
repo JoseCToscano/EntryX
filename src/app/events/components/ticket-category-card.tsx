@@ -51,7 +51,7 @@ export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
             alt={"Stellar XLM icon"}
           />
           {Number(category.pricePerUnit).toLocaleString("en-US", {
-            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
             maximumSignificantDigits: 2,
           })}{" "}
           XLM

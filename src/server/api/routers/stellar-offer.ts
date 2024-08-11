@@ -11,7 +11,11 @@ import {
 import { type Asset as AssetDB } from "@prisma/client";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
-import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
+import {
+  FIXED_UNITARY_COMMISSION,
+  RESELLER_UNITARY_COMMISSION,
+  SERVICE_FEE,
+} from "~/constants";
 import { getAssetBalanceFromAccount, isInTrustline } from "~/lib/utils";
 
 const horizonUrl = "https://horizon-testnet.stellar.org";
@@ -230,6 +234,18 @@ export const stellarOfferRouter = createTRPCRouter({
             price: input.desiredPrice
               ? input.desiredPrice.toString()
               : asset.pricePerUnit.toString(),
+          }),
+        )
+        // Add FIXED_UNITARY_COMMISSION operations
+        // Add SERVICE_FEE operations
+        .addOperation(
+          Operation.payment({
+            source: input.userPublicKey,
+            asset: Asset.native(),
+            destination: env.ISSUER_PUBLIC_KEY,
+            amount: (
+              RESELLER_UNITARY_COMMISSION * input.unitsToSell
+            ).toString(),
           }),
         )
         .setTimeout(standardTimebounds)

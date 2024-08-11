@@ -11,23 +11,20 @@ import { Button } from "~/components/ui/button";
 import { ClientTRPCErrorHandler, fromXLMToUSD, plurify } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
-import {
-  getPublicKey,
-  isConnected,
-  signTransaction,
-} from "@stellar/freighter-api";
 import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
+import { RESELLER_UNITARY_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
 import { useWallet } from "~/hooks/useWallet";
+import Loading from "~/app/account/components/loading";
+import { Badge } from "~/components/ui/badge";
 
 const TicketCard: React.FC = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, signXDR } = useWallet();
   const params = useParams();
   const { id: eventId, asset_id } = params;
   const ctx = api.useContext();
@@ -76,29 +73,27 @@ const TicketCard: React.FC = () => {
     try {
       if (sellAmount <= 0) return;
       setLoading(true);
-      const isWalletConnected = await isConnected();
-      if (!isWalletConnected) {
-        toast.error("Please connect your wallet");
+      if (!publicKey) {
+        return toast.error("Please connect your wallet");
       }
-      const userPublicKey = await getPublicKey();
-      if (!userPublicKey) toast.error("Error getting public key");
       const xdr = await sell.mutateAsync({
         assetId: asset_id as string,
         unitsToSell: sellAmount,
-        userPublicKey,
+        userPublicKey: publicKey,
       });
-      const signedXDR = await signTransaction(xdr, {
-        network: "TESTNET",
-        accountToSign: userPublicKey,
-      });
-      const result = await ledger.mutateAsync({ xdr: signedXDR });
-      void ctx.event.myTickets.invalidate({ eventId: eventId as string });
-      void ctx.event.ticket.invalidate({
-        eventId: eventId as string,
-        assetId: asset_id as string,
-      });
-      console.log(result);
+      const signedXDR = await signXDR(xdr);
+      const tx = await ledger.mutateAsync({ xdr: signedXDR });
+      if (tx?.successful) {
+        void ctx.event.myTickets.invalidate({ eventId: eventId as string });
+        void ctx.event.ticket.invalidate({
+          eventId: eventId as string,
+          assetId: asset_id as string,
+        });
+      } else {
+        toast.error("Error on sell");
+      }
     } catch (e) {
+      toast.error("Error on sell");
       console.error(e);
     } finally {
       setLoading(false);
@@ -136,74 +131,81 @@ const TicketCard: React.FC = () => {
 
   if (!asset_id || !eventId) return null;
 
-  if (!ticket.data) return null;
-
   return (
     <div className="p-4">
       <MenuBreadcumb id={eventId as string} actionSection="My Tickets" />
       <div className="container mx-auto grid grid-cols-1 gap-12 px-4 py-12 md:grid-cols-[1fr_400px] md:gap-16 md:px-6 lg:px-8">
-        {/* <div className="space-y-8"> */}
-        <div className="flex min-h-screen w-full flex-col items-center justify-start space-y-8 bg-background">
-          <div className="mt-10 w-full max-w-md rounded-xl border-2 border-primary-foreground bg-gradient-to-br from-white to-primary-foreground p-8 shadow-lg">
-            <div className="flex flex-col items-center justify-center gap-6">
-              <div className="rounded-xl bg-muted p-6">
-                <Image
-                  src={generateQrCode(asset_id as string)}
-                  alt="QR Code"
-                  width={200}
-                  height={200}
-                  className="h-44 w-44"
-                  style={{ aspectRatio: "160/160", objectFit: "cover" }}
-                />
-              </div>
-              <div className="grid gap-2 text-center">
-                <h2 className="text-2xl font-bold">{asset.data?.label}</h2>
-                <div className="text-sm">
-                  {parseInt(ticket.data?.balance)}{" "}
-                  {plurify("ticket", parseInt(ticket.data?.balance))}
-                </div>{" "}
-                {Number(ticket.data?.sellingLiabilities) > 0 && (
-                  <div className="rounded-md bg-amber-600 px-2 text-sm text-white">
-                    {parseInt(ticket.data?.sellingLiabilities)}{" "}
-                    {plurify(
-                      "ticket",
-                      parseInt(ticket.data?.sellingLiabilities),
-                    )}{" "}
-                    on sell
-                  </div>
-                )}
-                <div className="text-muted-foreground">
-                  <p className="text-sm">
-                    {dayjs(event.data?.date).format("MMM D, YYYY")}
-                  </p>
-                  <p className="text-sm">7:00 PM - 11:00 PM</p>
-                  <p className="text-sm"> {event.data?.venue}</p>
-                  <p className="text-xs"> {event.data?.location}</p>
+        {ticket.isLoading && <Loading />}
+        {ticket.data && (
+          <div className="flex min-h-screen w-full flex-col items-center justify-start space-y-8 bg-background">
+            <div className="mt-10 w-full max-w-md rounded-xl border-2 border-primary-foreground bg-gradient-to-br from-white to-primary-foreground p-8 shadow-lg">
+              <div className="flex flex-col items-center justify-center gap-6">
+                <Badge className="border-0 bg-gradient-to-br from-black to-gray-400">
+                  {ticket.data?.asset.code}
+                </Badge>
+                <div className="rounded-xl bg-muted p-6">
+                  <Image
+                    src={generateQrCode(asset_id as string)}
+                    alt="QR Code"
+                    width={200}
+                    height={200}
+                    className="h-44 w-44"
+                    style={{ aspectRatio: "160/160", objectFit: "cover" }}
+                  />
                 </div>
+                <div className="grid gap-2 text-center">
+                  <h2 className="text-2xl font-bold">{asset.data?.label}</h2>
+                  <div className="text-sm">
+                    {parseInt(ticket.data?.balance)}{" "}
+                    {plurify("ticket", parseInt(ticket.data?.balance))}
+                  </div>{" "}
+                  {Number(ticket.data?.sellingLiabilities) > 0 && (
+                    <div className="rounded-md bg-amber-600 px-2 text-sm text-white">
+                      {parseInt(ticket.data?.sellingLiabilities)}{" "}
+                      {plurify(
+                        "ticket",
+                        parseInt(ticket.data?.sellingLiabilities),
+                      )}{" "}
+                      on sell
+                    </div>
+                  )}
+                  <div className="text-muted-foreground">
+                    <p className="text-sm">
+                      {dayjs(event.data?.date).format("MMM D, YYYY")}
+                    </p>
+                    <p className="text-sm">7:00 PM - 11:00 PM</p>
+                    <p className="text-sm"> {event.data?.venue}</p>
+                    <p className="text-xs"> {event.data?.location}</p>
+                  </div>
+                </div>
+                <Button
+                  disabled={sell.isPending || ledger.isPending || loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTicketManagement(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="group border-[1px] border-black bg-black pl-4 pr-8 text-white hover:bg-white hover:text-black"
+                >
+                  {sell.isPending || ledger.isPending || loading ? (
+                    <Icons.spinner className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <p>
+                      Manage{" "}
+                      {plurify(
+                        "Ticket",
+                        parseInt(ticket.data?.sellingLiabilities ?? "0"),
+                      )}
+                    </p>
+                  )}
+                  <Icons.expandingArrow className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                onClick={() => setShowTicketManagement(true)}
-                variant="outline"
-                size="sm"
-                className="group border-[1px] border-black bg-black pl-4 pr-8 text-white hover:bg-white hover:text-black"
-              >
-                {sell.isPending || ledger.isPending ? (
-                  "..."
-                ) : (
-                  <p>
-                    Manage{" "}
-                    {plurify(
-                      "Ticket",
-                      parseInt(ticket.data?.sellingLiabilities),
-                    )}
-                  </p>
-                )}
-                <Icons.expandingArrow className="h-4 w-4" />
-              </Button>
             </div>
           </div>
-        </div>
-        {showTicketManagement && (
+        )}
+        {ticket.data && showTicketManagement && (
           <div className="space-y-8">
             <Card>
               <CardHeader>
@@ -219,30 +221,21 @@ const TicketCard: React.FC = () => {
                     <div>{Number(asset.data?.pricePerUnit ?? "0")} XLM</div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>Unitary commission</div>
-                    <div>{FIXED_UNITARY_COMMISSION} XLM</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>Service Fee</div>
-                    <div>{SERVICE_FEE} XLM</div>
-                  </div>
-                  <div className="flex items-center justify-between font-medium">
-                    <div>Subtotal</div>
-                    <div>
-                      {total.toLocaleString("en-US", {
-                        minimumFractionDigits: 5,
-                        maximumFractionDigits: 5,
-                      })}{" "}
-                      XLM
+                  {sellAmount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div>Reseller Unitary commission</div>
+                      <div>{RESELLER_UNITARY_COMMISSION} XLM</div>
                     </div>
-                  </div>
+                  )}
+
                   <Separator />
                   <div className="flex items-center gap-2">
                     <Button
+                      disabled={sell.isPending || ledger.isPending || loading}
                       onClick={reduceSellAmount}
                       variant="outline"
                       size="sm"
+                      className="bg-black text-white hover:bg-white hover:text-black"
                     >
                       -
                     </Button>
@@ -250,22 +243,24 @@ const TicketCard: React.FC = () => {
                       Selling {sellAmount} {plurify("Ticket", sellAmount)}
                     </span>
                     <Button
+                      disabled={sell.isPending || ledger.isPending || loading}
                       onClick={increaseSellAmount}
                       variant="outline"
                       size="sm"
+                      className="bg-black text-white hover:bg-white hover:text-black"
                     >
                       +
                     </Button>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between font-bold">
-                    <div>Total</div>
+                    <div>You&apos;ll receive</div>
+
                     <div className="flex flex-col items-end justify-end">
                       <div>
                         {(
                           total -
-                          (SERVICE_FEE * sellAmount > 0 ? 1 : 0) -
-                          sellAmount * FIXED_UNITARY_COMMISSION
+                          RESELLER_UNITARY_COMMISSION * (sellAmount > 0 ? 1 : 0)
                         ).toLocaleString("en-US", {
                           minimumFractionDigits: 5,
                           maximumFractionDigits: 5,
@@ -276,8 +271,9 @@ const TicketCard: React.FC = () => {
                         approx. $
                         {fromXLMToUSD(
                           total -
-                            (SERVICE_FEE * sellAmount > 0 ? 1 : 0) -
-                            sellAmount * FIXED_UNITARY_COMMISSION,
+                            (RESELLER_UNITARY_COMMISSION * sellAmount > 0
+                              ? 1
+                              : 0),
                         ).toFixed(2)}{" "}
                         USD
                       </div>
@@ -285,7 +281,7 @@ const TicketCard: React.FC = () => {
                   </div>
 
                   <div className="py-4">
-                    <TransactionSteps assets={[]} />
+                    <TransactionSteps assets={[]} offerType="sell" />
                   </div>
                   <Button
                     disabled={loading || sellAmount <= 0}
@@ -303,6 +299,7 @@ const TicketCard: React.FC = () => {
                     onClick={() => {
                       setShowTicketManagement(false);
                       setSellAmount(0);
+                      setLoading(false);
                     }}
                     variant="outline"
                     size="lg"

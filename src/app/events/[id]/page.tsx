@@ -18,6 +18,7 @@ import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Icons } from "~/components/icons";
 import { useWallet } from "~/hooks/useWallet";
 import { fromXLMToUSD } from "~/lib/utils";
+import Banner from "~/components/components/banner";
 
 export default function Component() {
   const { publicKey, hasFreighter } = useWallet();
@@ -39,8 +40,35 @@ export default function Component() {
   if (typeof id !== "string") return null;
   return (
     <div className="w-full">
-      <section className="w-full bg-[url('/images/event-placeholder-3.png')] bg-cover bg-center py-20 md:py-28">
-        <MenuBreadcumb id={id} />
+      {event.data?.distributorKey === publicKey && (
+        <Banner
+          title={"It seems you are using the event's distributor's Waller"}
+          content={
+            <>
+              <p className="text-sm text-gray-500">
+                You are connected to the event&apos;s distributor&apos;s wallet.
+                If your intention is to purchase tickets, please connect your
+                personal wallet.
+              </p>
+              <p className="text-sm text-gray-500">
+                If your intention was to edit the event, please go to the
+                event&apos;s
+                <a
+                  href={`/account/events/${id}`}
+                  className="text-blue-500 underline"
+                >
+                  {" "}
+                  edit page{" "}
+                </a>
+              </p>
+            </>
+          }
+          buttonText={"Got it"}
+          defaultOpen
+        />
+      )}
+      <section className="w-full bg-[url('/images/event-placeholder-3.png')] bg-cover bg-center py-10">
+        <MenuBreadcumb id={id} className="ml-8" />
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="max-w-3xl space-y-6">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
@@ -82,6 +110,7 @@ export default function Component() {
                       <TicketCard
                         key={ticket.id}
                         eventId={id}
+                        code={ticket.code ?? ""}
                         numOfEntries={Number(ticket.balance.balance)}
                         id={ticket.id!}
                         title={ticket.label!}

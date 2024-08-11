@@ -161,64 +161,12 @@ export default function CreateEvent() {
                       />
                     </div>
                   </div>
-                  <Button onClick={handleSubmit(onSubmit)}>Create Event</Button>
-                </CardContent>
-              </Card>
-
-              <Card x-chunk="dashboard-07-chunk-2">
-                <CardHeader>
-                  <CardTitle>Event Analytics</CardTitle>
-                  <CardDescription>
-                    View event performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Ticket Sales</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">1,500</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-green-500" />
-                              <span>+12%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Attendance</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">2,800</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-red-500" />
-                              <span>-5%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Revenue</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">$250,000</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-green-500" />
-                              <span>+8%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
+                  <Button
+                    className="border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
+                    onClick={handleSubmit(onSubmit)}
+                  >
+                    Create Event
+                  </Button>
                 </CardContent>
               </Card>
             </div>

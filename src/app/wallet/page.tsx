@@ -82,7 +82,7 @@ export default function Component() {
                     onClick={() => {
                       copyToClipboard(publicKey ?? "");
                     }}
-                    className="flex cursor-pointer items-center gap-2 text-blue-600 underline"
+                    className="flex cursor-pointer items-center gap-2 text-blue-800 underline"
                   >
                     {shortStellarAddress(publicKey ?? "", 5)}
                     <Icons.copy className="h-4 w-4" />
@@ -104,7 +104,7 @@ export default function Component() {
                   <Link
                     href={`https://stellar.expert/explorer/testnet/account/${publicKey}`}
                     target="_blank"
-                    className="text-blue-600 underline"
+                    className="text-blue-800 underline"
                     prefetch={false}
                   >
                     View History
@@ -128,7 +128,7 @@ export default function Component() {
                     onClick={() => {
                       copyToClipboard(publicKey ?? "");
                     }}
-                    className="flex cursor-pointer items-center gap-2 text-center text-blue-600 underline"
+                    className="flex cursor-pointer items-center gap-2 text-center text-blue-800 underline"
                   >
                     {shortStellarAddress(publicKey ?? "", 5)}
                     <Icons.copy className="h-4 w-4" />
@@ -214,7 +214,7 @@ export default function Component() {
               <Link
                 href={`https://stellar.expert/explorer/testnet/account/${publicKey}`}
                 target="_blank"
-                className="text-blue-600 underline"
+                className="text-blue-800 underline"
                 prefetch={false}
               >
                 View All Transactions

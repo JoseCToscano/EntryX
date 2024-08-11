@@ -27,7 +27,7 @@ import {
   TableBody,
 } from "~/components/ui/table";
 import { CartesianGrid, XAxis, Bar, BarChart } from "recharts";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cn } from "~/lib/utils";
 import Image from "next/image";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
@@ -42,17 +42,26 @@ import {
 import { Icons } from "~/components/icons";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { useWallet } from "~/hooks/useWallet";
+import Loading from "~/app/account/components/loading";
 
 export default function EventEditor() {
+  const { publicKey, isLoading } = useWallet();
   // Use the useParams hook to access the dynamic parameters
   const params = useParams();
+  const router = useRouter();
   // Extract the id from the params object
   const { id } = params;
-  const categories = api.asset.list.useQuery(
-    { eventId: id as string },
-    { enabled: !!id },
+
+  const event = api.organizer.event.useQuery(
+    { eventId: id as string, publicKey: publicKey! },
+    { enabled: !!id && !!publicKey },
   );
-  const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
+
+  const categories = api.asset.list.useQuery(
+    { eventId: event.data!.id },
+    { enabled: !!event.data?.id },
+  );
   const [pendingForms, setPendingForms] = React.useState<number[]>([]);
 
   const update = api.event.update.useMutation({
@@ -66,6 +75,19 @@ export default function EventEditor() {
   });
 
   if (!id) return null;
+
+  if (event.isLoading || isLoading) {
+    return <Loading />;
+  }
+
+  if (event.error) {
+    void router.push("/account/events");
+    toast.error("Event not found");
+  }
+
+  if (!event.data) {
+    return <>No data</>;
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40 p-4">
@@ -130,17 +152,15 @@ export default function EventEditor() {
                           />
                         </div>
                       </div>
-                      <div className="">
-                        <Image
-                          src={`/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`}
-                          alt={"album.name"}
-                          width={300}
-                          height={330}
-                          className={cn(
-                            "aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:scale-105",
-                          )}
-                        />
-                      </div>
+                      <Image
+                        src={`/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`}
+                        alt={"album.name"}
+                        width={300}
+                        height={330}
+                        className={cn(
+                          "z-10 aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:scale-105",
+                        )}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-3">
@@ -261,79 +281,11 @@ export default function EventEditor() {
                     }}
                     size="sm"
                     variant="ghost"
-                    className="gap-1"
+                    className="bg-black text-white"
                   >
-                    <div className="h-3.5 w-3.5" />
                     Add Ticket Type
                   </Button>
                 </CardFooter>
-              </Card>
-
-              <Card x-chunk="dashboard-07-chunk-2">
-                <CardHeader>
-                  <CardTitle>Event Analytics</CardTitle>
-                  <CardDescription>
-                    View event performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Ticket Sales</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">1,500</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-green-500" />
-                              <span>+12%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Attendance</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">2,800</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-red-500" />
-                              <span>-5%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Revenue</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="text-4xl font-bold">$250,000</div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <div className="h-4 w-4 text-green-500" />
-                              <span>+8%</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    <div className="grid gap-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Ticket Sales by Type</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <BarchartChart className="aspect-[9/4]" />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </CardContent>
               </Card>
             </div>
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">

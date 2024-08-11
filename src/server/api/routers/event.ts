@@ -81,6 +81,7 @@ export const eventsRouter = createTRPCRouter({
           Number(b.balance) > 0
         );
       }) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
+      console.log("myTicketCodes:", myTicketCodes);
       const assets = await ctx.db.asset.findMany({
         where: {
           eventId: input.eventId,
@@ -230,6 +231,7 @@ export const eventsRouter = createTRPCRouter({
       const event = await ctx.db.event.findUniqueOrThrow({
         where: { id: input.eventId },
         select: {
+          distributorKey: true,
           _count: {
             select: {
               Asset: true,
@@ -246,7 +248,7 @@ export const eventsRouter = createTRPCRouter({
           totalUnits: input.totalUnits,
           eventId: input.eventId,
           issuer: env.ISSUER_PUBLIC_KEY,
-          distributor: input.distributorPublicKey,
+          distributor: event.distributorKey!,
         },
       });
     }),

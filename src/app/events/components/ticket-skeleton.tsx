@@ -8,7 +8,7 @@ export const TciketSkeleton: React.FC<Props> = ({ className }) => {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-start gap-2",
+        "flex h-96 flex-col items-center justify-start gap-2",
         className,
       )}
     >
