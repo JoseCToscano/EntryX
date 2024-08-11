@@ -7,6 +7,8 @@ import {
 } from "~/server/api/trpc";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "@prisma/client";
+import EventFindManyArgs = Prisma.EventFindManyArgs;
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
@@ -57,6 +59,9 @@ export const eventsRouter = createTRPCRouter({
       return ctx.db.event.findMany({
         where: {
           distributorKey: input.publicKey,
+        },
+        orderBy: {
+          date: "desc",
         },
       });
     }),
@@ -210,11 +215,34 @@ export const eventsRouter = createTRPCRouter({
       }, 0);
     }),
   search: publicProcedure
-    .input(z.object({ orderBy: z.string().optional() }).optional())
+    .input(
+      z
+        .object({
+          orderBy: z.string().optional(),
+          minDate: z.string().optional(),
+          maxDate: z.string().optional(),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
-      return await ctx.db.event.findMany({
-        orderBy: { createdAt: "desc" },
-      });
+      // Build WHERE object
+      const findManyArgs: EventFindManyArgs = {
+        where: {},
+        orderBy: { date: "desc" },
+      };
+      if (input?.minDate) {
+        findManyArgs.where = {
+          ...findManyArgs.where,
+          date: { gte: new Date(input.minDate) },
+        };
+      }
+      if (input?.maxDate) {
+        findManyArgs.where = {
+          ...findManyArgs.where,
+          date: { lte: new Date(input.maxDate) },
+        };
+      }
+      return await ctx.db.event.findMany(findManyArgs);
     }),
   addTicketCategory: publicProcedure
     .input(
@@ -306,8 +334,10 @@ export const eventsRouter = createTRPCRouter({
         publicKey: z.string().min(1),
         name: z.string().min(1),
         venue: z.string().min(1),
+        location: z.string().min(1),
         description: z.string().min(1),
         date: z.string().min(1).or(z.date()),
+        imageUrl: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -318,6 +348,8 @@ export const eventsRouter = createTRPCRouter({
           description: input.description,
           date: input.date,
           distributorKey: input.publicKey,
+          location: input.location,
+          imageUrl: input.imageUrl,
           // organizerId: ctx.session.user.id,
         },
       });

@@ -1,18 +1,42 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { Horizon } from "@stellar/stellar-sdk";
-
-const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+import { Prisma } from "@prisma/client";
+import EventFindManyArgs = Prisma.EventFindManyArgs;
 
 export const organizerRouter = createTRPCRouter({
   myEvents: publicProcedure
-    .input(z.object({ publicKey: z.string(), orderBy: z.string().optional() }))
+    .input(
+      z.object({
+        publicKey: z.string(),
+        orderBy: z.string().optional(),
+        minDate: z.string().optional(),
+        maxDate: z.string().optional(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
-      return await ctx.db.event.findMany({
-        where: { distributorKey: input.publicKey },
-        orderBy: { createdAt: "desc" },
-      });
+      // Build WHERE object
+      const findManyArgs: EventFindManyArgs = {
+        where: {
+          distributorKey: input.publicKey,
+        },
+        orderBy: { date: "desc" },
+      };
+      if (input.minDate) {
+        findManyArgs.where = {
+          ...findManyArgs.where,
+          date: { gte: new Date(input.minDate) },
+        };
+      }
+      if (input.maxDate) {
+        findManyArgs.where = {
+          ...findManyArgs.where,
+          date: { lte: new Date(input.maxDate) },
+        };
+      }
+
+      return await ctx.db.event.findMany(findManyArgs);
     }),
+
   event: publicProcedure
     .input(z.object({ publicKey: z.string(), eventId: z.string() }))
     .query(async ({ ctx, input }) => {

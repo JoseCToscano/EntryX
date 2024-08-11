@@ -21,6 +21,7 @@ import Image from "next/image";
 import { ClientTRPCErrorHandler, cn } from "~/lib/utils";
 import { useRouter } from "next/navigation";
 import { useWallet } from "~/hooks/useWallet";
+import { Icons } from "~/components/icons";
 
 dayjs.extend(utc);
 
@@ -52,6 +53,7 @@ export default function CreateEvent() {
       name: "",
       venue: "",
       description: "",
+      location: "",
     },
   });
 
@@ -62,6 +64,7 @@ export default function CreateEvent() {
       date: dayjs.utc(data.date as string).toDate(),
       venue: data.venue as string,
       description: data.description as string,
+      location: data.location as string,
       publicKey,
     });
     await ctx.event.search.invalidate();
@@ -155,6 +158,7 @@ export default function CreateEvent() {
                       <Label htmlFor="location">Location</Label>
                       <Input
                         id="location"
+                        register={register}
                         type="text"
                         className="w-full"
                         placeholder="London, UK"
@@ -165,7 +169,11 @@ export default function CreateEvent() {
                     className="border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
                     onClick={handleSubmit(onSubmit)}
                   >
-                    Create Event
+                    {createEvent.isPending ? (
+                      <Icons.spinner className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Create Event"
+                    )}
                   </Button>
                 </CardContent>
               </Card>

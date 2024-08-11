@@ -3,6 +3,7 @@
 import React, { type ReactNode } from "react";
 import { CloseIcon } from "next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon";
 import { cn } from "~/lib/utils";
+import { Button } from "~/components/ui/button";
 
 type BannerProps = {
   title: string;
@@ -47,14 +48,15 @@ const Banner: React.FC<BannerProps> = ({
       </h3>
       {content}
       <div className="mt-2 flex space-x-5">
-        <button
+        <Button
           onClick={() => {
             setShowBanner(false);
           }}
-          className="mt-4 w-full rounded-md border border-gray-300 p-2 text-center text-sm font-medium text-gray-500 transition-all hover:border-gray-700 hover:text-gray-600"
+          variant="ghost"
+          className="mt-4 w-full rounded-md border border-gray-300 bg-black p-2 text-sm font-medium text-gray-500 text-white transition-all hover:border-gray-700 hover:text-gray-600"
         >
           {buttonText}
-        </button>
+        </Button>
         {actions}
       </div>
       {footer}

@@ -9,15 +9,21 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { useWallet } from "~/hooks/useWallet";
 
+const today = new Date().toISOString();
+
 export default function EventsPage() {
   const { publicKey, isLoading: isLoadingKey } = useWallet();
-  const {
-    data: events,
-    error,
-    isLoading,
-  } = api.organizer.myEvents.useQuery(
+  const { data: upcomingEvents } = api.organizer.myEvents.useQuery(
     {
       publicKey: publicKey!,
+      minDate: today,
+    },
+    { enabled: !!publicKey },
+  );
+  const { data: previousEvents } = api.organizer.myEvents.useQuery(
+    {
+      publicKey: publicKey!,
+      maxDate: today,
     },
     { enabled: !!publicKey },
   );
@@ -46,24 +52,19 @@ export default function EventsPage() {
               </div>
             </div>
             <Separator className="my-4" />
-            <div className="relative">
-              <ScrollArea>
-                <div className="flex space-x-4 pb-4">
-                  {events?.map((event) => (
-                    <AlbumArtwork
-                      key={event.name}
-                      album={event}
-                      className="w-[250px]"
-                      aspectRatio="portrait"
-                      width={300}
-                      height={300}
-                      showSalesPercentage
-                      href={`/account/events/${event.id}`}
-                    />
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+            <div className="flex max-w-[90vw] space-x-4 overflow-x-scroll pb-4">
+              {upcomingEvents?.map((event) => (
+                <AlbumArtwork
+                  key={event.name}
+                  album={event}
+                  className="w-[250px]"
+                  aspectRatio="portrait"
+                  width={300}
+                  height={300}
+                  showSalesPercentage
+                  href={`/account/events/${event.id}`}
+                />
+              ))}
             </div>
             <div className="mt-6 space-y-1">
               <h2 className="text-2xl font-semibold tracking-tight">
@@ -77,7 +78,7 @@ export default function EventsPage() {
             <div className="relative">
               <ScrollArea>
                 <div className="flex space-x-4 pb-4">
-                  {madeForYouAlbums.map((album) => (
+                  {previousEvents?.map((album) => (
                     <AlbumArtwork
                       key={album.name}
                       album={album}

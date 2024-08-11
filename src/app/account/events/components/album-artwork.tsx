@@ -50,14 +50,14 @@ export function AlbumArtwork({
       <div className="overflow-hidden rounded-md">
         <Image
           src={
-            (album as Albums).cover ??
+            (album as Event).imageUrl ??
             `/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`
           }
           alt={album.name}
           width={width}
           height={height}
           className={cn(
-            "h-auto w-auto cursor-pointer object-cover transition-all",
+            "h-auto w-auto cursor-pointer object-cover transition-all hover:border-2",
             aspectRatio === "portrait" ? "aspect-[3/4]" : "aspect-square",
           )}
         />
@@ -65,7 +65,9 @@ export function AlbumArtwork({
       <div className="space-y-1 text-sm">
         <h3 className="font-medium leading-none">{album.name}</h3>
         <span className="flex flex-row items-center justify-between">
-          <p className="text-xs text-muted-foreground">{album.venue}</p>
+          <p className="text-xs text-muted-foreground">
+            {(album as Event).location}
+          </p>
           <p className="text-xs text-muted-foreground">
             {dayjs(album.date).format("MMM DD")}
           </p>

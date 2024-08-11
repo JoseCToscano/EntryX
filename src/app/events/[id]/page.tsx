@@ -42,7 +42,7 @@ export default function Component() {
     <div className="w-full">
       {event.data?.distributorKey === publicKey && (
         <Banner
-          title={"It seems you are using the event's distributor's Waller"}
+          title={"It seems you are using the event's distributor's Wallet"}
           content={
             <>
               <p className="text-sm text-gray-500">
@@ -63,7 +63,7 @@ export default function Component() {
               </p>
             </>
           }
-          buttonText={"Got it"}
+          buttonText={"Understood"}
           defaultOpen
         />
       )}
@@ -128,6 +128,14 @@ export default function Component() {
           )}
         </div>
         <div className="space-y-8">
+          <Card x-chunk="dashboard-07-chunk-3">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Event Status</CardTitle>
+              <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400">
+                {event.data?.status}
+              </Badge>
+            </CardHeader>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Purchase Tickets</CardTitle>

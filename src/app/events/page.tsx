@@ -10,8 +10,20 @@ import { CalendarDateRangePicker } from "~/app/account/events/components/date-ra
 import { Search } from "~/app/account/components/search";
 import { noop } from "~/lib/utils";
 
+const today = new Date().toISOString();
+
 const EventsPage: React.FC = () => {
-  const { data: events, error, isLoading } = api.event.search.useQuery({});
+  const {
+    data: events,
+    error,
+    isLoading,
+  } = api.event.search.useQuery({
+    minDate: today,
+  });
+
+  const { data: previousEvents } = api.event.search.useQuery({
+    maxDate: today,
+  });
 
   if (error) {
     return <div>Error: {error.message}</div>;
@@ -56,26 +68,26 @@ const EventsPage: React.FC = () => {
           </div>
           <div className="mt-6 space-y-1">
             <h2 className="text-2xl font-semibold tracking-tight">
-              Your events
+              Recent events
             </h2>
             <p className="text-sm text-muted-foreground">
-              Take a look back to previous events.
+              Take a look back to previous events
             </p>
           </div>
           <Separator className="my-4" />
           <div className="relative">
             <ScrollArea className="max-w-[90vw]">
               <div className="flex space-x-4 pb-4">
-                {madeForYouAlbums.map((album) => (
+                {previousEvents?.map((event) => (
                   <AlbumArtwork
-                    key={album.name}
-                    album={album}
+                    key={event.name}
+                    album={event}
                     className="w-[150px]"
                     aspectRatio="square"
                     width={150}
                     height={150}
                     showAttendance
-                    href={`/events/#`}
+                    href={`/events/${event.id}`}
                   />
                 ))}
               </div>

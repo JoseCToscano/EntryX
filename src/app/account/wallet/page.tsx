@@ -10,14 +10,12 @@ import Image from "next/image";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
 import { useWallet } from "~/hooks/useWallet";
-import { ConnectWallet } from "~/app/account/wallet/connect/connect-component";
 import { Icons } from "~/components/icons";
 
-export default function WallerPage() {
+export default function WalletPage() {
   const {
     publicKey,
     connect: connectWallet,
-    signXDR,
     network,
     isLoading,
     hasFreighter,

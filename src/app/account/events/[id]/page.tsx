@@ -59,8 +59,8 @@ export default function EventEditor() {
   );
 
   const categories = api.asset.list.useQuery(
-    { eventId: event.data!.id },
-    { enabled: !!event.data?.id },
+    { eventId: id as string },
+    { enabled: !!id && Boolean(event.data?.id) },
   );
   const [pendingForms, setPendingForms] = React.useState<number[]>([]);
 
@@ -153,12 +153,15 @@ export default function EventEditor() {
                         </div>
                       </div>
                       <Image
-                        src={`/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`}
+                        src={
+                          event.data?.imageUrl ??
+                          `/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`
+                        }
                         alt={"album.name"}
                         width={300}
                         height={330}
                         className={cn(
-                          "z-10 aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:scale-105",
+                          "aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:border-2",
                         )}
                       />
                     </div>
