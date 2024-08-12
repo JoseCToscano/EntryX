@@ -10,16 +10,11 @@ import {
   BASE_FEE,
   Networks,
   xdr,
-  StrKey,
   Address,
-  Asset,
 } from "@stellar/stellar-sdk";
 import { env } from "~/env";
 const execute = promisify(exec);
 
-const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
-const contractAddress =
-  "CDUURCG5C2RUHPDTXICJGFH6ILQ5VI5K3XI5QXCJGOJH6N4B6KQHF3W4";
 const rpcUrl = "https://soroban-testnet.stellar.org";
 export async function exe(command: string) {
   const { stdout, stderr } = await execute(command);
@@ -49,9 +44,9 @@ export function addressToScVal(addressStr: string) {
   // Convert to ScVal as an Object with Bytes
   return nativeToScVal(Address.fromString(addressStr));
 }
-export const nativize = (val: xdr.ScVal): any => {
-  return scValToNative(val);
-};
+export function nativize<T>(val: xdr.ScVal): T {
+  return scValToNative(val) as T;
+}
 export async function contractInt(
   address: string,
   contractMethod: string,
@@ -114,6 +109,7 @@ export async function getContractXDR(
   console.log("Here is the source account", sourceAccount);
   const contract = new Contract(address);
   console.log("Here is the contract", contract);
+  console.log();
   const transaction = new TransactionBuilder(sourceAccount, {
     fee: BASE_FEE,
     networkPassphrase: Networks.TESTNET,
@@ -128,5 +124,75 @@ export async function getContractXDR(
   } catch (e) {
     console.log("Error", e);
     throw new Error("Unable to send transaction");
+  }
+}
+
+export async function callContract(
+  address: string,
+  contractMethod: string,
+  caller: string,
+  values: xdr.ScVal[],
+) {
+  const provider = new SorobanRpc.Server(rpcUrl, { allowHttp: true });
+  const sourceAccount = await provider.getAccount(caller);
+  const contract = new Contract(address);
+  const transaction = new TransactionBuilder(sourceAccount, {
+    fee: BASE_FEE,
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(contract.call(contractMethod, ...values))
+    .setTimeout(30)
+    .build();
+  console.log("Here is the transaction");
+  try {
+    const prepareTx = await provider.prepareTransaction(transaction);
+    console.log("prepared TX");
+    console.log("signed TX");
+    const sendTx = await provider.sendTransaction(prepareTx);
+    console.log("sent TX");
+    if (sendTx.errorResult) {
+      console.log("Error", sendTx.errorResult);
+      throw new Error("Unable to send transaction");
+    }
+    if (sendTx.status === "PENDING") {
+      let txResponse = await provider.getTransaction(sendTx.hash);
+      while (
+        txResponse.status === SorobanRpc.Api.GetTransactionStatus.NOT_FOUND
+      ) {
+        txResponse = await provider.getTransaction(sendTx.hash);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      if (txResponse.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+        return txResponse.returnValue;
+      }
+    }
+  } catch (e) {
+    console.log("Error", e);
+    throw new Error("Unable to send transaction");
+  }
+}
+
+export async function callWithSignedXDR(xdr: string) {
+  const provider = new SorobanRpc.Server(rpcUrl, { allowHttp: true });
+  const transaction = TransactionBuilder.fromXDR(xdr, Networks.TESTNET);
+  const sendTx = await provider.sendTransaction(transaction);
+  console.log("sent TX");
+  if (sendTx.errorResult) {
+    console.log("Error", sendTx.errorResult);
+    throw new Error("Unable to send transaction");
+  }
+  if (sendTx.status === "PENDING") {
+    let txResponse = await provider.getTransaction(sendTx.hash);
+    while (
+      txResponse.status === SorobanRpc.Api.GetTransactionStatus.NOT_FOUND
+    ) {
+      txResponse = await provider.getTransaction(sendTx.hash);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (txResponse.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+      return txResponse.returnValue;
+    } else {
+      throw new Error("Unable to send transaction");
+    }
   }
 }

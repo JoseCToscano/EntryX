@@ -1,10 +1,10 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, token, log};
+use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, token, log, Symbol};
 
 #[derive(Clone)]
 #[contracttype]
 pub enum DataKey {
-    Auction(Address, u64),  // key is (owner, auction_id)
+    Auction(Symbol),
 }
 
 // CBKVQIAGAOYMTJWFCO6U546TUE4YCPAPEXHJGTQBMYAC6J6HRPV6JOXX
@@ -34,7 +34,7 @@ impl TicketAuctionContract {
  pub fn start_auction(
         env: Env,
         owner: Address,
-        auction_id: u64, // Unique auction ID
+        auction_id: Symbol, // Unique auction ID
         asset_address: Address, // Asset's SAC address (hint: starts with "C...")
         quantity: i128,
         starting_price: u64,
@@ -76,25 +76,25 @@ impl TicketAuctionContract {
             end_time: auction_end_time,
             event_start_time,
         };
-        let key = DataKey::Auction(owner.clone(), auction_id);
+        let key = DataKey::Auction(auction_id.clone());
         log!(&env,"Before setting auction");
         env.storage().persistent().set(&key, &auction);
         log!(&env,"After setting auction");
+//         env.storage().persistent().get(&key).unwrap()
     }
 
     pub fn view_auction(
             env: Env,
-            owner: Address,
-            auction_id: u64,
+            auction_id: Symbol,
         ) -> Auction {
-            let key = DataKey::Auction(owner.clone(), auction_id);
-            return env.storage().instance().get(&key).unwrap();
+            let key = DataKey::Auction(auction_id.clone());
+            env.storage().persistent().get(&key).unwrap()
     }
 
-    pub fn place_bid(env: Env, auction_id: u64, owner: Address, bidder: Address, bid_amount: u64) {
+    pub fn place_bid(env: Env, auction_id: Symbol, bidder: Address, bid_amount: u64) {
             bidder.require_auth();
-            let key = DataKey::Auction(owner.clone(), auction_id);
-            let mut auction: Auction = env.storage().instance().get(&key).unwrap();
+            let key = DataKey::Auction(auction_id.clone());
+            let mut auction: Auction = env.storage().persistent().get(&key).unwrap();
             if env.ledger().timestamp() >= auction.end_time {
                 panic!("Auction has ended");
             }
@@ -106,7 +106,7 @@ impl TicketAuctionContract {
             auction.highest_bid = bid_amount;
             auction.highest_bidder = Some(bidder.clone());
 
-            env.storage().instance().set(&key, &auction);
+            env.storage().persistent().set(&key, &auction);
         }
 }
 

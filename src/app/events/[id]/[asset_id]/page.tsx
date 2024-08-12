@@ -68,8 +68,20 @@ const TicketCard: React.FC = () => {
     },
     onError: ClientTRPCErrorHandler,
   });
+  const soroban = api.soroban.submitContractCall.useMutation({
+    onSuccess: () => {
+      setSellAmount(0);
+      setShowTicketManagement(false);
+      toast.success("Transaction sent to blockchain successfully");
+      setLoading(false);
+    },
+    onError: ClientTRPCErrorHandler,
+  });
 
   const startAuction = api.soroban.startAuction.useMutation({
+    onError: ClientTRPCErrorHandler,
+  });
+  const viewAuction = api.soroban.viewAuction.useMutation({
     onError: ClientTRPCErrorHandler,
   });
 
@@ -136,6 +148,24 @@ const TicketCard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewAuction = async () => {
+    if (!publicKey) {
+      return toast.error("Please connect your wallet");
+    }
+    const xdr = await viewAuction.mutateAsync({
+      ownerPublicKey: publicKey,
+      assetId: asset_id as string,
+    });
+    if (xdr) {
+      const signedXDR = await signXDR(xdr);
+      const res = await soroban.mutateAsync({ xdr: signedXDR });
+      console.log("res:", res);
+    } else {
+      toast.error("Error on view auction");
+    }
+    console.log(xdr);
   };
 
   const total = useMemo(() => {
@@ -351,7 +381,15 @@ const TicketCard: React.FC = () => {
                     size="lg"
                     className="w-full"
                   >
-                    Contract call (Auction)
+                    Contract call (Start Auction)
+                  </Button>
+                  <Button
+                    onClick={handleViewAuction}
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Contract call (View Auction)
                   </Button>
                 </div>
               </CardContent>

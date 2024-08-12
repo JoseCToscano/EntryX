@@ -75,24 +75,48 @@ enum EventStatus {
 }
 
 model Asset {
-  id           String   @id @default(cuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id           String         @id @default(cuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   address      String?
   label        String
   code         String
   issuer       String
+  sacAddress   String?        @unique // Refers to the Stock Asset Contract Address
   distributor  String
   type         String
   eventId      String
-  pricePerUnit Decimal  @db.Decimal(10, 2)
-  status       String   @default("ACTIVE")
+  pricePerUnit Decimal        @db.Decimal(10, 2)
+  status       String         @default("ACTIVE")
   totalUnits   Int
-  event        Event    @relation(fields: [eventId], references: [id])
+  event        Event          @relation(fields: [eventId], references: [id])
+  AssetAuction AssetAuction[]
 
   @@index([code, issuer])
   @@index([eventId])
   @@index([address])
+}
+
+model AssetAuction {
+  id                         Int      @id @default(autoincrement())
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+  startsAt                   DateTime
+  endsAt                     DateTime
+  assetId                    String
+  owner                      String // Stellar Address
+  contractAddress            String
+  contractMethodStartAuction String
+  contractMethodEndAuction   String
+  contractMethodBid          String
+  contractMethodWithdraw     String
+  contractMethodClaim        String
+  contractMethodCancel       String
+  contractMethodViewBids     String
+  assetUnits                 Int
+  asset                      Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([assetId])
 }
 
 model Wallet {
