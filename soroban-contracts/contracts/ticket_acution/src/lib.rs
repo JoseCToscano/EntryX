@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, token};
+use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, token, log};
 
 #[derive(Clone)]
 #[contracttype]
@@ -8,12 +8,13 @@ pub enum DataKey {
 }
 
 // CBKVQIAGAOYMTJWFCO6U546TUE4YCPAPEXHJGTQBMYAC6J6HRPV6JOXX
+// CBTDQVG4PUT6KRIQVMPDIY6CJVYWEY45OYAKM6MBSFGWOSGUVJZYW3HY
 
 #[contracttype]
 #[derive(Clone)]
 pub struct Auction {
     owner: Address,
-    asset_address: Address,  // CODE:ISSUER
+    asset_address: Address,
     starting_price: u64,
     highest_bid: u64,
     highest_bidder: Option<Address>,
@@ -34,12 +35,14 @@ impl TicketAuctionContract {
         env: Env,
         owner: Address,
         auction_id: u64, // Unique auction ID
-        asset_address: Address,  // CODE:ISSUER
+        asset_address: Address, // Asset's SAC address (hint: starts with "C...")
         quantity: i128,
         starting_price: u64,
         purchase_price: u64,  // Price at which the ticket was originally purchased
         event_start_time: u64,  // Event start time in Unix timestamp
     ) {
+        owner.require_auth();
+        log!(&env, "Starting auction for asset: {}", asset_address);
         let max_resell_price = purchase_price.clone() * 150 / 100;
 
         // Ensure the starting price is not higher than the purchase price
@@ -59,13 +62,14 @@ impl TicketAuctionContract {
         // Transfer the tickets from the owner to the contract address
         let asset = token::Client::new(&env, &asset_address.clone());
         let contract = env.current_contract_address();
-        asset.transfer(&owner.clone(), &contract, &quantity);
+        let transfer_quantity = quantity.clone() / 100;
+        asset.transfer(&owner.clone(), &contract, &transfer_quantity);
 
         // Initialize the auction
         let auction = Auction {
             owner: owner.clone(),
             asset_address: asset_address.clone(),
-            starting_price: starting_price.clone(),
+            starting_price: (starting_price.clone() / 100),
             highest_bid: 0,
             highest_bidder: None,
             max_resell_price,
@@ -73,7 +77,9 @@ impl TicketAuctionContract {
             event_start_time,
         };
         let key = DataKey::Auction(owner.clone(), auction_id);
-        env.storage().instance().set(&key, &auction);
+        log!(&env,"Before setting auction");
+        env.storage().persistent().set(&key, &auction);
+        log!(&env,"After setting auction");
     }
 
     pub fn view_auction(

@@ -56,7 +56,7 @@ const TicketCard: React.FC = () => {
   );
 
   const sell = api.stellarOffer.sell.useMutation({
-    onError: () => toast.error("Error on sell"),
+    onError: ClientTRPCErrorHandler,
   });
 
   const ledger = api.stellarAccountRouter.submitTransaction.useMutation({
@@ -71,10 +71,6 @@ const TicketCard: React.FC = () => {
 
   const startAuction = api.soroban.startAuction.useMutation({
     onError: ClientTRPCErrorHandler,
-    onSuccess: (e) => {
-      toast.success("Auction started successfully");
-      console.log(e);
-    },
   });
 
   const handleSell = async () => {
@@ -98,10 +94,10 @@ const TicketCard: React.FC = () => {
           assetId: asset_id as string,
         });
       } else {
-        toast.error("Error on sell");
+        toast.error("Error on contract's transaction signature");
       }
     } catch (e) {
-      toast.error("Error on sell");
+      toast.error("Error on contract's transaction signature");
       console.error(e);
     } finally {
       setLoading(false);
@@ -124,6 +120,7 @@ const TicketCard: React.FC = () => {
       console.log(xdr);
       const signedXDR = await signXDR(xdr);
       const tx = await ledger.mutateAsync({ xdr: signedXDR });
+      console.log(tx);
       if (tx?.successful) {
         void ctx.event.myTickets.invalidate({ eventId: eventId as string });
         void ctx.event.ticket.invalidate({

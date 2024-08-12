@@ -58,7 +58,7 @@ export default function Component() {
   }
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="mb-10 flex w-full flex-col">
       <main className="flex-1 p-6 md:p-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card>

@@ -52,7 +52,9 @@ export const sorobanRouter = createTRPCRouter({
       const contractParams = [
         addressToScVal(input.ownerPublicKey),
         numberToU64(1), // TODO: Auction ID
-        addressToScVal(asset.issuer), // addressToScVal(`${asset.code}:${asset.issuer}`),
+        addressToScVal(
+          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
+        ),
         numberToi128(input.quantity),
         numberToU64(input.startPrice),
         numberToU64(Number(asset.pricePerUnit)),
@@ -62,8 +64,9 @@ export const sorobanRouter = createTRPCRouter({
       console.log("contractParams", contractParams);
 
       const result = await getContractXDR(
-        "CBKVQIAGAOYMTJWFCO6U546TUE4YCPAPEXHJGTQBMYAC6J6HRPV6JOXX",
+        "CDMEDBDG5YEIZHWJS2XP5OMNZL63THGIZWSNJ3WRXDOBLLN4QEYZGPMC",
         "start_auction",
+        input.ownerPublicKey,
         contractParams,
       );
       // console.log("result", result);

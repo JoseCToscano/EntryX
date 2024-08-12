@@ -91,7 +91,9 @@ export function getAssetBalanceFromAccount(
 export function ClientTRPCErrorHandler<T extends AnyClientTypes>(
   x?: TRPCClientErrorLike<T>,
 ) {
-  if ((x?.data as { code: string })?.code === "INTERNAL_SERVER_ERROR") {
+  if (x?.message) {
+    toast.error(x?.message);
+  } else if ((x?.data as { code: string })?.code === "INTERNAL_SERVER_ERROR") {
     toast.error("We are facing some issues. Please try again later");
   } else if ((x?.data as { code: string })?.code === "BAD_REQUEST") {
     toast.error("Invalid request. Please try again later");
@@ -136,6 +138,7 @@ export function handleHorizonServerError(error: unknown) {
   function parsedTransactionFailedError(
     failedTXError?: Horizon.HorizonApi.ErrorResponseData.TransactionFailed,
   ) {
+    console.log("failedTXError", failedTXError);
     if (!failedTXError) return;
     const { extras } = failedTXError;
     let message = "Unknown error";
@@ -143,93 +146,98 @@ export function handleHorizonServerError(error: unknown) {
       return message;
     }
     if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.transaction ===
+      Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_AUTH
+    ) {
+      message = "Invalid transaction signature";
+    } else if (
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_FAILED,
       )
     ) {
       message = "One of the operations failed (none were applied)";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_TOO_EARLY,
       )
     ) {
       message = "The ledger closeTime was before the minTime";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_TOO_LATE,
       )
     ) {
       message = "The ledger closeTime was after the maxTime";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_MISSING_OPERATION,
       )
     ) {
       message = "No operation was specified";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_SEQ,
       )
     ) {
       message = "The sequence number does not match source account";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_AUTH,
       )
     ) {
       message =
         "Check if you have the required permissions and signatures for this Network";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_INSUFFICIENT_BALANCE,
       )
     ) {
       message = "You don't have enough balance to perform this operation";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_NO_SOURCE_ACCOUNT,
       )
     ) {
       message = "The source account does not exist";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_AUTH_EXTRA,
       )
     ) {
       message = "There are unused signatures attached to the transaction";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_INSUFFICIENT_FEE,
       )
     ) {
       message = "The fee is insufficient for the transaction";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_INTERNAL_ERROR,
       )
     ) {
       message = "An unknown error occurred while processing the transaction";
     } else if (
-      extras.result_codes.operations.includes(
+      extras.result_codes.operations?.includes(
         Horizon.HorizonApi.TransactionFailedResultCodes.TX_NOT_SUPPORTED,
       )
     ) {
       message = "The operation is not supported by the network";
-    } else if (extras.result_codes.operations.includes("op_buy_no_trust")) {
+    } else if (extras.result_codes.operations?.includes("op_buy_no_trust")) {
       message = "You need to establish trustline first";
-    } else if (extras.result_codes.operations.includes("op_low_reserve")) {
+    } else if (extras.result_codes.operations?.includes("op_low_reserve")) {
       message = "You don't have enough XLM to create the offer";
-    } else if (extras.result_codes.operations.includes("op_bad_auth")) {
+    } else if (extras.result_codes.operations?.includes("op_bad_auth")) {
       message =
         "There are missing valid signatures, or the transaction was submitted to the wrong network";
     } else if (
-      extras.result_codes.operations.includes("op_no_source_account")
+      extras.result_codes.operations?.includes("op_no_source_account")
     ) {
       message = "There is no source account";
-    } else if (extras.result_codes.operations.includes("op_not_supported")) {
+    } else if (extras.result_codes.operations?.includes("op_not_supported")) {
       message = "The operation is not supported by the network";
     } else if (
-      extras.result_codes.operations.includes("op_too_many_subentries")
+      extras.result_codes.operations?.includes("op_too_many_subentries")
     ) {
       message = "Max number of subentries (1000) already reached";
     }

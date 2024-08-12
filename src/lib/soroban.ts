@@ -105,10 +105,9 @@ export async function contractInt(
 export async function getContractXDR(
   address: string,
   contractMethod: string,
+  caller: string,
   values: xdr.ScVal[],
 ) {
-  const keyPair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
-  const caller = keyPair.publicKey();
   console.log("Here is the caller", caller);
   const provider = new SorobanRpc.Server(rpcUrl, { allowHttp: true });
   const sourceAccount = await provider.getAccount(caller);
