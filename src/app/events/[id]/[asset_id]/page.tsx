@@ -69,6 +69,14 @@ const TicketCard: React.FC = () => {
     onError: ClientTRPCErrorHandler,
   });
 
+  const startAuction = api.soroban.startAuction.useMutation({
+    onError: ClientTRPCErrorHandler,
+    onSuccess: (e) => {
+      toast.success("Auction started successfully");
+      console.log(e);
+    },
+  });
+
   const handleSell = async () => {
     try {
       if (sellAmount <= 0) return;
@@ -81,6 +89,39 @@ const TicketCard: React.FC = () => {
         unitsToSell: sellAmount,
         userPublicKey: publicKey,
       });
+      const signedXDR = await signXDR(xdr);
+      const tx = await ledger.mutateAsync({ xdr: signedXDR });
+      if (tx?.successful) {
+        void ctx.event.myTickets.invalidate({ eventId: eventId as string });
+        void ctx.event.ticket.invalidate({
+          eventId: eventId as string,
+          assetId: asset_id as string,
+        });
+      } else {
+        toast.error("Error on sell");
+      }
+    } catch (e) {
+      toast.error("Error on sell");
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartAuction = async () => {
+    try {
+      if (sellAmount <= 0) return;
+      setLoading(true);
+      if (!publicKey) {
+        return toast.error("Please connect your wallet");
+      }
+      const xdr = await startAuction.mutateAsync({
+        ownerPublicKey: publicKey,
+        assetId: asset_id as string,
+        quantity: sellAmount,
+        startPrice: 5,
+      });
+      console.log(xdr);
       const signedXDR = await signXDR(xdr);
       const tx = await ledger.mutateAsync({ xdr: signedXDR });
       if (tx?.successful) {
@@ -306,6 +347,14 @@ const TicketCard: React.FC = () => {
                     className="w-full"
                   >
                     Cancel
+                  </Button>
+                  <Button
+                    onClick={handleStartAuction}
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Contract call (Auction)
                   </Button>
                 </div>
               </CardContent>

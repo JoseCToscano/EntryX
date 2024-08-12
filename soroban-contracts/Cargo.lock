@@ -1243,6 +1243,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ticket-auction"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "time"
 version = "0.3.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"

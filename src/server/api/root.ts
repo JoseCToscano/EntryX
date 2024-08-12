@@ -4,6 +4,7 @@ import {
   TransactionBuilder,
   Horizon,
   Keypair,
+  scValToNative,
   BASE_FEE,
 } from "@stellar/stellar-sdk";
 import { postRouter } from "~/server/api/routers/post";
@@ -19,6 +20,8 @@ import { stellarAccountRouter } from "~/server/api/routers/stellar-account";
 import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
 import { analyticsRouter } from "~/server/api/routers/analytics";
 import { organizerRouter } from "~/server/api/routers/organizer";
+import { contractInt, nativize, stringToSymbol } from "~/lib/soroban";
+import { sorobanRouter } from "~/server/api/routers/soroban";
 
 /**
  * This is the primary router for your server.
@@ -33,6 +36,20 @@ export const appRouter = createTRPCRouter({
   stellarOffer: stellarOfferRouter,
   stellarAccountRouter: stellarAccountRouter,
   asset: assetsRouter,
+  soroban: sorobanRouter,
+  callcontract: publicProcedure.query(async () => {
+    const to = stringToSymbol("ticketsissuer");
+    const values = [to];
+    console.log("values", values);
+    const result = await contractInt("hello", values);
+    console.log("result", result);
+    if (result) {
+      console.log("nativize", nativize(result));
+      console.log(result._value[0]._value.toString());
+      console.log(result._value[1]._value.toString());
+    }
+    return result;
+  }),
   createStellarAccount: publicProcedure.query(async () => {
     console.log("createStellarAccount");
     // After you've got your test lumens from friendbot, we can also use that account to create a new account on the ledger.
