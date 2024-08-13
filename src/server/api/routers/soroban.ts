@@ -14,6 +14,7 @@ import {
 import { Horizon, Networks, TransactionBuilder } from "@stellar/stellar-sdk";
 import {
   getAssetBalanceFromAccount,
+  getXLMBalanceFromAccount,
   handleHorizonServerError,
 } from "~/lib/utils";
 import { TRPCError } from "@trpc/server";
@@ -33,8 +34,10 @@ interface TicketAuction {
 
 const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+// const ticketAuctionContractAddress =
+//   "CABNQYQNXLJUUYF65F3C3IERAWEXT5YF5XIMBHUZ3DAOQWVH7HLRZ3NC";
 const ticketAuctionContractAddress =
-  "CABNQYQNXLJUUYF65F3C3IERAWEXT5YF5XIMBHUZ3DAOQWVH7HLRZ3NC";
+  "CC7TAXRJV6AWXC2AZGNWVHVZLSXGQ3IOH2WHDSBNQ4SIFBBNSKWBRCYA";
 export const sorobanRouter = createTRPCRouter({
   startAuction: publicProcedure
     .input(
@@ -49,6 +52,9 @@ export const sorobanRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirstOrThrow({
         where: {
           id: input.assetId,
+        },
+        include: {
+          event: true,
         },
       });
       const ownerAccount = await server.loadAccount(input.ownerPublicKey);
@@ -93,9 +99,9 @@ export const sorobanRouter = createTRPCRouter({
           "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
         ),
         numberToi128(input.quantity),
-        numberToU64(input.startPrice),
+        numberToU64(input.startPrice), // TODO: editar el front
         numberToU64(Number(asset.pricePerUnit)),
-        numberToU64(dayjs().add(1, "month").unix() / 100),
+        numberToU64(dayjs(asset.event.date).unix()),
       ];
 
       console.log("contractParams", contractParams);
@@ -107,18 +113,98 @@ export const sorobanRouter = createTRPCRouter({
         contractParams,
       );
     }),
+  closeAuction: publicProcedure
+    .input(
+      z.object({
+        publicKey: z.string(),
+        auctionId: z.string().or(z.number()),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const auction = await ctx.db.assetAuction.findFirstOrThrow({
+        where: {
+          id: Number(input.auctionId),
+        },
+      });
+
+      if (input.publicKey !== auction.owner) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only the auction owner can close the auction",
+        });
+      }
+      console.log("auction.owner:", auction.owner);
+      const contractParams = [
+        stringToSymbol(`AU${auction.id}`),
+        addressToScVal(auction.owner),
+      ];
+
+      console.log("contractParams", contractParams);
+
+      return await getContractXDR(
+        ticketAuctionContractAddress,
+        "close_auction",
+        input.publicKey,
+        contractParams,
+      );
+    }),
+  bid: publicProcedure
+    .input(
+      z.object({
+        bidderKey: z.string(),
+        auctionId: z.string().or(z.number()),
+        bid: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const auction = await ctx.db.assetAuction.findFirstOrThrow({
+        where: {
+          id: Number(input.auctionId),
+        },
+      });
+
+      if (input.bid <= Number(auction.highestBid)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Please bid higher than the current highest bid",
+        });
+      }
+      const ownerAccount = await server.loadAccount(input.bidderKey);
+      const balance = getXLMBalanceFromAccount(ownerAccount.balances);
+      if (balance < input.bid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient balance",
+        });
+      }
+
+      const contractParams = [
+        stringToSymbol(`AU${auction.id}`), // TODO: Auction ID
+        addressToScVal(input.bidderKey),
+        numberToU64(input.bid),
+      ];
+
+      console.log("contractParams", contractParams);
+
+      return await getContractXDR(
+        ticketAuctionContractAddress,
+        "place_bid",
+        input.bidderKey,
+        contractParams,
+      );
+    }),
   viewAuction: publicProcedure
     .input(
       z.object({
         ownerPublicKey: z.string(),
-        assetId: z.string(),
+        auctionId: z.string().or(z.number()),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
         // Query the contract's state
         const contractParams = [
-          stringToSymbol(`AU${3}`), // TODO: Auction ID
+          stringToSymbol(`AU${Number(input.auctionId)}`), // TODO: Auction ID
         ];
 
         const xdr = await getContractXDR(
@@ -147,6 +233,29 @@ export const sorobanRouter = createTRPCRouter({
         // handleHorizonServerError(e);
       }
     }),
+  updateAuction: publicProcedure
+    .input(
+      z.object({
+        bidder: z.string(),
+        auctionId: z.string().or(z.number()),
+        highestBid: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await ctx.db.assetAuction.update({
+          where: {
+            id: Number(input.auctionId),
+          },
+          data: {
+            highestBid: input.highestBid,
+            highestBidder: input.bidder,
+          },
+        });
+      } catch (e) {
+        console.log(e);
+      }
+    }),
   submitContractCall: publicProcedure
     .input(z.object({ xdr: z.string().min(1) }))
     .mutation(async ({ input }) => {
@@ -156,7 +265,7 @@ export const sorobanRouter = createTRPCRouter({
         if (result) {
           console.log("nativize", nativize(result));
           console.log("result", result);
-          return nativize<TicketAuction>(result);
+          return nativize<TicketAuction>(result) ?? "No result";
         }
       } catch (e) {
         // This will throw a TRPCError with the appropriate message

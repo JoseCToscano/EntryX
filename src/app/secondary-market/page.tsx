@@ -22,68 +22,43 @@ import {
   CardFooter,
 } from "~/components/ui/card";
 import { Icons } from "~/components/icons";
+import { api } from "~/trpc/react";
+import dayjs from "dayjs";
+import Image from "next/image";
+import { AlbumArtwork } from "~/app/account/events/components/album-artwork";
+import type { Event } from "@prisma/client";
+import Link from "next/link";
+import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterOptions, setFilterOptions] = useState({
-    event: "",
-    date: "",
-    price: "",
+  const [filters, setFilters] = useState({
+    category: ["Music Festival", "Sports", "Theater"],
+    price: {
+      min: 0,
+      max: 1000,
+    },
+    timeRemaining: {
+      min: 0,
+      max: 72,
+    },
   });
-  const tickets = [
-    {
-      id: 1,
-      event: "Coachella Music Festival",
-      date: "April 14-16, 2023",
-      location: "Indio, CA",
-      price: 499.99,
-    },
-    {
-      id: 2,
-      event: "Lollapalooza",
-      date: "July 28-31, 2023",
-      location: "Chicago, IL",
-      price: 375.0,
-    },
-    {
-      id: 3,
-      event: "Bonnaroo Music & Arts Festival",
-      date: "June 15-18, 2023",
-      location: "Manchester, TN",
-      price: 299.99,
-    },
-    {
-      id: 4,
-      event: "Austin City Limits Music Festival",
-      date: "October 6-8 & 13-15, 2023",
-      location: "Austin, TX",
-      price: 325.0,
-    },
-    {
-      id: 5,
-      event: "Glastonbury Festival",
-      date: "June 21-25, 2023",
-      location: "Pilton, UK",
-      price: 335.0,
-    },
-  ];
-  const filteredTickets = useMemo(() => {
-    return tickets.filter((ticket) => {
-      const eventMatch = filterOptions.event
-        ? ticket.event.toLowerCase().includes(filterOptions.event.toLowerCase())
-        : true;
-      const dateMatch = filterOptions.date
-        ? ticket.date.toLowerCase().includes(filterOptions.date.toLowerCase())
-        : true;
-      const priceMatch = filterOptions.price
-        ? ticket.price <= parseFloat(filterOptions.price)
-        : true;
-      const searchMatch = searchTerm
-        ? ticket.event.toLowerCase().includes(searchTerm.toLowerCase())
-        : true;
-      return eventMatch && dateMatch && priceMatch && searchMatch;
-    });
-  }, [searchTerm, filterOptions]);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setSearchTerm(e.target.value);
+  };
+  const handleFilterChange = (
+    type: "category" | "price" | "timeRemaining",
+    value: string | number,
+  ) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [type]: value,
+    }));
+  };
+
+  const auctionItems = api.marketplace.searchAuctions.useQuery({});
 
   return (
     <div className="border-t">
@@ -119,92 +94,180 @@ export default function Component() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 p-4">
-                  <div className="space-y-4">
+                  <div className="grid gap-4">
                     <div>
-                      <label
-                        htmlFor="event-filter"
-                        className="mb-2 block font-medium"
-                      >
-                        Event
-                      </label>
-                      <Input
-                        id="event-filter"
-                        type="text"
-                        placeholder="Search events..."
-                        value={filterOptions.event}
-                        onChange={(e) =>
-                          setFilterOptions((prev) => ({
-                            ...prev,
-                            event: e.target.value,
-                          }))
-                        }
-                      />
+                      <h3 className="mb-2 text-lg font-medium">Category</h3>
+                      <div className="grid gap-2">
+                        <Label className="flex items-center gap-2">
+                          <Checkbox
+                            checked={filters.category.includes(
+                              "Music Festival",
+                            )}
+                            onCheckedChange={(checked) =>
+                              handleFilterChange(
+                                "category",
+                                checked
+                                  ? [...filters.category, "Music Festival"]
+                                  : filters.category.filter(
+                                      (c) => c !== "Music Festival",
+                                    ),
+                              )
+                            }
+                          />
+                          Music Festival
+                        </Label>
+                        <Label className="flex items-center gap-2">
+                          <Checkbox
+                            checked={filters.category.includes("Sports")}
+                            onCheckedChange={(checked) =>
+                              handleFilterChange(
+                                "category",
+                                checked
+                                  ? [...filters.category, "Sports"]
+                                  : filters.category.filter(
+                                      (c) => c !== "Sports",
+                                    ),
+                              )
+                            }
+                          />
+                          Sports
+                        </Label>
+                        <Label className="flex items-center gap-2">
+                          <Checkbox
+                            checked={filters.category.includes("Theater")}
+                            onCheckedChange={(checked) =>
+                              handleFilterChange(
+                                "category",
+                                checked
+                                  ? [...filters.category, "Theater"]
+                                  : filters.category.filter(
+                                      (c) => c !== "Theater",
+                                    ),
+                              )
+                            }
+                          />
+                          Theater
+                        </Label>
+                      </div>
                     </div>
                     <div>
-                      <label
-                        htmlFor="date-filter"
-                        className="mb-2 block font-medium"
-                      >
-                        Date
-                      </label>
-                      <Input
-                        id="date-filter"
-                        type="text"
-                        placeholder="Search dates..."
-                        value={filterOptions.date}
-                        onChange={(e) =>
-                          setFilterOptions((prev) => ({
-                            ...prev,
-                            date: e.target.value,
-                          }))
-                        }
-                      />
+                      <h3 className="mb-2 text-lg font-medium">Price</h3>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <span>Min:</span>
+                          <Input
+                            type="number"
+                            value={filters.price.min}
+                            onChange={(e) =>
+                              handleFilterChange("price", {
+                                ...filters.price,
+                                min: Number(e.target.value),
+                              })
+                            }
+                            className="w-24"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span>Max:</span>
+                          <Input
+                            type="number"
+                            value={filters.price.max}
+                            onChange={(e) =>
+                              handleFilterChange("price", {
+                                ...filters.price,
+                                max: Number(e.target.value),
+                              })
+                            }
+                            className="w-24"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <div>
-                      <label
-                        htmlFor="price-filter"
-                        className="mb-2 block font-medium"
-                      >
-                        Price
-                      </label>
-                      <Input
-                        id="price-filter"
-                        type="number"
-                        placeholder="Max price..."
-                        value={filterOptions.price}
-                        onChange={(e) =>
-                          setFilterOptions((prev) => ({
-                            ...prev,
-                            price: e.target.value,
-                          }))
-                        }
-                      />
+                      <h3 className="mb-2 text-lg font-medium">
+                        Time Remaining
+                      </h3>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <span>Min (hours):</span>
+                          <Input
+                            type="number"
+                            value={filters.timeRemaining.min}
+                            onChange={(e) =>
+                              handleFilterChange("timeRemaining", {
+                                ...filters.timeRemaining,
+                                min: Number(e.target.value),
+                              })
+                            }
+                            className="w-24"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span>Max (hours):</span>
+                          <Input
+                            type="number"
+                            value={filters.timeRemaining.max}
+                            onChange={(e) =>
+                              handleFilterChange("timeRemaining", {
+                                ...filters.timeRemaining,
+                                max: Number(e.target.value),
+                              })
+                            }
+                            className="w-24"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {filteredTickets.map((ticket) => (
-                <Card key={ticket.id} className="h-full">
-                  <CardHeader>
-                    <CardTitle>{ticket.event}</CardTitle>
-                    <CardDescription>{ticket.date}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-muted-foreground">
-                        {ticket.location}
+              {auctionItems.data?.map(({ asset, id, ...auction }) => (
+                <Link href={`/secondary-market/${id}`} key={id}>
+                  <Card
+                    key={id}
+                    className="hover:boder-[1.5px] hover:border-gray-400 hover:shadow-gray-300"
+                  >
+                    <Image
+                      width={300}
+                      height={300}
+                      src={asset.event.imageUrl ?? "/"}
+                      alt={asset.event.name}
+                      className="h-48 w-full rounded-t-lg object-cover"
+                    />
+                    <CardHeader>
+                      <CardTitle>{asset.event.name}</CardTitle>
+                      <CardDescription>
+                        <span className="flex flex-row items-center justify-between">
+                          <p className="text-xs text-muted-foreground">
+                            {asset.event.location}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {dayjs(asset.event.date).format("MMM DD")}
+                          </p>
+                        </span>{" "}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="">
+                      <div className="mb-4 flex flex-col items-start justify-between">
+                        <div className="text-sm font-bold text-primary">
+                          Current Bid: ${Number(auction.highestBid ?? 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {dayjs(auction.endsAt).diff(dayjs(), "day")} days
+                          remaining
+                        </div>
                       </div>
-                      <div className="font-bold">
-                        ${ticket.price.toFixed(2)}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full">Buy Ticket</Button>
-                  </CardFooter>
-                </Card>
+                      <Button
+                        variant="ghost"
+                        className="w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
+                      >
+                        Place Bid
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>

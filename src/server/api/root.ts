@@ -20,6 +20,7 @@ import { stellarOfferRouter } from "~/server/api/routers/stellar-offer";
 import { analyticsRouter } from "~/server/api/routers/analytics";
 import { organizerRouter } from "~/server/api/routers/organizer";
 import { sorobanRouter } from "~/server/api/routers/soroban";
+import { marketplaceRouter } from "~/server/api/routers/marketplace";
 
 /**
  * This is the primary router for your server.
@@ -35,6 +36,7 @@ export const appRouter = createTRPCRouter({
   stellarAccountRouter: stellarAccountRouter,
   asset: assetsRouter,
   soroban: sorobanRouter,
+  marketplace: marketplaceRouter,
   createStellarAccount: publicProcedure.query(async () => {
     console.log("createStellarAccount");
     // After you've got your test lumens from friendbot, we can also use that account to create a new account on the ledger.

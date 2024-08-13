@@ -28,14 +28,14 @@ export const stringToSymbol = (val: string) => {
   return nativeToScVal(val, { type: "symbol" });
 };
 
-export const numberToU64 = (num: number) => {
-  const val = Math.floor(num * 100);
-  return nativeToScVal(val, { type: "u64" });
+export const numberToU64 = (val: number) => {
+  const num = parseInt((val * 100).toFixed(0));
+  return nativeToScVal(num, { type: "u64" });
 };
 
-export const numberToi128 = (num: number) => {
-  const val = Math.floor(num * 100);
-  return nativeToScVal(val, { type: "i128" });
+export const numberToi128 = (val: number) => {
+  const num = parseInt((val * 100).toFixed(0));
+  return nativeToScVal(num, { type: "i128" });
 };
 
 // Convert Stellar address to ScVal

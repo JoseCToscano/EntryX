@@ -116,7 +116,7 @@ export const stellarAccountRouter = createTRPCRouter({
         .operations()
         .forAccount(input.id)
         .order("desc")
-        .limit(input.limit ?? 5)
+        .limit(input.limit ?? 15)
         .call();
       return ops.records.map((op) => {
         const operation = {
@@ -129,23 +129,44 @@ export const stellarAccountRouter = createTRPCRouter({
           asset_code: "",
         };
         switch (op.type) {
+          case Horizon.HorizonApi.OperationResponseType.invokeHostFunction:
+            console.log(op);
+            if (op.asset_balance_changes.length) {
+              operation.desc = op.asset_balance_changes.reduce(
+                (acc, change) => {
+                  if (change.asset_code) {
+                    operation.asset_code = change.asset_code;
+                  }
+                  return `${acc ? `${acc},` : ""}${change.type} ${change.asset_code} ${change.amount}`;
+                },
+                "",
+              );
+            } else {
+              operation.desc = "No asset balance changes";
+            }
+            if (op.function?.toLowerCase().includes("invokecontract")) {
+              operation.label = "Soroban contract function call";
+            } else {
+              operation.label = "Invoke host function";
+            }
+            break;
           case Horizon.HorizonApi.OperationResponseType.createAccount:
             operation.label = "Create account";
             operation.desc = `Create account ${shortStellarAddress(op.account)}`;
             break;
           case Horizon.HorizonApi.OperationResponseType.payment:
             operation.label = "Payment";
-            operation.desc = `Payment ${op.amount} ${op.asset_code ?? ""} to ${shortStellarAddress(op.to)}`;
+            operation.desc = `Payment ${Number(op.amount)} ${op.asset_code ?? ""} to ${shortStellarAddress(op.to)}`;
             operation.asset_code = op.asset_code ?? "";
             break;
           case Horizon.HorizonApi.OperationResponseType.pathPayment:
             operation.label = "Path payment";
-            operation.desc = `Path payment ${op.amount} ${op.asset_code} to ${op.to}`;
+            operation.desc = `Path payment ${Number(op.amount)} ${op.asset_code} to ${op.to}`;
             operation.asset_code = op.asset_code ?? "";
             break;
           case Horizon.HorizonApi.OperationResponseType.manageOffer:
             operation.label = "Manage offer";
-            operation.desc = `${op.buying_asset_code ?? ""} for ${op.amount} ${op.selling_asset_code}`;
+            operation.desc = `${op.buying_asset_code ?? ""} for ${Number(op.amount)} ${op.selling_asset_code}`;
             operation.asset_code =
               op.buying_asset_code && op.selling_asset_code
                 ? `${op.buying_asset_code}<>${op.selling_asset_code}`
@@ -224,7 +245,7 @@ export const stellarAccountRouter = createTRPCRouter({
           case Horizon.HorizonApi.OperationResponseType
             .manageBuyOffer as Horizon.HorizonApi.OperationResponseType.manageOffer: // Horizon API is not correctly mapping manageBuyOffer
             operation.label = "Manage buy offer";
-            operation.desc = `${op.amount} ${op.buying_asset_code} for ${op.price}`;
+            operation.desc = `${Number(op.amount ?? "0")} ${op.buying_asset_code} for ${op.price}`;
             operation.asset_code =
               op.buying_asset_code && op.selling_asset_code
                 ? `${op.buying_asset_code}<>${op.selling_asset_code}`

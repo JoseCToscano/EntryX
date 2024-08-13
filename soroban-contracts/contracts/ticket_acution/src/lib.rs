@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, token, log, Symbol};
+use soroban_sdk::{contract, contracttype, contractimpl, Address, Env, Map, token, log, Symbol};
 
 #[derive(Clone)]
 #[contracttype]
@@ -20,7 +20,9 @@ pub struct Auction {
     highest_bidder: Option<Address>,
     max_resell_price: u64,
     end_time: u64,
+    quantity: i128,
     event_start_time: u64,
+    bids: Map<Address, u64>, // All bids placed in the auction
 }
 
 #[contract]
@@ -62,7 +64,7 @@ impl TicketAuctionContract {
         // Transfer the tickets from the owner to the contract address
         let asset = token::Client::new(&env, &asset_address.clone());
         let contract = env.current_contract_address();
-        let transfer_quantity = quantity.clone() / 100;
+        let transfer_quantity = quantity.clone();
         asset.transfer(&owner.clone(), &contract, &transfer_quantity);
 
         // Initialize the auction
@@ -73,8 +75,10 @@ impl TicketAuctionContract {
             highest_bid: 0,
             highest_bidder: None,
             max_resell_price,
+            quantity: quantity.clone(),
             end_time: auction_end_time,
             event_start_time,
+            bids: Map::new(&env),
         };
         let key = DataKey::Auction(auction_id.clone());
         log!(&env,"Before setting auction");
@@ -105,8 +109,30 @@ impl TicketAuctionContract {
 
             auction.highest_bid = bid_amount;
             auction.highest_bidder = Some(bidder.clone());
+            auction.bids.set(bidder.clone(), bid_amount);
 
-            env.storage().persistent().set(&key, &auction);
+            env.storage().persistent().set(&key, &auction)
+        }
+
+    pub fn close_auction(env: Env, auction_id: Symbol, owner: Address) {
+            owner.require_auth();
+            let key = DataKey::Auction(auction_id.clone());
+            let auction: Auction = env.storage().persistent().get(&key).unwrap();
+
+
+            // Transfer the tickets from the the contract address to the highest bidder
+            let asset = token::Client::new(&env, &auction.asset_address.clone());
+            let contract = env.current_contract_address();
+            let transfer_quantity = auction.quantity.clone() / 100;
+
+            // Transfer the tickets to the highest bidder if there is one, otherwise transfer them back to the owner
+            if auction.highest_bidder.is_none() {
+                asset.transfer(&contract, &owner.clone(), &transfer_quantity);
+            } else {
+            let highest_bidder = auction.highest_bidder.clone().unwrap();
+            asset.transfer(&contract, &highest_bidder, &transfer_quantity);
+            }
+
         }
 }
 

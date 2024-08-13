@@ -18,7 +18,6 @@ import {
 } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { type Horizon } from "@stellar/stellar-sdk";
@@ -41,10 +40,10 @@ export default function Component() {
     return () => clearTimeout(timeout);
   }, []);
 
-  const last5Operations = api.stellarAccountRouter.operations.useQuery(
+  const recentOperations = api.stellarAccountRouter.operations.useQuery(
     {
       id: publicKey!,
-      limit: 10,
+      limit: 25,
     },
     { enabled: !!publicKey },
   );
@@ -142,7 +141,7 @@ export default function Component() {
               <CardTitle>Assets</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <ScrollArea className="flex max-h-80 flex-col gap-10">
+              <div className="flex max-h-96 flex-col gap-2 overflow-y-scroll">
                 {(
                   account?.balances?.filter(
                     (b) => b.asset_type !== "native",
@@ -168,7 +167,7 @@ export default function Component() {
                     </div>
                   </div>
                 ))}
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -176,8 +175,8 @@ export default function Component() {
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-10">
-              <ScrollArea className="flex max-h-80 flex-col gap-10">
-                {last5Operations.data?.map((op) => (
+              <div className="flex max-h-96 flex-col gap-1 overflow-y-scroll">
+                {recentOperations.data?.map((op) => (
                   <div key={op.id} className="pr-4">
                     <Separator />
                     <div className="my-1 flex items-center justify-between">
@@ -208,7 +207,7 @@ export default function Component() {
                     </div>
                   </div>
                 ))}
-              </ScrollArea>
+              </div>
             </CardContent>
             <CardFooter>
               <Link

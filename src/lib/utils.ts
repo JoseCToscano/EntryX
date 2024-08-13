@@ -88,6 +88,15 @@ export function getAssetBalanceFromAccount(
   ) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">;
 }
 
+export function getXLMBalanceFromAccount(
+  accountBalances: AccountBalance[],
+): number {
+  const xlmBalance = accountBalances.find(
+    (balance) => balance.asset_type === "native",
+  );
+  return xlmBalance?.balance ? Number(xlmBalance.balance) : 0;
+}
+
 export function ClientTRPCErrorHandler<T extends AnyClientTypes>(
   x?: TRPCClientErrorLike<T>,
 ) {

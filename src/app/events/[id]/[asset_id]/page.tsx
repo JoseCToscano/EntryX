@@ -55,24 +55,11 @@ const TicketCard: React.FC = () => {
     { enabled: !!eventId && !!asset_id && !!publicKey },
   );
 
-  const sell = api.stellarOffer.sell.useMutation({
-    onError: ClientTRPCErrorHandler,
-  });
-
-  const ledger = api.stellarAccountRouter.submitTransaction.useMutation({
-    onSuccess: () => {
-      setSellAmount(0);
-      setShowTicketManagement(false);
-      toast.success("Transaction sent to blockchain successfully");
-      setLoading(false);
-    },
-    onError: ClientTRPCErrorHandler,
-  });
   const soroban = api.soroban.submitContractCall.useMutation({
     onSuccess: () => {
       setSellAmount(0);
       setShowTicketManagement(false);
-      toast.success("Transaction sent to blockchain successfully");
+      toast.success("Blockchain updated");
       setLoading(false);
     },
     onError: ClientTRPCErrorHandler,
@@ -81,40 +68,6 @@ const TicketCard: React.FC = () => {
   const startAuction = api.soroban.startAuction.useMutation({
     onError: ClientTRPCErrorHandler,
   });
-  const viewAuction = api.soroban.viewAuction.useMutation({
-    onError: ClientTRPCErrorHandler,
-  });
-
-  const handleSell = async () => {
-    try {
-      if (sellAmount <= 0) return;
-      setLoading(true);
-      if (!publicKey) {
-        return toast.error("Please connect your wallet");
-      }
-      const xdr = await sell.mutateAsync({
-        assetId: asset_id as string,
-        unitsToSell: sellAmount,
-        userPublicKey: publicKey,
-      });
-      const signedXDR = await signXDR(xdr);
-      const tx = await ledger.mutateAsync({ xdr: signedXDR });
-      if (tx?.successful) {
-        void ctx.event.myTickets.invalidate({ eventId: eventId as string });
-        void ctx.event.ticket.invalidate({
-          eventId: eventId as string,
-          assetId: asset_id as string,
-        });
-      } else {
-        toast.error("Error on contract's transaction signature");
-      }
-    } catch (e) {
-      toast.error("Error on contract's transaction signature");
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleStartAuction = async () => {
     try {
@@ -131,41 +84,18 @@ const TicketCard: React.FC = () => {
       });
       console.log(xdr);
       const signedXDR = await signXDR(xdr);
-      const tx = await ledger.mutateAsync({ xdr: signedXDR });
-      console.log(tx);
-      if (tx?.successful) {
-        void ctx.event.myTickets.invalidate({ eventId: eventId as string });
-        void ctx.event.ticket.invalidate({
-          eventId: eventId as string,
-          assetId: asset_id as string,
-        });
-      } else {
-        toast.error("Error on sell");
-      }
+      const tx = await soroban.mutateAsync({ xdr: signedXDR });
+      void ctx.event.myTickets.invalidate({ eventId: eventId as string });
+      void ctx.event.ticket.invalidate({
+        eventId: eventId as string,
+        assetId: asset_id as string,
+      });
     } catch (e) {
       toast.error("Error on sell");
       console.error(e);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleViewAuction = async () => {
-    if (!publicKey) {
-      return toast.error("Please connect your wallet");
-    }
-    const xdr = await viewAuction.mutateAsync({
-      ownerPublicKey: publicKey,
-      assetId: asset_id as string,
-    });
-    if (xdr) {
-      const signedXDR = await signXDR(xdr);
-      const res = await soroban.mutateAsync({ xdr: signedXDR });
-      console.log("res:", res);
-    } else {
-      toast.error("Error on view auction");
-    }
-    console.log(xdr);
   };
 
   const total = useMemo(() => {
@@ -247,7 +177,7 @@ const TicketCard: React.FC = () => {
                   </div>
                 </div>
                 <Button
-                  disabled={sell.isPending || ledger.isPending || loading}
+                  disabled={soroban.isPending || loading}
                   onClick={(e) => {
                     e.preventDefault();
                     setShowTicketManagement(true);
@@ -256,7 +186,7 @@ const TicketCard: React.FC = () => {
                   size="sm"
                   className="group border-[1px] border-black bg-black pl-4 pr-8 text-white hover:bg-white hover:text-black"
                 >
-                  {sell.isPending || ledger.isPending || loading ? (
+                  {soroban.isPending || loading ? (
                     <Icons.spinner className="h-4 w-4 animate-spin" />
                   ) : (
                     <p>
@@ -299,7 +229,7 @@ const TicketCard: React.FC = () => {
                   <Separator />
                   <div className="flex items-center gap-2">
                     <Button
-                      disabled={sell.isPending || ledger.isPending || loading}
+                      disabled={soroban.isPending || loading}
                       onClick={reduceSellAmount}
                       variant="outline"
                       size="sm"
@@ -311,7 +241,7 @@ const TicketCard: React.FC = () => {
                       Selling {sellAmount} {plurify("Ticket", sellAmount)}
                     </span>
                     <Button
-                      disabled={sell.isPending || ledger.isPending || loading}
+                      disabled={soroban.isPending || loading}
                       onClick={increaseSellAmount}
                       variant="outline"
                       size="sm"
@@ -353,14 +283,14 @@ const TicketCard: React.FC = () => {
                   </div>
                   <Button
                     disabled={loading || sellAmount <= 0}
-                    onClick={handleSell}
+                    onClick={handleStartAuction}
                     size="lg"
                     className="w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                   >
                     {loading ? (
                       <Icons.spinner className="animate-spin" />
                     ) : (
-                      "Sell"
+                      "Start auction"
                     )}
                   </Button>
                   <Button
@@ -374,22 +304,6 @@ const TicketCard: React.FC = () => {
                     className="w-full"
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    onClick={handleStartAuction}
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                  >
-                    Contract call (Start Auction)
-                  </Button>
-                  <Button
-                    onClick={handleViewAuction}
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                  >
-                    Contract call (View Auction)
                   </Button>
                 </div>
               </CardContent>

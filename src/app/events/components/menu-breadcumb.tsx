@@ -35,7 +35,7 @@ export const MenuBreadcumb: React.FC<{
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {id && (
+          {id ? (
             <>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -48,6 +48,8 @@ export const MenuBreadcumb: React.FC<{
                 </BreadcrumbLink>
               </BreadcrumbItem>
             </>
+          ) : (
+            "..."
           )}
           {actionSection && (
             <>

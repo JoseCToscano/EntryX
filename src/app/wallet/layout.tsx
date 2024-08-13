@@ -3,12 +3,14 @@ import React from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { Icons } from "~/components/icons";
+import Image from "next/image";
 import Footer from "~/components/components/footer";
 import { useWallet } from "~/hooks/useWallet";
 import { Badge } from "~/components/ui/badge";
+import { shortStellarAddress } from "~/lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { account, network, isLoading } = useWallet();
+  const { publicKey, network, isLoading } = useWallet();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -18,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="mx-6"
             sections={[
               { name: "Events", href: "/events" },
-              { name: "Wallet", href: "/account/wallet" },
+              { name: "Wallet", href: "/wallet" },
             ]}
           />
           <div className="ml-auto flex items-center space-x-4">
@@ -26,8 +28,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Icons.spinner className="animate-spin" />
             ) : (
               <span className="flex flex-row items-center gap-1 font-semibold">
-                <Icons.StellarIcon />
-                XLM: {account?.xlm?.balance ?? "-"}
+                <Image
+                  width={20}
+                  height={20}
+                  src={"/icons/stellar-xlm-logo.svg"}
+                  alt={"Stellar XLM icon"}
+                />
+                {publicKey
+                  ? shortStellarAddress(publicKey)
+                  : "Wallet not connected"}
                 {network && (
                   <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
                     {network}
