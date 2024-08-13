@@ -103,48 +103,48 @@ export default function Component() {
                             checked={filters.category.includes(
                               "Music Festival",
                             )}
-                            onCheckedChange={(checked) =>
-                              handleFilterChange(
-                                "category",
-                                checked
-                                  ? [...filters.category, "Music Festival"]
-                                  : filters.category.filter(
-                                      (c) => c !== "Music Festival",
-                                    ),
-                              )
-                            }
+                            // onCheckedChange={(checked) =>
+                            //   handleFilterChange(
+                            //     "category",
+                            //     checked
+                            //       ? [...filters.category, "Music Festival"]
+                            //       : filters.category.filter(
+                            //           (c) => c !== "Music Festival",
+                            //         ),
+                            //   )
+                            // }
                           />
                           Music Festival
                         </Label>
                         <Label className="flex items-center gap-2">
                           <Checkbox
                             checked={filters.category.includes("Sports")}
-                            onCheckedChange={(checked) =>
-                              handleFilterChange(
-                                "category",
-                                checked
-                                  ? [...filters.category, "Sports"]
-                                  : filters.category.filter(
-                                      (c) => c !== "Sports",
-                                    ),
-                              )
-                            }
+                            // onCheckedChange={(checked) =>
+                            //   handleFilterChange(
+                            //     "category",
+                            //     checked
+                            //       ? [...filters.category, "Sports"]
+                            //       : filters.category.filter(
+                            //           (c) => c !== "Sports",
+                            //         ),
+                            //   )
+                            // }
                           />
                           Sports
                         </Label>
                         <Label className="flex items-center gap-2">
                           <Checkbox
                             checked={filters.category.includes("Theater")}
-                            onCheckedChange={(checked) =>
-                              handleFilterChange(
-                                "category",
-                                checked
-                                  ? [...filters.category, "Theater"]
-                                  : filters.category.filter(
-                                      (c) => c !== "Theater",
-                                    ),
-                              )
-                            }
+                            // onCheckedChange={(checked) =>
+                            //   handleFilterChange(
+                            //     "category",
+                            //     checked
+                            //       ? [...filters.category, "Theater"]
+                            //       : filters.category.filter(
+                            //           (c) => c !== "Theater",
+                            //         ),
+                            //   )
+                            // }
                           />
                           Theater
                         </Label>
@@ -155,29 +155,29 @@ export default function Component() {
                       <div className="grid gap-2">
                         <div className="flex items-center gap-2">
                           <span>Min:</span>
-                          <Input
+                          <input
                             type="number"
                             value={filters.price.min}
-                            onChange={(e) =>
-                              handleFilterChange("price", {
-                                ...filters.price,
-                                min: Number(e.target.value),
-                              })
-                            }
+                            // onChange={(e) =>
+                            //   handleFilterChange("price", {
+                            //     ...filters.price,
+                            //     min: Number(e.target.value),
+                            //   })
+                            // }
                             className="w-24"
                           />
                         </div>
                         <div className="flex items-center gap-2">
                           <span>Max:</span>
-                          <Input
+                          <input
                             type="number"
                             value={filters.price.max}
-                            onChange={(e) =>
-                              handleFilterChange("price", {
-                                ...filters.price,
-                                max: Number(e.target.value),
-                              })
-                            }
+                            // onChange={(e) =>
+                            //   handleFilterChange("price", {
+                            //     ...filters.price,
+                            //     max: Number(e.target.value),
+                            //   })
+                            // }
                             className="w-24"
                           />
                         </div>
@@ -190,29 +190,29 @@ export default function Component() {
                       <div className="grid gap-2">
                         <div className="flex items-center gap-2">
                           <span>Min (hours):</span>
-                          <Input
+                          <input
                             type="number"
                             value={filters.timeRemaining.min}
-                            onChange={(e) =>
-                              handleFilterChange("timeRemaining", {
-                                ...filters.timeRemaining,
-                                min: Number(e.target.value),
-                              })
-                            }
+                            // onChange={(e) =>
+                            //   handleFilterChange("timeRemaining", {
+                            //     ...filters.timeRemaining,
+                            //     min: Number(e.target.value),
+                            //   })
+                            // }
                             className="w-24"
                           />
                         </div>
                         <div className="flex items-center gap-2">
                           <span>Max (hours):</span>
-                          <Input
+                          <input
                             type="number"
                             value={filters.timeRemaining.max}
-                            onChange={(e) =>
-                              handleFilterChange("timeRemaining", {
-                                ...filters.timeRemaining,
-                                max: Number(e.target.value),
-                              })
-                            }
+                            // onChange={(e) =>
+                            //   handleFilterChange("timeRemaining", {
+                            //     ...filters.timeRemaining,
+                            //     max: Number(e.target.value),
+                            //   })
+                            // }
                             className="w-24"
                           />
                         </div>
