@@ -8,6 +8,8 @@ import Footer from "~/components/components/footer";
 import { useWallet } from "~/hooks/useWallet";
 import { Badge } from "~/components/ui/badge";
 import { shortStellarAddress } from "~/lib/utils";
+import Link from "next/link";
+import Logo from "~/app/_components/logo";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { publicKey, network, isLoading } = useWallet();
@@ -16,6 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <div className="sticky top-0 border-b">
         <div className="z-50 flex h-16 items-center bg-white px-4 opacity-95">
+          <Logo />
           <MainNav
             className="mx-6"
             sections={[

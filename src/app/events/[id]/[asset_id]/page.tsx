@@ -82,16 +82,15 @@ const TicketCard: React.FC = () => {
         quantity: sellAmount,
         startPrice: 5,
       });
-      console.log(xdr);
       const signedXDR = await signXDR(xdr);
-      const tx = await soroban.mutateAsync({ xdr: signedXDR });
+      await soroban.mutateAsync({ xdr: signedXDR });
       void ctx.event.myTickets.invalidate({ eventId: eventId as string });
       void ctx.event.ticket.invalidate({
         eventId: eventId as string,
         assetId: asset_id as string,
       });
     } catch (e) {
-      toast.error("Error on sell");
+      toast.error("Auction was not created");
       console.error(e);
     } finally {
       setLoading(false);

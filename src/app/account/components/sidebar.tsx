@@ -31,16 +31,20 @@ export function Sidebar({ className }: { className?: string }) {
             My Account
           </h2>
           <div className="space-y-1">
-            <Button variant="ghost" className="h-8 w-full justify-start">
-              <Icons.ticket className="mx-2 h-4 w-4" />
-              Tickets
-            </Button>
+            <Link href="/my-tickets">
+              <Button variant="ghost" className="h-8 w-full justify-start">
+                <Icons.ticket className="mx-2 h-4 w-4" />
+                Tickets
+              </Button>
+            </Link>
           </div>
           <div className="space-y-1">
-            <Button variant="ghost" className="h-8 w-full justify-start">
-              <Icons.wallet className="mx-2 h-4 w-4" />
-              Wallet
-            </Button>
+            <Link href="/wallet">
+              <Button variant="ghost" className="h-8 w-full justify-start">
+                <Icons.wallet className="mx-2 h-4 w-4" />
+                Wallet
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

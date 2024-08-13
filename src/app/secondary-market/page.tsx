@@ -5,7 +5,7 @@
  */
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
@@ -19,17 +19,15 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "~/components/ui/card";
 import { Icons } from "~/components/icons";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import Image from "next/image";
-import { AlbumArtwork } from "~/app/account/events/components/album-artwork";
-import type { Event } from "@prisma/client";
 import Link from "next/link";
 import { Label } from "~/components/ui/label";
 import { Checkbox } from "~/components/ui/checkbox";
+import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,7 +62,6 @@ export default function Component() {
     <div className="border-t">
       <div className="bg-background p-4">
         <div className="h-full px-4 py-6 lg:px-8">
-          {/*<MenuBreadcumb actionSection="Secondary Market" />*/}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <h2 className="text-2xl font-semibold tracking-tight">
@@ -223,6 +220,10 @@ export default function Component() {
               </DropdownMenu>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {auctionItems.isLoading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TciketSkeleton key={i} />
+                ))}
               {auctionItems.data?.map(({ asset, id, ...auction }) => (
                 <Link href={`/secondary-market/${id}`} key={id}>
                   <Card

@@ -136,7 +136,7 @@ export const stellarAccountRouter = createTRPCRouter({
                   if (change.asset_code) {
                     operation.asset_code = change.asset_code;
                   }
-                  return `${acc ? `${acc},` : ""}${change.type} ${Number(change.amount)} ${change.asset_type === "native" ? "XLM" : change.asset_code}`;
+                  return `${acc ? `${acc},` : ""}${change.type} ${Number(change.amount)} ${change.asset_type === "native" ? "XLM" : change.asset_code} ${change.to ? shortStellarAddress(change.to, 3) : ""}`;
                 },
                 "",
               );

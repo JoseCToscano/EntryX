@@ -199,9 +199,14 @@ export default function Component() {
                             )}
                           </span>
 
-                          <div className="text-sm text-muted-foreground">
-                            {op.desc}
-                          </div>
+                          {op.desc.split(",").map((d, i) => (
+                            <div
+                              key={i}
+                              className="text-xs text-muted-foreground"
+                            >
+                              • {d}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>

@@ -195,7 +195,7 @@ export default function Purchase() {
                 </h3>
                 {/* <p className="text-muted-foreground">Desc...</p> */}
                 <div className="flex w-full items-center justify-end">
-                  <Link href={`/events/${id}/secondary-market`}>
+                  <Link href={`/secondary-market?eventId=${id}`}>
                     <Button className="group w-48 border-[1px] border-black bg-black text-sm text-white hover:bg-white hover:text-black">
                       Go to marketplace
                       <Icons.expandingArrow className="ml-2 h-4 w-4" />
