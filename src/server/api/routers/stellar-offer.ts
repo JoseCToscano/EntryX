@@ -105,7 +105,7 @@ export const stellarOfferRouter = createTRPCRouter({
       const cart = new Map<string, number>(
         input.items.map((p) => [p.assetId, p.unitsToBuy]),
       );
-
+      console.log("cart", cart);
       // Fetch the assets to be purchased
       const assets = await ctx.db.asset.findMany({
         where: {
@@ -151,16 +151,24 @@ export const stellarOfferRouter = createTRPCRouter({
             }),
           );
         }
+        const buyAmount = cart.get(asset.id)!;
         // Add the purchase operation
         return txBuilder.addOperation(
           Operation.manageBuyOffer({
             selling: Asset.native(),
             buying: new Asset(asset.code, asset.issuer),
-            buyAmount: cart.get(asset.id)!.toString(),
+            buyAmount: buyAmount.toString(),
             price: asset.pricePerUnit.toString(),
           }),
         );
       }, emptyTransaction);
+      console.log("Here");
+
+      const fee = (
+        SERVICE_FEE +
+        totalTickets * FIXED_UNITARY_COMMISSION
+      ).toFixed(7);
+      console.log("fee", fee);
 
       // Add FIXED_UNITARY_COMMISSION operations
       // Add SERVICE_FEE operations
@@ -169,10 +177,7 @@ export const stellarOfferRouter = createTRPCRouter({
           source: input.userPublicKey,
           asset: Asset.native(),
           destination: env.ISSUER_PUBLIC_KEY,
-          amount: (
-            SERVICE_FEE +
-            totalTickets * FIXED_UNITARY_COMMISSION
-          ).toString(),
+          amount: fee,
         }),
       );
 

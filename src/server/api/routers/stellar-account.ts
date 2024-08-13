@@ -130,14 +130,13 @@ export const stellarAccountRouter = createTRPCRouter({
         };
         switch (op.type) {
           case Horizon.HorizonApi.OperationResponseType.invokeHostFunction:
-            console.log(op);
             if (op.asset_balance_changes.length) {
               operation.desc = op.asset_balance_changes.reduce(
                 (acc, change) => {
                   if (change.asset_code) {
                     operation.asset_code = change.asset_code;
                   }
-                  return `${acc ? `${acc},` : ""}${change.type} ${change.asset_code} ${change.amount}`;
+                  return `${acc ? `${acc},` : ""}${change.type} ${Number(change.amount)} ${change.asset_type === "native" ? "XLM" : change.asset_code}`;
                 },
                 "",
               );
@@ -252,7 +251,7 @@ export const stellarAccountRouter = createTRPCRouter({
                 : (op.buying_asset_code ?? "");
             break;
           default:
-            console.log("operation", op);
+            console.log("unkown operation", op);
             operation.desc = `Unknown operation`;
         }
         return operation;

@@ -39,7 +39,7 @@ const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 // const ticketAuctionContractAddress =
 //   "CC7TAXRJV6AWXC2AZGNWVHVZLSXGQ3IOH2WHDSBNQ4SIFBBNSKWBRCYA";
 const ticketAuctionContractAddress =
-  "CBPSFDMAHY5MKNNICF5KBLHDEHMVEDDQYEFDATSCYTC3AQHN4AWP7TUB";
+  "CDWPMPRTWCIKOP66WKVPTEEAQDGU446XIIQKENVBBHPRJISKXNGBRABY";
 
 // Stellar's Native Asset (XLM) Stellar Asset Contract Address
 const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";

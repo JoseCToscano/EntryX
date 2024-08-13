@@ -66,7 +66,7 @@ impl TicketAuctionContract {
         // Transfer the tickets from the owner to the contract address
         let asset = token::Client::new(&env, &asset_address.clone());
         let contract = env.current_contract_address();
-        let transfer_quantity = quantity.clone();
+        let transfer_quantity = quantity.clone() * 100000;
         asset.transfer(&owner.clone(), &contract, &transfer_quantity);
 
         // Initialize the auction
@@ -78,7 +78,7 @@ impl TicketAuctionContract {
             highest_bid: 0,
             highest_bidder: None,
             max_resell_price,
-            quantity: quantity.clone(),
+            quantity: quantity.clone() / 100,
             end_time: auction_end_time,
             event_start_time,
             bids: Map::new(&env),
@@ -117,9 +117,11 @@ impl TicketAuctionContract {
             let xlmAmount = bid_amount.clone() * 100000;
             asset.transfer(&bidder.clone(), &contract, &xlmAmount);
 
-            auction.highest_bid = bid_amount;
+            // TODO: Transfer the previous highest bid back to the previous highest bidder
+
+            auction.highest_bid = bid_amount.clone() / 100;
             auction.highest_bidder = Some(bidder.clone());
-            auction.bids.set(bidder.clone(), bid_amount);
+            auction.bids.set(bidder.clone(), bid_amount / 100);
 
             env.storage().persistent().set(&key, &auction)
         }
@@ -133,18 +135,24 @@ impl TicketAuctionContract {
             // Transfer the tickets from the the contract address to the highest bidder
             let asset = token::Client::new(&env, &auction.asset_address.clone());
             let contract = env.current_contract_address();
-            let transfer_quantity = auction.quantity.clone() / 100;
+            // Transactions are in stroops, so multiply by 10000000 to get the correct amount
+            let asset_quantity = auction.quantity.clone() * 10000000;
 
 
             // Transfer the tickets to the highest bidder if there is one, otherwise transfer them back to the owner
             if auction.highest_bidder.is_none() {
-                asset.transfer(&contract, &owner.clone(), &transfer_quantity);
+                asset.transfer(&contract, &owner.clone(), &asset_quantity);
             } else {
-            // Transfer corresponding XLM from the highest bidder to the owner
-            let native = token::Client::new(&env, &auction.native_address.clone());
-            let xlm_quantity = auction.highest_bid.clone() / 100;
-            let highest_bidder = auction.highest_bidder.clone().unwrap();
-            asset.transfer(&contract, &highest_bidder, &xlm_quantity);
+
+                // Transfer corresponding XLM from the contract to the owner
+                let native = token::Client::new(&env, &auction.native_address.clone());
+                // Transactions are in stroops, so multiply by 10000000 to get the correct amount
+                let xlm_quantity = auction.highest_bid.clone() * 10000000;
+                native.transfer(&contract, &owner.clone(), &xlm_quantity);
+
+                // Transfer the tickets to the highest bidder
+                let highest_bidder = auction.highest_bidder.clone().unwrap();
+                asset.transfer(&contract, &highest_bidder, &asset_quantity);
             }
 
         }
