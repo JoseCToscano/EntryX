@@ -45,6 +45,10 @@ export function fromStroopsToXLM(stroops: number) {
   return stroops / 10000000;
 }
 
+export function fromXLMToStroops(xlm: number) {
+  return xlm * 10000000;
+}
+
 export function computeTransactionFees(
   assets: Set<Asset>,
   accountBalances: AccountBalance[],

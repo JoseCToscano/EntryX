@@ -63,6 +63,7 @@ export const marketplaceRouter = createTRPCRouter({
         where: {
           id: Number(input.id),
         },
+        orderBy: { id: "desc" },
         include: {
           asset: {
             include: {
@@ -71,7 +72,6 @@ export const marketplaceRouter = createTRPCRouter({
           },
         },
       });
-      console.log("auctions", auctions);
       return auctions;
     }),
 });

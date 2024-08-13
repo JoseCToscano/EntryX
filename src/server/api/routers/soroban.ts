@@ -36,8 +36,14 @@ const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 // const ticketAuctionContractAddress =
 //   "CABNQYQNXLJUUYF65F3C3IERAWEXT5YF5XIMBHUZ3DAOQWVH7HLRZ3NC";
+// const ticketAuctionContractAddress =
+//   "CC7TAXRJV6AWXC2AZGNWVHVZLSXGQ3IOH2WHDSBNQ4SIFBBNSKWBRCYA";
 const ticketAuctionContractAddress =
-  "CC7TAXRJV6AWXC2AZGNWVHVZLSXGQ3IOH2WHDSBNQ4SIFBBNSKWBRCYA";
+  "CBPSFDMAHY5MKNNICF5KBLHDEHMVEDDQYEFDATSCYTC3AQHN4AWP7TUB";
+
+// Stellar's Native Asset (XLM) Stellar Asset Contract Address
+const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+
 export const sorobanRouter = createTRPCRouter({
   startAuction: publicProcedure
     .input(
@@ -98,9 +104,10 @@ export const sorobanRouter = createTRPCRouter({
         addressToScVal(
           "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
         ),
+        addressToScVal(xlmSAC), // Native Asset
         numberToi128(input.quantity),
-        numberToU64(input.startPrice), // TODO: editar el front
-        numberToU64(Number(asset.pricePerUnit)),
+        numberToi128(input.startPrice), // TODO: editar el front
+        numberToi128(Number(asset.pricePerUnit)),
         numberToU64(dayjs(asset.event.date).unix()),
       ];
 
@@ -179,9 +186,9 @@ export const sorobanRouter = createTRPCRouter({
       }
 
       const contractParams = [
-        stringToSymbol(`AU${auction.id}`), // TODO: Auction ID
-        addressToScVal(input.bidderKey),
-        numberToU64(input.bid),
+        stringToSymbol(`AU${auction.id}`), // Auction ID
+        addressToScVal(input.bidderKey), // Bidder
+        numberToi128(input.bid), // Bid
       ];
 
       console.log("contractParams", contractParams);
@@ -268,6 +275,7 @@ export const sorobanRouter = createTRPCRouter({
           return nativize<TicketAuction>(result) ?? "No result";
         }
       } catch (e) {
+        console.error(e);
         // This will throw a TRPCError with the appropriate message
         handleHorizonServerError(e);
       }

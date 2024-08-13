@@ -192,6 +192,7 @@ export async function callWithSignedXDR(xdr: string) {
     if (txResponse.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
       return txResponse.returnValue;
     } else {
+      console.log("Error", txResponse);
       throw new Error("Unable to send transaction");
     }
   }

@@ -15,14 +15,15 @@ pub enum DataKey {
 pub struct Auction {
     owner: Address,
     asset_address: Address,
-    starting_price: u64,
-    highest_bid: u64,
+    native_address: Address,
+    starting_price: i128,
+    highest_bid: i128,
     highest_bidder: Option<Address>,
-    max_resell_price: u64,
+    max_resell_price: i128,
     end_time: u64,
     quantity: i128,
     event_start_time: u64,
-    bids: Map<Address, u64>, // All bids placed in the auction
+    bids: Map<Address, i128>, // All bids placed in the auction
 }
 
 #[contract]
@@ -38,9 +39,10 @@ impl TicketAuctionContract {
         owner: Address,
         auction_id: Symbol, // Unique auction ID
         asset_address: Address, // Asset's SAC address (hint: starts with "C...")
+        native_address: Address, // Asset's SAC address (hint: starts with "C...")
         quantity: i128,
-        starting_price: u64,
-        purchase_price: u64,  // Price at which the ticket was originally purchased
+        starting_price: i128,
+        purchase_price: i128,  // Price at which the ticket was originally purchased
         event_start_time: u64,  // Event start time in Unix timestamp
     ) {
         owner.require_auth();
@@ -71,7 +73,8 @@ impl TicketAuctionContract {
         let auction = Auction {
             owner: owner.clone(),
             asset_address: asset_address.clone(),
-            starting_price: (starting_price.clone() / 100),
+            native_address: native_address.clone(),
+            starting_price: (starting_price.clone() ^ 100),
             highest_bid: 0,
             highest_bidder: None,
             max_resell_price,
@@ -95,7 +98,7 @@ impl TicketAuctionContract {
             env.storage().persistent().get(&key).unwrap()
     }
 
-    pub fn place_bid(env: Env, auction_id: Symbol, bidder: Address, bid_amount: u64) {
+    pub fn place_bid(env: Env, auction_id: Symbol, bidder: Address, bid_amount: i128) {
             bidder.require_auth();
             let key = DataKey::Auction(auction_id.clone());
             let mut auction: Auction = env.storage().persistent().get(&key).unwrap();
@@ -106,6 +109,13 @@ impl TicketAuctionContract {
             if bid_amount <= auction.highest_bid {
                 panic!("Bid is too low");
             }
+
+            // Put your Money where your mouth is $$$
+            // Transfer the corresponding bid (XLM) from the bidder to the contract address
+            let asset = token::Client::new(&env, &auction.native_address.clone());
+            let contract = env.current_contract_address();
+            let xlmAmount = bid_amount.clone() * 100000;
+            asset.transfer(&bidder.clone(), &contract, &xlmAmount);
 
             auction.highest_bid = bid_amount;
             auction.highest_bidder = Some(bidder.clone());
@@ -125,12 +135,16 @@ impl TicketAuctionContract {
             let contract = env.current_contract_address();
             let transfer_quantity = auction.quantity.clone() / 100;
 
+
             // Transfer the tickets to the highest bidder if there is one, otherwise transfer them back to the owner
             if auction.highest_bidder.is_none() {
                 asset.transfer(&contract, &owner.clone(), &transfer_quantity);
             } else {
+            // Transfer corresponding XLM from the highest bidder to the owner
+            let native = token::Client::new(&env, &auction.native_address.clone());
+            let xlm_quantity = auction.highest_bid.clone() / 100;
             let highest_bidder = auction.highest_bidder.clone().unwrap();
-            asset.transfer(&contract, &highest_bidder, &transfer_quantity);
+            asset.transfer(&contract, &highest_bidder, &xlm_quantity);
             }
 
         }
