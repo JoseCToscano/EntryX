@@ -121,18 +121,6 @@ model AssetAuction {
   @@index([assetId])
 }
 
-model Bid {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  auctionId String
-  bidder    String // Stellar Address
-  amount    Decimal  @default(0) @db.Decimal(10, 2)
-  asset     Asset    @relation(fields: [assetId], references: [id])
-
-  @@index([assetId])
-}
-
 model Wallet {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
