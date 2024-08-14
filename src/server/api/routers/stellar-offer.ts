@@ -12,8 +12,8 @@ import { type Asset as AssetDB } from "@prisma/client";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import {
-  FIXED_UNITARY_COMMISSION,
-  RESELLER_UNITARY_COMMISSION,
+  COMMISSION_PER_PURCHASED_ITEM,
+  RESELLER_COMMISSION,
   SERVICE_FEE,
 } from "~/constants";
 import { getAssetBalanceFromAccount, isInTrustline } from "~/lib/utils";
@@ -164,11 +164,8 @@ export const stellarOfferRouter = createTRPCRouter({
       }, emptyTransaction);
       console.log("Here");
 
-      const fee = (
-        SERVICE_FEE +
-        totalTickets * FIXED_UNITARY_COMMISSION
-      ).toFixed(7);
-      console.log("fee", fee);
+      const extraCharges =
+        SERVICE_FEE + COMMISSION_PER_PURCHASED_ITEM * totalTickets;
 
       // Add FIXED_UNITARY_COMMISSION operations
       // Add SERVICE_FEE operations
@@ -177,7 +174,7 @@ export const stellarOfferRouter = createTRPCRouter({
           source: input.userPublicKey,
           asset: Asset.native(),
           destination: env.ISSUER_PUBLIC_KEY,
-          amount: fee,
+          amount: extraCharges.toFixed(7),
         }),
       );
 
@@ -248,9 +245,7 @@ export const stellarOfferRouter = createTRPCRouter({
             source: input.userPublicKey,
             asset: Asset.native(),
             destination: env.ISSUER_PUBLIC_KEY,
-            amount: (
-              RESELLER_UNITARY_COMMISSION * input.unitsToSell
-            ).toString(),
+            amount: (RESELLER_COMMISSION * input.unitsToSell).toString(),
           }),
         )
         .setTimeout(standardTimebounds)

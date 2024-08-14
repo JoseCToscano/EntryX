@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -15,13 +15,19 @@ import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { RESELLER_UNITARY_COMMISSION } from "~/constants";
+import { RESELLER_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
 import { useWallet } from "~/hooks/useWallet";
 import Loading from "~/app/account/components/loading";
 import { Badge } from "~/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 const TicketCard: React.FC = () => {
   const { publicKey, signXDR } = useWallet();
@@ -80,7 +86,7 @@ const TicketCard: React.FC = () => {
         ownerPublicKey: publicKey,
         assetId: asset_id as string,
         quantity: sellAmount,
-        startPrice: 5,
+        startPrice: Number(asset.data?.pricePerUnit) * sellAmount,
       });
       const signedXDR = await signXDR(xdr);
       await soroban.mutateAsync({ xdr: signedXDR });
@@ -96,10 +102,6 @@ const TicketCard: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const total = useMemo(() => {
-    return sellAmount * Number(asset.data?.pricePerUnit);
-  }, [sellAmount, asset.data?.pricePerUnit]);
 
   const increaseSellAmount = () => {
     const availableTickets =
@@ -207,7 +209,9 @@ const TicketCard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Place tickets for sale</CardTitle>
-                <CardDescription>Sell on the secondary market</CardDescription>
+                <CardDescription>
+                  Start an auction on the secondary market
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -215,16 +219,43 @@ const TicketCard: React.FC = () => {
                     <div>
                       ({sellAmount}) {asset.data?.label}
                     </div>
-                    <div>{Number(asset.data?.pricePerUnit ?? "0")} XLM</div>
+                    <div className="flex-col items-center justify-between text-right">
+                      <div>{Number(asset.data?.pricePerUnit ?? "0")} XLM</div>
+                      <div className="text-xs font-light opacity-50">
+                        Issuer&apos;s price
+                      </div>
+                    </div>
                   </div>
-
                   {sellAmount > 0 && (
                     <div className="flex items-center justify-between">
-                      <div>Reseller Unitary commission</div>
-                      <div>{RESELLER_UNITARY_COMMISSION} XLM</div>
+                      <div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild className="">
+                              <span className="flex items-center justify-start">
+                                Reseller Commission
+                                <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>
+                                This amount will be taken off from the
+                                transaction only if completed successfully
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+
+                      <div className="flex flex-col items-end justify-end">
+                        <div>{RESELLER_COMMISSION} XLM</div>
+                        <div className="text-xs font-light opacity-50">
+                          approx. $
+                          {fromXLMToUSD(RESELLER_COMMISSION).toFixed(2)} USD
+                        </div>
+                      </div>
                     </div>
                   )}
-
                   <Separator />
                   <div className="flex items-center gap-2">
                     <Button
@@ -237,7 +268,7 @@ const TicketCard: React.FC = () => {
                       -
                     </Button>
                     <span>
-                      Selling {sellAmount} {plurify("Ticket", sellAmount)}
+                      Auction for {sellAmount} {plurify("Ticket", sellAmount)}
                     </span>
                     <Button
                       disabled={soroban.isPending || loading}
@@ -249,34 +280,27 @@ const TicketCard: React.FC = () => {
                       +
                     </Button>
                   </div>
+
                   <Separator />
                   <div className="flex items-center justify-between font-bold">
-                    <div>You&apos;ll receive</div>
+                    <div>Auction start price</div>
 
                     <div className="flex flex-col items-end justify-end">
                       <div>
                         {(
-                          total -
-                          RESELLER_UNITARY_COMMISSION * (sellAmount > 0 ? 1 : 0)
-                        ).toLocaleString("en-US", {
-                          minimumFractionDigits: 5,
-                          maximumFractionDigits: 5,
-                        })}{" "}
+                          Number(asset.data?.pricePerUnit ?? 0) * sellAmount
+                        ).toFixed(2)}{" "}
                         XLM
                       </div>
                       <div className="text-xs font-light opacity-50">
                         approx. $
                         {fromXLMToUSD(
-                          total -
-                            (RESELLER_UNITARY_COMMISSION * sellAmount > 0
-                              ? 1
-                              : 0),
+                          Number(asset.data?.pricePerUnit ?? 0) * sellAmount,
                         ).toFixed(2)}{" "}
                         USD
                       </div>
                     </div>
                   </div>
-
                   <div className="py-4">
                     <TransactionSteps assets={[]} offerType="sell" />
                   </div>

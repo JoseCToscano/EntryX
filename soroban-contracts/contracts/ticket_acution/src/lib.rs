@@ -19,7 +19,6 @@ pub struct Auction {
     starting_price: i128,
     highest_bid: i128,
     highest_bidder: Option<Address>,
-    max_resell_price: i128,
     end_time: u64,
     quantity: i128,
     event_start_time: u64,
@@ -46,11 +45,10 @@ impl TicketAuctionContract {
         event_start_time: u64,  // Event start time in Unix timestamp
     ) {
         owner.require_auth();
-        log!(&env, "Starting auction for asset: {}", asset_address);
-        let max_resell_price = purchase_price.clone() * 150 / 100;
+        let unit_price = starting_price.clone() / quantity.clone();
 
-        // Ensure the starting price is not higher than the purchase price
-        if starting_price > purchase_price {
+        // Ensure the starting price is not over the unit price
+        if unit_price > purchase_price {
             panic!("Starting price cannot be higher than the original purchase price.");
         }
 
@@ -77,7 +75,6 @@ impl TicketAuctionContract {
             starting_price: (starting_price.clone() ^ 100),
             highest_bid: 0,
             highest_bidder: None,
-            max_resell_price,
             quantity: quantity.clone() / 100,
             end_time: auction_end_time,
             event_start_time,
@@ -112,12 +109,18 @@ impl TicketAuctionContract {
 
             // Put your Money where your mouth is $$$
             // Transfer the corresponding bid (XLM) from the bidder to the contract address
-            let asset = token::Client::new(&env, &auction.native_address.clone());
+            let native_asset = token::Client::new(&env, &auction.native_address.clone());
             let contract = env.current_contract_address();
             let xlmAmount = bid_amount.clone() * 100000;
-            asset.transfer(&bidder.clone(), &contract, &xlmAmount);
+            native_asset.transfer(&bidder.clone(), &contract, &xlmAmount);
 
             // TODO: Transfer the previous highest bid back to the previous highest bidder
+            let previous_highest_bidder = auction.highest_bidder.clone();
+            if previous_highest_bidder.is_some() {
+                let previous_bidder = previous_highest_bidder.unwrap();
+                let previous_bid = auction.highest_bid.clone() * 10000000;
+                native_asset.transfer(&contract, &previous_bidder, &previous_bid);
+            }
 
             auction.highest_bid = bid_amount.clone() / 100;
             auction.highest_bidder = Some(bidder.clone());

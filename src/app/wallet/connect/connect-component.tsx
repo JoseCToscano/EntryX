@@ -10,12 +10,17 @@ import { Button } from "~/components/ui/button";
 import { useWallet } from "~/hooks/useWallet";
 import { useRouter } from "next/navigation";
 
-export const ConnectWallet: React.FC = () => {
+interface ConnectWalletProps {
+  redirectTarget?: string;
+}
+export const ConnectWallet: React.FC<ConnectWalletProps> = ({
+  redirectTarget = "/wallet",
+}) => {
   const { isFreighterAllowed, hasFreighter, connect } = useWallet();
   const router = useRouter();
 
   if (isFreighterAllowed) {
-    void router.push("/wallet");
+    void router.push(redirectTarget);
   }
 
   return (

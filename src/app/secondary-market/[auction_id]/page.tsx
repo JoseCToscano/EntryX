@@ -20,7 +20,7 @@ import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { RESELLER_UNITARY_COMMISSION } from "~/constants";
+import { RESELLER_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
@@ -30,6 +30,7 @@ import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
 import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 import Link from "next/link";
+import ConnectYourWallet from "~/app/_components/connect-your-wallet";
 
 const AuctionCard: React.FC = () => {
   const { publicKey, signXDR } = useWallet();
@@ -39,6 +40,7 @@ const AuctionCard: React.FC = () => {
 
   const [loading, setLoading] = React.useState(false);
   const [isSigning, setIsSigning] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
 
   const auction = api.marketplace.getAuction.useQuery(
     { id: auction_id as string },
@@ -49,16 +51,9 @@ const AuctionCard: React.FC = () => {
   );
 
   // void api.post.getLatest.prefetch();
-  const {
-    register,
-    handleSubmit,
-    reset,
-    getValues,
-    setError,
-    formState: { errors },
-  } = useForm<FieldValues>({
+  const { register, handleSubmit, reset } = useForm<FieldValues>({
     defaultValues: {
-      bid: auction.data?.highestBid ?? 0,
+      bid: undefined,
     },
   });
 
@@ -113,6 +108,9 @@ const AuctionCard: React.FC = () => {
         toast.error("Please connect your wallet");
         return;
       }
+      if (!data.bid) {
+        return toast.error("Please enter a bid amount");
+      }
       if (Number(data.bid) <= Number(auction.data?.highestBid ?? "0")) {
         return toast.error("Please bid higher than the current highest bid");
       }
@@ -149,22 +147,20 @@ const AuctionCard: React.FC = () => {
         toast.error("Invalid auction");
         return;
       }
+      setIsClosing(true);
 
       const xdr = await closeAuction.mutateAsync({
         auctionId: auction_id as string,
         publicKey,
       });
       const signedXDR = await signXDR(xdr);
-      const res = await soroban.mutateAsync({ xdr: signedXDR });
-      console.log("res:", res);
+      await soroban.mutateAsync({ xdr: signedXDR });
     } catch (error) {
       console.error(error);
     } finally {
-      setIsSigning(false);
+      setIsClosing(false);
     }
   };
-
-  const total = 0;
 
   return (
     <div className="p-4">
@@ -173,13 +169,18 @@ const AuctionCard: React.FC = () => {
         actionSection="Auction"
       />
       {loading && <Loading />}
+      {!publicKey && <ConnectYourWallet />}
       <main className="flex-1">
         <section className="bg-gradient-to-b from-muted to-white py-12 md:py-16 lg:py-20">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12">
               <div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  {auction.data?.asset.event.name}
+                  {auction.isLoading ? (
+                    <Icons.spinner className="animate-spin" />
+                  ) : (
+                    auction.data?.asset.event.name
+                  )}
                 </h2>
                 <p className="text-lg text-muted-foreground md:text-xl">
                   {dayjs(auction.data?.asset.event.date).format("MMMM D, YYYY")}
@@ -289,10 +290,15 @@ const AuctionCard: React.FC = () => {
                           <Button
                             type="button"
                             variant="ghost"
+                            disabled={isClosing}
                             className="mt-4 h-8 w-full border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
                             onClick={handleCloseAuction}
                           >
-                            Close Auction
+                            {isClosing ? (
+                              <Icons.spinner className="animate-spin" />
+                            ) : (
+                              "Close Auction"
+                            )}
                           </Button>
                         </div>
                       </CardContent>
@@ -323,9 +329,11 @@ const AuctionCard: React.FC = () => {
                         <div>
                           <div className="font-medium">Dates</div>
                           <div className="text-muted-foreground">
-                            {dayjs(auction.data?.asset.event.date).format(
-                              "MMMM D, YYYY",
-                            )}
+                            {auction.data
+                              ? dayjs(auction.data?.asset.event.date).format(
+                                  "MMMM D, YYYY",
+                                )
+                              : ""}
                           </div>
                         </div>
                       </div>

@@ -44,7 +44,11 @@ export const marketplaceRouter = createTRPCRouter({
           endsAt: {
             gt: new Date(),
           },
+          closedAt: {
+            equals: null,
+          },
         },
+        orderBy: { endsAt: "asc" },
         include: {
           asset: {
             include: {
@@ -63,7 +67,6 @@ export const marketplaceRouter = createTRPCRouter({
         where: {
           id: Number(input.id),
         },
-        orderBy: { id: "desc" },
         include: {
           asset: {
             include: {

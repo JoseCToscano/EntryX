@@ -98,15 +98,17 @@ model Asset {
 }
 
 model AssetAuction {
-  id                         Int      @id @default(autoincrement())
-  createdAt                  DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
+  id                         Int       @id @default(autoincrement())
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
   startsAt                   DateTime
   endsAt                     DateTime
+  closedAt                   DateTime?
+  bidCount                   Int       @default(0)
   assetId                    String
   owner                      String // Stellar Address
   highestBidder              String? // Stellar Address
-  highestBid                 Decimal? @default(0) @db.Decimal(10, 2)
+  highestBid                 Decimal?  @default(0) @db.Decimal(10, 2)
   contractAddress            String
   contractMethodStartAuction String
   contractMethodEndAuction   String
@@ -116,7 +118,7 @@ model AssetAuction {
   contractMethodCancel       String
   contractMethodViewBids     String
   assetUnits                 Int
-  asset                      Asset    @relation(fields: [assetId], references: [id])
+  asset                      Asset     @relation(fields: [assetId], references: [id])
 
   @@index([assetId])
 }

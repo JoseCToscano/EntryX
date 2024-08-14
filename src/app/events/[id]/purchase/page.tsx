@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
-import { FIXED_UNITARY_COMMISSION, SERVICE_FEE } from "~/constants";
+import { COMMISSION_PER_PURCHASED_ITEM, SERVICE_FEE } from "~/constants";
 import {
   TicketCategoryCard,
   TicketCategorySkeleton,
@@ -249,10 +249,12 @@ export default function Purchase() {
                 </div>
 
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <div>Service Fees & Commissions</div>
-                  <div>
-                    {SERVICE_FEE + totalTickets * FIXED_UNITARY_COMMISSION} XLM
-                  </div>
+                  <div>Service Fee</div>
+                  <div>{SERVICE_FEE} XLM</div>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <div>Commissions</div>
+                  <div>{COMMISSION_PER_PURCHASED_ITEM * totalTickets} XLM</div>
                 </div>
                 <div className="flex items-center justify-between font-bold">
                   <div>Total</div>
@@ -261,7 +263,7 @@ export default function Purchase() {
                       {(
                         total +
                         SERVICE_FEE +
-                        totalTickets * FIXED_UNITARY_COMMISSION
+                        COMMISSION_PER_PURCHASED_ITEM * totalTickets
                       ).toLocaleString("en-US", {
                         minimumFractionDigits: 5,
                         maximumFractionDigits: 5,
@@ -273,7 +275,7 @@ export default function Purchase() {
                       {fromXLMToUSD(
                         total +
                           SERVICE_FEE +
-                          totalTickets * FIXED_UNITARY_COMMISSION,
+                          COMMISSION_PER_PURCHASED_ITEM * totalTickets,
                       ).toFixed(2)}{" "}
                       USD
                     </div>

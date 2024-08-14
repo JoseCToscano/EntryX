@@ -5,13 +5,10 @@ import React from "react";
 
 export default function Logo() {
   return (
-    <Link
-      href={"/events"}
-      className="flex items-center font-medium text-gray-900"
-    >
-      <Icons.Logo className="h-8 w-8 rounded-full hover:scale-[1.01]" />
-      <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400">
-        Entry•X
+    <Link href={"/events"} className="flex items-center text-gray-900">
+      <Badge className="ml-2 border-0 bg-gradient-to-r from-black to-gray-700">
+        ENTRY
+        <Icons.LogoNoBg className="h-5 w-5" />
       </Badge>
     </Link>
   );

@@ -4,11 +4,18 @@ import Image from "next/image";
 type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
-  Logo: (props: IconProps) => (
+  LogoNoBg1: (props: IconProps) => (
     <svg
-      fill="#000000"
-      viewBox="0 0 24 24"
+      width="180px"
+      height="180px"
+      viewBox="0 0 76.00 76.00"
       xmlns="http://www.w3.org/2000/svg"
+      version="1.1"
+      baseProfile="full"
+      enableBackground="new 0 0 76.00 76.00"
+      fill="#ffffff"
+      stroke="#ffffff"
+      transform="rotate(180)matrix(-1, 0, 0, -1, 0, 0)"
       {...props}
     >
       <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
@@ -18,7 +25,88 @@ export const Icons = {
         strokeLinejoin="round"
       ></g>
       <g id="SVGRepo_iconCarrier">
-        <path d="m21.406 6.086-9-4a1.001 1.001 0 0 0-.813 0l-9 4c-.02.009-.034.024-.054.035-.028.014-.058.023-.084.04-.022.015-.039.034-.06.05a.87.87 0 0 0-.19.194c-.02.028-.041.053-.059.081a1.119 1.119 0 0 0-.076.165c-.009.027-.023.052-.031.079A1.013 1.013 0 0 0 2 7v10c0 .396.232.753.594.914l9 4c.13.058.268.086.406.086a.997.997 0 0 0 .402-.096l.004.01 9-4A.999.999 0 0 0 22 17V7a.999.999 0 0 0-.594-.914zM12 4.095 18.538 7 12 9.905l-1.308-.581L5.463 7 12 4.095zm1 15.366V11.65l7-3.111v7.812l-7 3.11z"></path>
+        {" "}
+        <path
+          fill="#ffffff"
+          fillOpacity="1"
+          strokeWidth="0.00076"
+          strokeLinejoin="round"
+          d="M 19,10.2917C 27.3776,9.99247 34.8506,14.4426 38,16.6332C 41.1494,14.4426 48.6224,9.99247 57,10.2917C 60.1667,11.4792 60.5625,12.2709 60.5625,12.2709C 60.5625,12.2709 51.8542,15.0417 45.5208,22.9583C 53.8333,33.6458 65.3125,48.2917 63.7292,60.9583C 55.4167,46.3125 45.8739,35.2702 38,30.6145C 30.1261,35.2702 20.5833,46.3125 12.2708,60.9583C 10.6875,48.2917 22.1667,33.6458 30.4792,22.9583C 24.1458,15.0417 15.4375,12.2709 15.4375,12.2709C 15.4375,12.2709 15.8333,11.4792 19,10.2917 Z "
+        ></path>{" "}
+      </g>
+    </svg>
+  ),
+  LogoNoBg: (props: IconProps) => (
+    <svg
+      width="180px"
+      height="180px"
+      viewBox="0 0 76.00 76.00"
+      xmlns="http://www.w3.org/2000/svg"
+      version="1.1"
+      baseProfile="full"
+      enableBackground="new 0 0 76.00 76.00"
+      fill="#ffffff"
+      stroke="#ffffff"
+      transform="rotate(90)matrix(-1, 0, 0, -1, 0, 0)"
+      {...props}
+    >
+      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+      <g
+        id="SVGRepo_tracerCarrier"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      ></g>
+      <g id="SVGRepo_iconCarrier">
+        {" "}
+        <path
+          fill="#ffffff"
+          fillOpacity="1"
+          strokeWidth="0.00076"
+          strokeLinejoin="round"
+          d="M 19,10.2917C 27.3776,9.99247 34.8506,14.4426 38,16.6332C 41.1494,14.4426 48.6224,9.99247 57,10.2917C 60.1667,11.4792 60.5625,12.2709 60.5625,12.2709C 60.5625,12.2709 51.8542,15.0417 45.5208,22.9583C 53.8333,33.6458 65.3125,48.2917 63.7292,60.9583C 55.4167,46.3125 45.8739,35.2702 38,30.6145C 30.1261,35.2702 20.5833,46.3125 12.2708,60.9583C 10.6875,48.2917 22.1667,33.6458 30.4792,22.9583C 24.1458,15.0417 15.4375,12.2709 15.4375,12.2709C 15.4375,12.2709 15.8333,11.4792 19,10.2917 Z "
+        ></path>{" "}
+      </g>
+    </svg>
+  ),
+  Logo: (props: IconProps) => (
+    <svg
+      width="180px"
+      height="180px"
+      viewBox="0 0 76.00 76.00"
+      xmlns="http://www.w3.org/2000/svg"
+      version="1.1"
+      baseProfile="full"
+      enableBackground="new 0 0 76.00 76.00"
+      fill="#ffffff"
+      stroke="#ffffff"
+      transform="rotate(90)matrix(-1, 0, 0, -1, 0, 0)"
+      {...props}
+    >
+      <g id="SVGRepo_bgCarrier" strokeWidth="0">
+        <rect
+          x="0"
+          y="0"
+          width="76.00"
+          height="76.00"
+          rx="9.88"
+          fill="#ffffff"
+          strokeWidth="0"
+        ></rect>
+      </g>
+      <g
+        id="SVGRepo_tracerCarrier"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      ></g>
+      <g id="SVGRepo_iconCarrier">
+        {" "}
+        <path
+          fill="#151313"
+          fillOpacity="1"
+          strokeWidth="0.9119999999999999"
+          strokeLinejoin="round"
+          d="M 19,10.2917C 27.3776,9.99247 34.8506,14.4426 38,16.6332C 41.1494,14.4426 48.6224,9.99247 57,10.2917C 60.1667,11.4792 60.5625,12.2709 60.5625,12.2709C 60.5625,12.2709 51.8542,15.0417 45.5208,22.9583C 53.8333,33.6458 65.3125,48.2917 63.7292,60.9583C 55.4167,46.3125 45.8739,35.2702 38,30.6145C 30.1261,35.2702 20.5833,46.3125 12.2708,60.9583C 10.6875,48.2917 22.1667,33.6458 30.4792,22.9583C 24.1458,15.0417 15.4375,12.2709 15.4375,12.2709C 15.4375,12.2709 15.8333,11.4792 19,10.2917 Z "
+        ></path>{" "}
       </g>
     </svg>
   ),

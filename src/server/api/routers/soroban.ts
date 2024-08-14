@@ -32,14 +32,9 @@ interface TicketAuction {
   starting_price: bigint;
 }
 
-const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
-// const ticketAuctionContractAddress =
-//   "CABNQYQNXLJUUYF65F3C3IERAWEXT5YF5XIMBHUZ3DAOQWVH7HLRZ3NC";
-// const ticketAuctionContractAddress =
-//   "CC7TAXRJV6AWXC2AZGNWVHVZLSXGQ3IOH2WHDSBNQ4SIFBBNSKWBRCYA";
 const ticketAuctionContractAddress =
-  "CDWPMPRTWCIKOP66WKVPTEEAQDGU446XIIQKENVBBHPRJISKXNGBRABY";
+  "CBNBZPMQ7NV5BEM5VSVYPWYBWCTPOAHZWIODULI6MFTDDXGPRDJ3AV3A";
 
 // Stellar's Native Asset (XLM) Stellar Asset Contract Address
 const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
@@ -63,6 +58,15 @@ export const sorobanRouter = createTRPCRouter({
           event: true,
         },
       });
+      const unitAskPrice = Number(input.startPrice) / Number(input.quantity);
+
+      if (unitAskPrice > Number(asset.pricePerUnit)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Starting price must be lower or equal than the asset's price per unit",
+        });
+      }
       const ownerAccount = await server.loadAccount(input.ownerPublicKey);
       const balance = getAssetBalanceFromAccount(ownerAccount.balances, asset);
       if (!balance) {
@@ -83,16 +87,17 @@ export const sorobanRouter = createTRPCRouter({
           assetId: input.assetId,
           assetUnits: input.quantity,
           startsAt: dayjs().toDate(),
-          endsAt: dayjs().add(1, "month").toDate(),
+          endsAt: dayjs(asset.event.date).subtract(1, "day").toDate(),
           owner: input.ownerPublicKey,
           contractAddress: ticketAuctionContractAddress,
           contractMethodStartAuction: "start_auction",
           contractMethodViewBids: "view_auction",
-          contractMethodEndAuction: "not_defined",
+          contractMethodEndAuction: "close_auction",
           contractMethodBid: "place_bid",
           contractMethodWithdraw: "not_defined",
           contractMethodClaim: "not_defined",
           contractMethodCancel: "not_defined",
+          highestBid: Number(input.startPrice),
         },
       });
 
@@ -114,8 +119,8 @@ export const sorobanRouter = createTRPCRouter({
       console.log("contractParams", contractParams);
 
       return await getContractXDR(
-        ticketAuctionContractAddress,
-        "start_auction",
+        auction.contractAddress,
+        auction.contractMethodStartAuction,
         input.ownerPublicKey,
         contractParams,
       );
@@ -149,8 +154,8 @@ export const sorobanRouter = createTRPCRouter({
       console.log("contractParams", contractParams);
 
       return await getContractXDR(
-        ticketAuctionContractAddress,
-        "close_auction",
+        auction.contractAddress,
+        auction.contractMethodEndAuction,
         input.publicKey,
         contractParams,
       );
@@ -194,8 +199,8 @@ export const sorobanRouter = createTRPCRouter({
       console.log("contractParams", contractParams);
 
       return await getContractXDR(
-        ticketAuctionContractAddress,
-        "place_bid",
+        auction.contractAddress,
+        auction.contractMethodBid,
         input.bidderKey,
         contractParams,
       );
@@ -209,13 +214,19 @@ export const sorobanRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       try {
+        const auction = await ctx.db.assetAuction.findFirstOrThrow({
+          where: {
+            id: Number(input.auctionId),
+          },
+        });
+
         // Query the contract's state
         const contractParams = [
           stringToSymbol(`AU${Number(input.auctionId)}`), // TODO: Auction ID
         ];
 
         const xdr = await getContractXDR(
-          ticketAuctionContractAddress,
+          auction.contractAddress,
           "view_auction",
           input.ownerPublicKey,
           contractParams,
@@ -257,6 +268,31 @@ export const sorobanRouter = createTRPCRouter({
           data: {
             highestBid: input.highestBid,
             highestBidder: input.bidder,
+            bidCount: {
+              increment: 1,
+            },
+          },
+        });
+      } catch (e) {
+        console.log(e);
+      }
+    }),
+  closeAuctionOffChain: publicProcedure
+    .input(
+      z.object({
+        bidder: z.string(),
+        auctionId: z.string().or(z.number()),
+        highestBid: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await ctx.db.assetAuction.update({
+          where: {
+            id: Number(input.auctionId),
+          },
+          data: {
+            closedAt: dayjs().toDate(),
           },
         });
       } catch (e) {

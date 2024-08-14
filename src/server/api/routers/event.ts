@@ -218,6 +218,7 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z
         .object({
+          fromUserKey: z.string().optional(),
           orderBy: z.string().optional(),
           minDate: z.string().optional(),
           maxDate: z.string().optional(),
@@ -242,6 +243,30 @@ export const eventsRouter = createTRPCRouter({
           date: { lte: new Date(input.maxDate) },
         };
       }
+
+      if (input?.fromUserKey) {
+        const assetsInWallet = await server.loadAccount(input.fromUserKey);
+        const myTicketCodes = assetsInWallet.balances.filter((b) => {
+          return (
+            b.asset_type === "credit_alphanum12" &&
+            b.asset_issuer === env.ISSUER_PUBLIC_KEY &&
+            Number(b.balance) > 0
+          );
+        }) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
+        return ctx.db.event.findMany({
+          where: {
+            ...findManyArgs.where,
+            Asset: {
+              some: {
+                code: {
+                  in: myTicketCodes.map((b) => b.asset_code),
+                },
+              },
+            },
+          },
+        });
+      }
+
       return await ctx.db.event.findMany(findManyArgs);
     }),
   addTicketCategory: publicProcedure

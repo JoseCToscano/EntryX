@@ -52,7 +52,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
           <div className="flex flex-1 flex-col">
             <p className="text-muted-foreground">
               {offerType === "sell"
-                ? "Verifying asset ownership"
+                ? "Asset ownership verification"
                 : hasTrustline
                   ? "Existing trustline"
                   : "Establishing Trustline"}
@@ -80,7 +80,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
           <div className="flex flex-1 flex-col">
             <div className="text-muted-foreground">
               {offerType === "sell"
-                ? "Building offer"
+                ? "Preparing asset for auction"
                 : processStep && processStep > 2
                   ? "Existing offer"
                   : "Processing offer"}
@@ -102,7 +102,7 @@ export const TransactionSteps: React.FC<TransactionStepsProps> = ({
             <p className="text-muted-foreground">
               {processStep && processStep === 3
                 ? "Executing the transaction"
-                : "Transactional processing"}
+                : "Smart contract execution"}
             </p>
           </div>
         </div>

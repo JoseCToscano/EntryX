@@ -5,7 +5,7 @@
  */
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
@@ -28,8 +28,16 @@ import Link from "next/link";
 import { Label } from "~/components/ui/label";
 import { Checkbox } from "~/components/ui/checkbox";
 import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
+import ListYourTicketsBanner from "~/app/secondary-market/components/list-your-tickets-banner";
+import { useWallet } from "~/hooks/useWallet";
+import { env } from "~/env";
+import ConnectYourWallet from "~/app/_components/connect-your-wallet";
+import NoAuctions from "~/app/_components/events/no-auctions";
+import { plurify } from "~/lib/utils";
+import { Badge } from "~/components/ui/badge";
 
 export default function Component() {
+  const { account, publicKey } = useWallet();
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     category: ["Music Festival", "Sports", "Theater"],
@@ -58,9 +66,22 @@ export default function Component() {
 
   const auctionItems = api.marketplace.searchAuctions.useQuery({});
 
+  const hasAssets = useMemo(() => {
+    return account?.balances.some((balance) => {
+      if (balance.asset_type === "credit_alphanum12") {
+        return (
+          balance.asset_issuer === env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY &&
+          Number(balance.balance) > 0
+        );
+      }
+    });
+  }, [account?.balances]);
+
   return (
     <div className="border-t">
-      <div className="bg-background p-4">
+      {hasAssets && <ListYourTicketsBanner />}
+      {!publicKey && <ConnectYourWallet />}
+      <div className="bg-background px-4">
         <div className="h-full px-4 py-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -74,7 +95,7 @@ export default function Component() {
           </div>
 
           <div className="mb-8">
-            <div className="mb-4 flex items-center">
+            <div className="my-4 flex items-center">
               <Input
                 id="event-filter"
                 type="text"
@@ -85,7 +106,10 @@ export default function Component() {
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
+                  <Button
+                    variant="ghost"
+                    className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
+                  >
                     <Icons.filter className="mr-2 h-4 w-4" />
                     Filters
                   </Button>
@@ -219,6 +243,7 @@ export default function Component() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {auctionItems.data?.length === 0 && <NoAuctions />}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {auctionItems.isLoading &&
                 Array.from({ length: 5 }).map((_, i) => (
@@ -238,7 +263,13 @@ export default function Component() {
                       className="h-48 w-full rounded-t-lg object-cover"
                     />
                     <CardHeader>
-                      <CardTitle>{asset.event.name}</CardTitle>
+                      <CardTitle>
+                        <Badge className="mb-2 text-sm">
+                          {auction.assetUnits}{" "}
+                          {plurify("ticket", auction.assetUnits)} for{" "}
+                        </Badge>
+                        <p>{asset.event.name}</p>
+                      </CardTitle>
                       <CardDescription>
                         <span className="flex flex-row items-center justify-between">
                           <p className="text-xs text-muted-foreground">
@@ -256,13 +287,16 @@ export default function Component() {
                           Current Bid: ${Number(auction.highestBid ?? 0)}
                         </div>
                         <div className="text-sm text-muted-foreground">
+                          Total bids: {Number(auction.bidCount ?? 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
                           {dayjs(auction.endsAt).diff(dayjs(), "day")} days
                           remaining
                         </div>
                       </div>
                       <Button
                         variant="ghost"
-                        className="w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
+                        className="h-8 w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                       >
                         Place Bid
                       </Button>
@@ -271,9 +305,6 @@ export default function Component() {
                 </Link>
               ))}
             </div>
-          </div>
-          <div className="flex justify-end">
-            <Button>List Your Tickets</Button>
           </div>
         </div>
       </div>

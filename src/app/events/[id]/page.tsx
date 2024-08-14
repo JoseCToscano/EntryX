@@ -67,7 +67,7 @@ export default function Component() {
           defaultOpen
         />
       )}
-      <section className="w-full bg-[url('/images/event-placeholder-3.png')] bg-cover bg-center py-10">
+      <section className={`w-full bg-cover bg-center py-10`}>
         <MenuBreadcumb id={id} className="ml-8" />
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="max-w-3xl space-y-6">
@@ -103,26 +103,23 @@ export default function Component() {
           {myTickets.data && myTickets.data?.length > 0 && (
             <div>
               <h2 className="my-4 text-2xl font-bold">Your tickets</h2>
-              <div className="overflow-x-hidden">
-                <ScrollArea>
-                  <div className="flex max-w-[30vw] space-x-4 p-2 pb-4">
-                    {myTickets.data?.map((ticket) => (
-                      <TicketCard
-                        key={ticket.id}
-                        eventId={id}
-                        code={ticket.code ?? ""}
-                        numOfEntries={Number(ticket.balance.balance)}
-                        id={ticket.id!}
-                        title={ticket.label!}
-                        location={event?.data?.location ?? ""}
-                        venue={event?.data?.venue ?? ""}
-                        date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
-                        sellingLiabilities={parseInt(ticket.sellingLiabilities)}
-                      />
-                    ))}{" "}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+              <div className="overflow-x-scroll">
+                <div className="flex max-w-[30vw] space-x-4 p-2 pb-4">
+                  {myTickets.data?.map((ticket) => (
+                    <TicketCard
+                      key={ticket.id}
+                      eventId={id}
+                      code={ticket.code ?? ""}
+                      numOfEntries={Number(ticket.balance.balance)}
+                      id={ticket.id!}
+                      title={ticket.label!}
+                      location={event?.data?.location ?? ""}
+                      venue={event?.data?.venue ?? ""}
+                      date={dayjs(ticket.createdAt).format("MMM D, YYYY")}
+                      sellingLiabilities={parseInt(ticket.sellingLiabilities)}
+                    />
+                  ))}{" "}
+                </div>
               </div>
             </div>
           )}

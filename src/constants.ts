@@ -1,4 +1,8 @@
-export const FIXED_UNITARY_COMMISSION = 1.99; // Fixed fee
-export const RESELLER_UNITARY_COMMISSION = 2.99; // Fixed fee
+// Fixed fee for customers (XLM)
+export const COMMISSION_PER_PURCHASED_ITEM = 1.99; // Fixed fee
 
-export const SERVICE_FEE = 9.99; // Fixed fee
+// Fixed fee for resellers on the secondary market
+export const RESELLER_COMMISSION = 15;
+
+// Fixed fee for the Distributor
+export const SERVICE_FEE = 9.99;
