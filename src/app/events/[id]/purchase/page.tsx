@@ -300,7 +300,7 @@ export default function Purchase() {
                       }
                     }}
                     size="lg"
-                    className="w-full bg-black text-white"
+                    className="h-8 w-full bg-black text-white"
                   >
                     {loading ? (
                       <Icons.spinner className="h-4 w-4 animate-spin" />

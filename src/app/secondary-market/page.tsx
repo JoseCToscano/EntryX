@@ -1,11 +1,11 @@
+"use client";
 /**
  * v0 by Vercel.
  * @see https://v0.dev/t/L3HRyFOavtW
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
-"use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "~/components/ui/input";
 import {
   DropdownMenu,
@@ -34,11 +34,13 @@ import { env } from "~/env";
 import ConnectYourWallet from "~/app/_components/connect-your-wallet";
 import NoAuctions from "~/app/_components/events/no-auctions";
 import { plurify } from "~/lib/utils";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "~/components/ui/badge";
 
 export default function Component() {
   const { account, publicKey } = useWallet();
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [filters, setFilters] = useState({
     category: ["Music Festival", "Sports", "Theater"],
     price: {
@@ -50,21 +52,47 @@ export default function Component() {
       max: 72,
     },
   });
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Get a new searchParams string by merging the current
+  // searchParams with a provided key/value pair
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams],
+  );
+
+  // Debouncing the search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      router.push(pathname + "?" + createQueryString("search", searchTerm));
+    }, 500); // Adjust the delay as needed
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setSearchTerm(e.target.value);
   };
-  const handleFilterChange = (
-    type: "category" | "price" | "timeRemaining",
-    value: string | number,
-  ) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [type]: value,
-    }));
-  };
 
-  const auctionItems = api.marketplace.searchAuctions.useQuery({});
+  const auctionItems = api.marketplace.searchAuctions.useQuery(
+    {
+      search: debouncedSearchTerm,
+      eventId: searchParams.get("eventId") ?? undefined,
+    },
+    {},
+  );
 
   const hasAssets = useMemo(() => {
     return account?.balances.some((balance) => {
@@ -101,19 +129,19 @@ export default function Component() {
                 type="text"
                 placeholder="Search events..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearch}
                 className="mr-4 flex-1"
               />
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
-                  >
-                    <Icons.filter className="mr-2 h-4 w-4" />
-                    Filters
-                  </Button>
-                </DropdownMenuTrigger>
+                {/*<DropdownMenuTrigger asChild>*/}
+                {/*  <Button*/}
+                {/*    variant="ghost"*/}
+                {/*    className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"*/}
+                {/*  >*/}
+                {/*    <Icons.filter className="mr-2 h-4 w-4" />*/}
+                {/*    Filters*/}
+                {/*  </Button>*/}
+                {/*</DropdownMenuTrigger>*/}
                 <DropdownMenuContent className="w-64 p-4">
                   <div className="grid gap-4">
                     <div>
@@ -243,6 +271,22 @@ export default function Component() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {searchParams.get("eventId") && (
+              <Badge className="mb-2">
+                Filtered by event: {searchParams.get("eventId")!}
+                <span
+                  className="ml-2 cursor-pointer text-white hover:scale-105"
+                  onClick={() => {
+                    console.log("clearing filter");
+                    router.push(
+                      pathname + "?" + createQueryString("eventId", ""),
+                    );
+                  }}
+                >
+                  x
+                </span>
+              </Badge>
+            )}
             {auctionItems.data?.length === 0 && <NoAuctions />}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {auctionItems.isLoading &&

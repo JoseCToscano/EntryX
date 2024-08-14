@@ -31,14 +31,21 @@ interface TicketAuction {
   starting_price: bigint;
 }
 
-const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
-const server = new Horizon.Server("https://horizon-testnet.stellar.org");
-const ticketAuctionContractAddress =
-  "CABNQYQNXLJUUYF65F3C3IERAWEXT5YF5XIMBHUZ3DAOQWVH7HLRZ3NC";
 export const marketplaceRouter = createTRPCRouter({
   searchAuctions: publicProcedure
-    .input(z.object({}))
+    .input(
+      z.object({
+        search: z.string().optional(),
+        eventId: z.string().optional(),
+      }),
+    )
     .query(async ({ input, ctx }) => {
+      let eventIdFilter = {};
+      if (input.eventId) {
+        eventIdFilter = {
+          eventId: input.eventId,
+        };
+      }
       const auctions = await ctx.db.assetAuction.findMany({
         where: {
           endsAt: {
@@ -46,6 +53,15 @@ export const marketplaceRouter = createTRPCRouter({
           },
           closedAt: {
             equals: null,
+          },
+          asset: {
+            ...eventIdFilter,
+            event: {
+              name: {
+                contains: input.search,
+                mode: "insensitive",
+              },
+            },
           },
         },
         orderBy: { endsAt: "asc" },

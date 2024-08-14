@@ -189,30 +189,24 @@ export const eventsRouter = createTRPCRouter({
   marketplaceCount: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const assets = await ctx.db.asset.findMany({
+      const auctions = await ctx.db.assetAuction.aggregate({
         where: {
-          eventId: input.id,
+          asset: {
+            eventId: input.id,
+          },
+          endsAt: {
+            gt: new Date(),
+          },
+          closedAt: {
+            equals: null,
+          },
         },
-        include: { event: true },
+        _count: {
+          assetUnits: true,
+        },
       });
 
-      const marketplaceItems = await Promise.all(
-        assets.map(async (a) => {
-          const offers = await server
-            .offers()
-            .selling(new Asset(a.code, a.issuer))
-            .call();
-          return offers.records
-            .filter((o) => o.seller !== a.distributor)
-            .map((o) => ({
-              ...a,
-              offer: o,
-            }));
-        }),
-      );
-      return marketplaceItems.flat().reduce((acc, item) => {
-        return acc + parseInt(item.offer.amount);
-      }, 0);
+      return auctions._count.assetUnits;
     }),
   search: publicProcedure
     .input(
@@ -229,7 +223,7 @@ export const eventsRouter = createTRPCRouter({
       // Build WHERE object
       const findManyArgs: EventFindManyArgs = {
         where: {},
-        orderBy: { date: "desc" },
+        orderBy: { date: "asc" },
       };
       if (input?.minDate) {
         findManyArgs.where = {

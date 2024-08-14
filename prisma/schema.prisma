@@ -54,6 +54,7 @@ model Event {
   venue          String
   status         EventStatus @default(DRAFT)
   imageUrl       String?
+  coverUrl       String?
   location       String?
   description    String?
   createdAt      DateTime    @default(now())
