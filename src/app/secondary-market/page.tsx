@@ -74,7 +74,7 @@ export default function Component() {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       router.push(pathname + "?" + createQueryString("search", searchTerm));
-    }, 500); // Adjust the delay as needed
+    }, 300); // Adjust the delay as needed
 
     return () => {
       clearTimeout(handler);
@@ -310,7 +310,7 @@ export default function Component() {
                       <CardTitle>
                         <Badge className="mb-2 text-sm">
                           {auction.assetUnits}{" "}
-                          {plurify("ticket", auction.assetUnits)} for{" "}
+                          {plurify("ticket", auction.assetUnits)}
                         </Badge>
                         <p>{asset.event.name}</p>
                       </CardTitle>
