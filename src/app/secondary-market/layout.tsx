@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { Icons } from "~/components/icons";
@@ -10,6 +10,7 @@ import { Badge } from "~/components/ui/badge";
 import { shortStellarAddress } from "~/lib/utils";
 import Link from "next/link";
 import Logo from "~/app/_components/logo";
+import Loading from "~/app/account/components/loading";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { publicKey, network, isLoading } = useWallet();
@@ -53,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="grid lg:grid-cols-7">
         <Sidebar className="hidden lg:block" />
         <div className="col-span-5 lg:col-span-6 lg:border-l">
-          {children}
+          <Suspense fallback={<Loading />}>{children}</Suspense>
           <Footer />
         </div>
       </div>
