@@ -79,6 +79,41 @@ export function Sidebar({ className }: { className?: string }) {
             </Link>
           </div>
         </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Partner Program
+          </h2>
+          <div className="space-y-1">
+            <Link href="/account">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "h-8 w-full justify-start",
+                  pathname === "/my-tickets" &&
+                    "text-primary-500 border-primary-500 bg-muted",
+                )}
+              >
+                <Icons.ticket className="mx-2 h-4 w-4" />
+                Partner Dashboard
+              </Button>
+            </Link>
+          </div>
+          <div className="space-y-1">
+            <Link href="/account/events">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "h-8 w-full justify-start",
+                  pathname === "/my-tickets" &&
+                    "text-primary-500 border-primary-500 bg-muted",
+                )}
+              >
+                <Icons.ticket className="mx-2 h-4 w-4" />
+                My Events
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

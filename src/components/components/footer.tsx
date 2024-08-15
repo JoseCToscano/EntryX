@@ -5,7 +5,7 @@ import { Icons } from "~/components/icons";
 import { Badge } from "~/components/ui/badge";
 
 const Footer = () => (
-  <footer className="bottom-0 mt-40 flex w-full flex-col items-center justify-center bg-muted p-6 md:py-12">
+  <footer className="bottom-0 flex w-full flex-col items-center justify-center bg-muted p-6 md:py-12">
     <div className="container grid max-w-7xl grid-cols-2 gap-8 text-sm sm:grid-cols-3 md:grid-cols-4">
       <div className="grid gap-1">
         <h1 className="text-2xl font-semibold">

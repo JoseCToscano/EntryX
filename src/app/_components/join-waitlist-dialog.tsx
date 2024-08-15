@@ -21,7 +21,7 @@ import Link from "next/link";
 import { Icons } from "~/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Image from "next/image";
 import {
   Select,
@@ -32,6 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { type FieldValues, useForm } from "react-hook-form";
+import { api } from "~/trpc/react";
+import { ClientTRPCErrorHandler } from "~/lib/utils";
+import toast from "react-hot-toast";
 
 function CompanyContactForm(step: number) {
   return (
@@ -192,8 +202,61 @@ function IndividualContactForm(step = 0) {
 }
 export default function JoinWaitlistDialog() {
   const [step, setStep] = useState(0);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Get a new searchParams string by merging the current
+  // searchParams with a provided key/value pair
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams],
+  );
+
+  const sendForm = api.joinWaitlist.useMutation({
+    onError: ClientTRPCErrorHandler,
+    onSuccess: () => {
+      toast.success("Done. We'll get back to you soon!");
+    },
+  });
+
+  const { register, handleSubmit, reset } = useForm<FieldValues>({
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      description: "",
+    },
+  });
+
+  const onSubmit = handleSubmit((data) => {
+    sendForm.mutate({
+      name: data.name as string,
+      email: data.email as string,
+      phone: data.phone as string,
+      event: data.description as string,
+    });
+  });
+
   return (
-    <Dialog onOpenChange={() => setStep(0)}>
+    <Dialog
+      defaultOpen={!!searchParams.get("joinWaitlist")}
+      onOpenChange={(isOpen) => {
+        setStep(0);
+        if (isOpen) {
+          router.push(
+            pathname + "?" + createQueryString("joinWaitlist", "true"),
+          );
+        } else {
+          router.push(pathname + "?" + createQueryString("joinWaitlist", ""));
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button className="group w-[250px] border-[1px] border-black bg-black pr-2 text-white hover:bg-white hover:text-black">
           Join the Waitlist

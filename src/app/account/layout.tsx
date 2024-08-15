@@ -1,64 +1,33 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { MainNav } from "~/app/account/components/main-nav";
-import { Sidebar } from "~/app/account/components/sidebar";
-import { Icons } from "~/components/icons";
-import Image from "next/image";
-import Footer from "~/components/components/footer";
+import React, { type ReactNode } from "react";
 import { useWallet } from "~/hooks/useWallet";
-import { Badge } from "~/components/ui/badge";
-import { shortStellarAddress } from "~/lib/utils";
-import { ConnectWallet } from "~/app/wallet/connect/connect-component";
-import WalletSkeleton from "~/app/wallet/components/wallet-skeleton";
+import { api } from "~/trpc/react";
 import Loading from "~/app/account/components/loading";
-import Logo from "~/app/_components/logo";
+import { useRouter } from "next/navigation";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  const { publicKey, network, isLoading } = useWallet();
+export default function AuthorizedPartners({
+  children,
+}: {
+  children?: ReactNode;
+}) {
+  const { isLoading, publicKey } = useWallet();
+  const router = useRouter();
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <div className="sticky top-0 border-b">
-        <div className="z-50 flex h-16 items-center bg-white px-4 opacity-95">
-          <Logo />
-          <MainNav
-            className="mx-6"
-            sections={[
-              { name: "Events", href: "/account/events" },
-              { name: "Wallet", href: "/wallet" },
-            ]}
-          />
-          <div className="ml-auto flex items-center space-x-4">
-            {isLoading ? (
-              <Icons.spinner className="animate-spin" />
-            ) : (
-              <span className="flex flex-row items-center gap-1 font-semibold">
-                <Image
-                  width={20}
-                  height={20}
-                  src={"/icons/stellar-xlm-logo.svg"}
-                  alt={"Stellar XLM icon"}
-                />
-                {publicKey
-                  ? shortStellarAddress(publicKey)
-                  : "Wallet not connected"}
-                {network && (
-                  <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
-                    {network}
-                  </Badge>
-                )}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="grid lg:grid-cols-7">
-        <Sidebar className="hidden lg:block" />
-        <div className="col-span-5 lg:col-span-6 lg:border-l">
-          {children}
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  const isAuthorizedPartner =
+    api.stellarAccountRouter.isAllowedPartner.useQuery(
+      {
+        publicKey: publicKey!,
+      },
+      { enabled: !!publicKey },
+    );
+
+  if (isAuthorizedPartner.isLoading || isLoading) {
+    return <Loading />;
+  }
+
+  if (!isAuthorizedPartner.data && publicKey) {
+    void router.push("/?joinWaitlist=true");
+  }
+
+  return <>{children}</>;
 }

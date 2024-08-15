@@ -40,11 +40,11 @@ export default function Component() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Overview</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
+          <Button disabled variant="outline" size="sm">
             <DownloadIcon className="h-4 w-4" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button disabled variant="outline" size="sm">
             <SettingsIcon className="h-4 w-4" />
             Settings
           </Button>
@@ -64,7 +64,7 @@ export default function Component() {
               )}
             </div>
             <div className="text-sm text-muted-foreground">
-              +15% from last month
+              +0% from last month
             </div>
           </CardContent>
         </Card>
@@ -87,7 +87,7 @@ export default function Component() {
               )}
             </div>
             <div className="text-sm text-muted-foreground">
-              +20% from last month
+              +0% from last month
             </div>
           </CardContent>
         </Card>
@@ -96,9 +96,9 @@ export default function Component() {
             <CardTitle>Occupation Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">82%</div>
+            <div className="text-4xl font-bold">0%</div>
             <div className="text-sm text-muted-foreground">
-              +5% from last month
+              +0% from last month
             </div>
           </CardContent>
         </Card>

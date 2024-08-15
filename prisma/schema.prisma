@@ -11,42 +11,6 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
-}
-
-model User {
-  id            String    @id @default(cuid())
-  clerkId       String?
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  publicKey     String?
-  posts         Post[]
-  events        Event[]
-  Wallet        Wallet[]
-
-  @@index([email])
-  @@index([publicKey])
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 model Event {
   id             String      @id @default(cuid())
   name           String
@@ -59,12 +23,9 @@ model Event {
   description    String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  organizerId    String?
   distributorKey String?
-  organizer      User?       @relation(fields: [organizerId], references: [id])
+  sequence       Int         @default(0)
   Asset          Asset[]
-
-  @@index([organizerId])
 }
 
 enum EventStatus {
@@ -73,6 +34,12 @@ enum EventStatus {
   CANCELLED
   CLOSED
   IN_PROGRESS
+}
+
+model AuthorizedPartners {
+  publicKey String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model StellaAssetContract {
@@ -95,6 +62,7 @@ model Asset {
   distributor    String
   type           String
   eventId        String
+  sequence       Int            @default(0)
   pricePerUnit   Decimal        @db.Decimal(10, 2)
   status         String         @default("ACTIVE")
   totalUnits     Int
@@ -145,16 +113,4 @@ model AssetAuction {
   Bid                        Bid[]
 
   @@index([assetId])
-}
-
-model Wallet {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  address   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@index([address])
-  @@index([userId])
 }

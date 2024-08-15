@@ -24,6 +24,7 @@ import { sorobanRouter } from "~/server/api/routers/soroban";
 import { marketplaceRouter } from "~/server/api/routers/marketplace";
 import { handleHorizonServerError } from "~/lib/utils";
 import { exe } from "~/lib/soroban";
+import { z } from "zod";
 
 /**
  * This is the primary router for your server.
@@ -40,6 +41,25 @@ export const appRouter = createTRPCRouter({
   asset: assetsRouter,
   soroban: sorobanRouter,
   marketplace: marketplaceRouter,
+  joinWaitlist: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        phone: z.string(),
+        email: z.string(),
+        event: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      console.log({
+        name: input.name,
+        phone: input.phone,
+        email: input.email,
+        event: input.event,
+      });
+
+      // INSERT INTO "AuthorizedPartners" (name, phone, email, event) VALUES (input.name, input.phone, input.email, input.event);
+    }),
   setDomain: publicProcedure.query(async () => {
     const domain = "entryx.me";
     const server = new Horizon.Server("https://horizon-testnet.stellar.org");

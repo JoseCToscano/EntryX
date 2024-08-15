@@ -51,6 +51,21 @@ export const stellarAccountRouter = createTRPCRouter({
 
       return isValid;
     }),
+  isAllowedPartner: publicProcedure
+    .input(z.object({ publicKey: z.string() }))
+    .query(async ({ input, ctx }) => {
+      console.log("publicKey", input.publicKey);
+      const partner = await ctx.db.authorizedPartners.findFirst({
+        where: {
+          publicKey: input.publicKey,
+        },
+        select: {
+          publicKey: true,
+        },
+      });
+      console.log("partner:", partner);
+      return !!partner?.publicKey;
+    }),
   getChallenge: publicProcedure
     .input(z.object({ publicKey: z.string() }))
     .mutation(async ({ input }) => {
