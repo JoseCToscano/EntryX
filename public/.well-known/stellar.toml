@@ -27,7 +27,7 @@ display_decimals=2
 name="Ticket Entry"
 desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 conditions="EntryX is a digital ticket for events and concerts."
-image="entryx.me/entryx.png"
+image="https://entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
 
@@ -39,12 +39,12 @@ display_decimals=2
 name="Ticket Entry"
 desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 conditions="EntryX is a digital ticket for events and concerts."
-image="entryx.me/entryx.png"
+image="https://entryx.me/entryx.png"
 fixed_number=1000000
 max_number=10000000
 
 [[CURRENCIES]]
-code="ENTRY0010004"
+code="TIXGeneralAd"
 issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
@@ -52,5 +52,18 @@ name="Ticket Entry"
 desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 conditions="EntryX is a digital ticket for events and concerts."
 image="entryx.me/entryx.png"
+fixed_number=1000000
+max_number=10000000
+
+
+[[CURRENCIES]]
+code="ENTRYXX10004"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+conditions="EntryX is a digital ticket for events and concerts."
+image="www.entryx.me/entryx.png"
 fixed_number=1000000
 max_number=10000000
