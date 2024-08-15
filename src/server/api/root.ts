@@ -21,6 +21,7 @@ import { analyticsRouter } from "~/server/api/routers/analytics";
 import { organizerRouter } from "~/server/api/routers/organizer";
 import { sorobanRouter } from "~/server/api/routers/soroban";
 import { marketplaceRouter } from "~/server/api/routers/marketplace";
+import { handleHorizonServerError } from "~/lib/utils";
 
 /**
  * This is the primary router for your server.
@@ -37,6 +38,29 @@ export const appRouter = createTRPCRouter({
   asset: assetsRouter,
   soroban: sorobanRouter,
   marketplace: marketplaceRouter,
+  setDomain: publicProcedure.query(async () => {
+    const domain = "entryx.me";
+    const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+    const issuingAccount = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
+
+    const account = await server.loadAccount(issuingAccount.publicKey());
+    const transaction = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    })
+      .addOperation(
+        Operation.setOptions({
+          source: issuingAccount.publicKey(),
+          homeDomain: domain,
+        }),
+      )
+      .setTimeout(100)
+      .build();
+    transaction.sign(issuingAccount);
+    return await server
+      .submitTransaction(transaction)
+      .catch(handleHorizonServerError);
+  }),
   createStellarAccount: publicProcedure.query(async () => {
     console.log("createStellarAccount");
     // After you've got your test lumens from friendbot, we can also use that account to create a new account on the ledger.

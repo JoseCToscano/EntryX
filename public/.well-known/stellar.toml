@@ -27,6 +27,6 @@ display_decimals=2
 name="Ticket Entry"
 desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 conditions="EntryX is a digital ticket for events and concerts."
-image="/entryx-icon.svg"
+image="entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000

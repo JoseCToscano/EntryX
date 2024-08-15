@@ -146,7 +146,7 @@ export function handleHorizonServerError(error: unknown) {
         break;
     }
   }
-  console.log("HEre:", message);
+  console.log(message);
   throw new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
     message,
