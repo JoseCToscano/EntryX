@@ -3,7 +3,6 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   addressToScVal,
-  callContract,
   callWithSignedXDR,
   getContractXDR,
   nativize,

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   addressToScVal,
-  callContract,
   callWithSignedXDR,
   getContractXDR,
   nativize,
@@ -11,7 +10,15 @@ import {
   numberToU64,
   stringToSymbol,
 } from "~/lib/soroban";
-import { Horizon, Networks, TransactionBuilder } from "@stellar/stellar-sdk";
+import {
+  Asset,
+  BASE_FEE,
+  Horizon,
+  Keypair,
+  Networks,
+  Operation,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
 import {
   getAssetBalanceFromAccount,
   getXLMBalanceFromAccount,
@@ -20,6 +27,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import dayjs from "dayjs";
 import { env } from "~/env";
+import { Fees, MAX_UNITS_PER_PURCHASE } from "~/constants";
 
 interface TicketAuction {
   asset_address: string;
@@ -39,7 +47,95 @@ const ticketAuctionContractAddress =
 // Stellar's Native Asset (XLM) Stellar Asset Contract Address
 const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 
+// Contract for Ticket Sales
+const ticketSaleContractAddress =
+  "CD5536FOSQ6IW2E5NL6GEC2BL23A5LDGUZ4GQSDXV5PRYG75H3RDXRCC";
+
 export const sorobanRouter = createTRPCRouter({
+  contractPurchase: publicProcedure
+    .input(
+      z.object({
+        userPublicKey: z.string().min(1),
+        assetId: z.string(),
+        quantity: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const asset = await ctx.db.asset.findFirstOrThrow({
+        where: {
+          id: input.assetId,
+        },
+      });
+      console.log("buying asset:", asset);
+
+      const contractParams = [
+        addressToScVal(
+          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
+        ),
+        numberToi128(input.quantity),
+        addressToScVal(input.userPublicKey),
+      ];
+
+      console.log("contractParams", contractParams.length);
+
+      /**
+       * This contract call will send the Assets to the Ticket Sale Contract
+       */
+      return await getContractXDR(
+        ticketSaleContractAddress,
+        "purchase",
+        input.userPublicKey,
+        contractParams,
+      );
+    }),
+  publish: publicProcedure
+    .input(
+      z.object({
+        ownerPublicKey: z.string(),
+        assetId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const asset = await ctx.db.asset.findFirstOrThrow({
+        where: {
+          id: input.assetId,
+        },
+      });
+      if (asset.distributor !== input.ownerPublicKey) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only the asset distributor can start a sale",
+        });
+      }
+      console.log("asset", asset);
+
+      const contractParams = [
+        addressToScVal(asset.issuer),
+        addressToScVal(asset.distributor),
+        stringToSymbol(asset.code),
+        addressToScVal(
+          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
+        ),
+        addressToScVal(xlmSAC),
+        numberToi128(Number(asset.pricePerUnit)),
+        numberToi128(asset.totalUnits),
+        numberToi128(Fees.SERVICE_FEE),
+        numberToi128(Fees.SELLER_UNITARY_COMMISSION_PERCENTAGE),
+        numberToi128(MAX_UNITS_PER_PURCHASE),
+      ];
+
+      console.log("contractParams", contractParams.length);
+
+      /**
+       * This contract call will send the Assets to the Ticket Sale Contract
+       */
+      return await getContractXDR(
+        ticketSaleContractAddress,
+        "initialize_sale",
+        asset.distributor,
+        contractParams,
+      );
+    }),
   startAuction: publicProcedure
     .input(
       z.object({
@@ -300,10 +396,15 @@ export const sorobanRouter = createTRPCRouter({
       }
     }),
   submitContractCall: publicProcedure
-    .input(z.object({ xdr: z.string().min(1) }))
+    .input(
+      z.object({
+        xdr: z.string().min(1),
+      }),
+    )
     .mutation(async ({ input }) => {
       try {
         const result = await callWithSignedXDR(input.xdr);
+
         console.log("result", result);
         if (result) {
           console.log("nativize", nativize(result));
@@ -311,7 +412,7 @@ export const sorobanRouter = createTRPCRouter({
           return nativize<TicketAuction>(result) ?? "No result";
         }
       } catch (e) {
-        console.error(e);
+        console.error("Error on soroban:", e);
         // This will throw a TRPCError with the appropriate message
         handleHorizonServerError(e);
       }

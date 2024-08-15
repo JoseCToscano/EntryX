@@ -11,11 +11,7 @@ import {
 import { type Asset as AssetDB } from "@prisma/client";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
-import {
-  COMMISSION_PER_PURCHASED_ITEM,
-  RESELLER_COMMISSION,
-  SERVICE_FEE,
-} from "~/constants";
+import { Fees } from "~/constants";
 import { getAssetBalanceFromAccount, isInTrustline } from "~/lib/utils";
 
 const horizonUrl = "https://horizon-testnet.stellar.org";
@@ -52,42 +48,6 @@ export const stellarOfferRouter = createTRPCRouter({
           message: "Error fetching offers",
         });
       }
-    }),
-  buy: publicProcedure
-    .input(
-      z.object({
-        assetId: z.string().min(1),
-        userPublicKey: z.string().min(1),
-        unitsToBuy: z.number().int().positive(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const asset = await ctx.db.asset.findUniqueOrThrow({
-        where: {
-          id: input.assetId,
-        },
-      });
-      const ledgerAsset = new Asset(asset.code, asset.issuer);
-      // User account
-      const userAccount = await server.loadAccount(input.userPublicKey);
-
-      // Ensure the user has a trustline set up for the asset before attempting to buy it
-      // Build the transaction
-      const transaction = new TransactionBuilder(userAccount, {
-        fee: BASE_FEE,
-        networkPassphrase: Networks.TESTNET,
-      })
-        .addOperation(
-          Operation.manageBuyOffer({
-            selling: Asset.native(),
-            buying: ledgerAsset,
-            buyAmount: input.unitsToBuy.toString(),
-            price: "0.01",
-          }),
-        )
-        .setTimeout(standardTimebounds)
-        .build();
-      return transaction.toXDR();
     }),
   purchase: publicProcedure
     .input(
@@ -165,7 +125,8 @@ export const stellarOfferRouter = createTRPCRouter({
       console.log("Here");
 
       const extraCharges =
-        SERVICE_FEE + COMMISSION_PER_PURCHASED_ITEM * totalTickets;
+        Fees.SERVICE_FEE +
+        Fees.SELLER_UNITARY_COMMISSION_PERCENTAGE * totalTickets;
 
       // Add FIXED_UNITARY_COMMISSION operations
       // Add SERVICE_FEE operations
@@ -245,7 +206,9 @@ export const stellarOfferRouter = createTRPCRouter({
             source: input.userPublicKey,
             asset: Asset.native(),
             destination: env.ISSUER_PUBLIC_KEY,
-            amount: (RESELLER_COMMISSION * input.unitsToSell).toString(),
+            amount: (
+              Fees.RESELLER_UNITARY_COMMISSION_PERCENTAGE * input.unitsToSell
+            ).toString(),
           }),
         )
         .setTimeout(standardTimebounds)

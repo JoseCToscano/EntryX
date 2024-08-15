@@ -18,6 +18,7 @@ import {
   handleHorizonServerError,
   shortStellarAddress,
 } from "~/lib/utils";
+import { env } from "~/env";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
@@ -131,10 +132,14 @@ export const stellarAccountRouter = createTRPCRouter({
         switch (op.type) {
           case Horizon.HorizonApi.OperationResponseType.invokeHostFunction:
             if (op.asset_balance_changes.length) {
+              console.log(op);
               operation.desc = op.asset_balance_changes.reduce(
                 (acc, change) => {
                   if (change.asset_code) {
                     operation.asset_code = change.asset_code;
+                  }
+                  if (change.to === env.ISSUER_PUBLIC_KEY) {
+                    return `${acc ? `${acc},` : ""}${change.type} ${Number(change.amount)} ${change.asset_type === "native" ? "XLM" : change.asset_code}: Fees & Commissions`;
                   }
                   return `${acc ? `${acc},` : ""}${change.type} ${Number(change.amount)} ${change.asset_type === "native" ? "XLM" : change.asset_code} ${change.to ? `to ${shortStellarAddress(change.to)}` : ""}`;
                 },

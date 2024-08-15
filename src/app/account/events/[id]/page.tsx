@@ -6,7 +6,6 @@
  */
 import React from "react";
 import { Button } from "~/components/ui/button";
-import { ChartContainer } from "~/components/ui/chart";
 import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -26,7 +25,6 @@ import {
   TableHead,
   TableBody,
 } from "~/components/ui/table";
-import { CartesianGrid, XAxis, Bar, BarChart } from "recharts";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "~/lib/utils";
 import Image from "next/image";
@@ -58,9 +56,9 @@ export default function EventEditor() {
     { enabled: !!id && !!publicKey },
   );
 
-  const categories = api.asset.list.useQuery(
-    { eventId: id as string },
-    { enabled: !!id && Boolean(event.data?.id) },
+  const categories = api.asset.listForOwner.useQuery(
+    { eventId: id as string, publicKey: publicKey! },
+    { enabled: !!id && Boolean(event.data?.id) && !!publicKey },
   );
   const [pendingForms, setPendingForms] = React.useState<number[]>([]);
 
@@ -229,12 +227,14 @@ export default function EventEditor() {
                             <Tooltip>
                               <TooltipTrigger asChild className="">
                                 <span className="flex items-center justify-start">
-                                  Commission
+                                  Fee
                                   <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
                                 </span>
                               </TooltipTrigger>
                               <TooltipContent side="bottom">
-                                <p>Fixed commission per ticket sold</p>
+                                <p>
+                                  Fixed service fee per ticket purchased(XLM)
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -244,14 +244,14 @@ export default function EventEditor() {
                             <Tooltip>
                               <TooltipTrigger asChild className="">
                                 <span className="flex items-center justify-start">
-                                  Fee
+                                  Commission
                                   <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
                                 </span>
                               </TooltipTrigger>
                               <TooltipContent side="bottom">
                                 <p>
-                                  Transaction-based fee, additional to Stellar
-                                  Network&lsquo;s fee.
+                                  Relative commission, percentage-based on the
+                                  ticket price
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -307,42 +307,3 @@ export default function EventEditor() {
     </div>
   );
 }
-
-const BarchartChart: React.FC<{ className?: string }> = (props) => {
-  return (
-    <div {...props}>
-      <ChartContainer
-        config={{
-          desktop: {
-            label: "Desktop",
-            color: "hsl(var(--chart-1))",
-          },
-        }}
-        className="min-h-[300px]"
-      >
-        <BarChart
-          accessibilityLayer
-          data={[
-            { month: "January", desktop: 186 },
-            { month: "February", desktop: 305 },
-            { month: "March", desktop: 237 },
-            { month: "April", desktop: 73 },
-            { month: "May", desktop: 209 },
-            { month: "June", desktop: 214 },
-          ]}
-        >
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="month"
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
-            tickFormatter={(value: string) => value.slice(0, 3)}
-          />
-
-          <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
-        </BarChart>
-      </ChartContainer>
-    </div>
-  );
-};

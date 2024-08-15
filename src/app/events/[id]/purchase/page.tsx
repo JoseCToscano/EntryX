@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
 import { api } from "~/trpc/react";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
-import { COMMISSION_PER_PURCHASED_ITEM, SERVICE_FEE } from "~/constants";
+import { Fees } from "~/constants";
 import {
   TicketCategoryCard,
   TicketCategorySkeleton,
@@ -17,7 +17,11 @@ import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
-import { computeTransactionFees, fromXLMToUSD } from "~/lib/utils";
+import {
+  ClientTRPCErrorHandler,
+  computeTransactionFees,
+  fromXLMToUSD,
+} from "~/lib/utils";
 import { type Asset as DBAsset } from "@prisma/client";
 import { Asset } from "@stellar/stellar-sdk";
 
@@ -58,9 +62,17 @@ export default function Purchase() {
     });
 
   const purchase = api.stellarOffer.purchase.useMutation({
-    onError: (e) => {
-      toast.error("Error on purchase");
-      console.error(e);
+    onError: ClientTRPCErrorHandler,
+  });
+
+  const contractPurchase = api.soroban.contractPurchase.useMutation({
+    onError: ClientTRPCErrorHandler,
+  });
+
+  const soroban = api.soroban.submitContractCall.useMutation({
+    onError: ClientTRPCErrorHandler,
+    onSuccess: () => {
+      toast.success("Transaction completed");
     },
   });
 
@@ -79,6 +91,42 @@ export default function Purchase() {
           prev.set(asset.id, { asset, total: currentQuantity - 1 }),
         );
       });
+    }
+  };
+
+  const handleContractPurchase = async () => {
+    setLoading(true);
+    try {
+      if (!publicKey) {
+        return toast.error("Please connect your wallet");
+      }
+      if (!cart.keys()) {
+        return toast.error("Please select a ticket to purchase");
+      }
+      setProcessStep(2);
+      const item = Array.from(cart.entries())[0];
+      if (!item) {
+        return toast.error("Please select a ticket to purchase");
+      }
+      const xdr = await contractPurchase.mutateAsync({
+        userPublicKey: publicKey,
+        quantity: item[1].total,
+        assetId: item[0],
+      });
+      const signedTransaction = await signXDR(xdr);
+      setProcessStep(3);
+      await soroban.mutateAsync({
+        xdr: signedTransaction,
+      });
+      setProcessStep(4);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      void ctx.asset.availability.invalidate();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setProcessStep(1);
+      setLoading(false);
     }
   };
 
@@ -148,12 +196,6 @@ export default function Purchase() {
       }, 0) + Number(totalFees)
     );
   }, [cart, ticketCategories.data, categories, totalFees]);
-
-  const totalTickets = React.useMemo(() => {
-    return Array.from(cart.values()).reduce((acc, item) => {
-      return acc + item.total;
-    }, 0);
-  }, [cart]);
 
   if (typeof id !== "string") return null;
 
@@ -250,21 +292,14 @@ export default function Purchase() {
 
                 <div className="flex items-center justify-between text-muted-foreground">
                   <div>Service Fee</div>
-                  <div>{SERVICE_FEE} XLM</div>
+                  <div>{Fees.SERVICE_FEE} XLM</div>
                 </div>
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <div>Commissions</div>
-                  <div>{COMMISSION_PER_PURCHASED_ITEM * totalTickets} XLM</div>
-                </div>
+
                 <div className="flex items-center justify-between font-bold">
                   <div>Total</div>
                   <div className="flex flex-col items-end justify-end">
                     <div>
-                      {(
-                        total +
-                        SERVICE_FEE +
-                        COMMISSION_PER_PURCHASED_ITEM * totalTickets
-                      ).toLocaleString("en-US", {
+                      {(total + Fees.SERVICE_FEE).toLocaleString("en-US", {
                         minimumFractionDigits: 5,
                         maximumFractionDigits: 5,
                       })}{" "}
@@ -272,12 +307,7 @@ export default function Purchase() {
                     </div>
                     <div className="text-xs font-light opacity-50">
                       approx. $
-                      {fromXLMToUSD(
-                        total +
-                          SERVICE_FEE +
-                          COMMISSION_PER_PURCHASED_ITEM * totalTickets,
-                      ).toFixed(2)}{" "}
-                      USD
+                      {fromXLMToUSD(total + Fees.SERVICE_FEE).toFixed(2)} USD
                     </div>
                   </div>
                 </div>
@@ -296,7 +326,7 @@ export default function Purchase() {
                       if (processStep === 4) {
                         void router.push(`/events/${id}`);
                       } else {
-                        void handlePurchase();
+                        void handleContractPurchase();
                       }
                     }}
                     size="lg"

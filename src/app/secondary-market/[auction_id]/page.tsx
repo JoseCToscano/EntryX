@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo } from "react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -8,25 +8,15 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import {
-  ClientTRPCErrorHandler,
-  fromXLMToUSD,
-  plurify,
-  shortStellarAddress,
-} from "~/lib/utils";
+import { ClientTRPCErrorHandler, shortStellarAddress } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
 import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { RESELLER_COMMISSION } from "~/constants";
-import { Separator } from "~/components/ui/separator";
-import { TransactionSteps } from "~/app/events/components/transaction-steps";
-import Image from "next/image";
 import { useWallet } from "~/hooks/useWallet";
 import Loading from "~/app/account/components/loading";
-import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
 import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 import Link from "next/link";

@@ -15,7 +15,6 @@ import { Icons } from "~/components/icons";
 import { useParams } from "next/navigation";
 import dayjs from "dayjs";
 import { MenuBreadcumb } from "~/app/events/components/menu-breadcumb";
-import { RESELLER_COMMISSION } from "~/constants";
 import { Separator } from "~/components/ui/separator";
 import { TransactionSteps } from "~/app/events/components/transaction-steps";
 import Image from "next/image";
@@ -28,6 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { Fees } from "~/constants";
 
 const TicketCard: React.FC = () => {
   const { publicKey, signXDR } = useWallet();
@@ -233,7 +233,7 @@ const TicketCard: React.FC = () => {
                           <Tooltip>
                             <TooltipTrigger asChild className="">
                               <span className="flex items-center justify-start">
-                                Reseller Commission
+                                Reseller Publishing Fee
                                 <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
                               </span>
                             </TooltipTrigger>
@@ -248,10 +248,13 @@ const TicketCard: React.FC = () => {
                       </div>
 
                       <div className="flex flex-col items-end justify-end">
-                        <div>{RESELLER_COMMISSION} XLM</div>
+                        <div>{Fees.RESELLER_PUBLISHING_FEE} XLM</div>
                         <div className="text-xs font-light opacity-50">
                           approx. $
-                          {fromXLMToUSD(RESELLER_COMMISSION).toFixed(2)} USD
+                          {fromXLMToUSD(Fees.RESELLER_PUBLISHING_FEE).toFixed(
+                            2,
+                          )}{" "}
+                          USD
                         </div>
                       </div>
                     </div>

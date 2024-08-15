@@ -12,6 +12,7 @@ import {
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import { handleHorizonServerError } from "~/lib/utils";
+import { Fees } from "~/constants";
 
 const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
@@ -22,21 +23,29 @@ export const assetsRouter = createTRPCRouter({
     .query(({ ctx, input }) => {
       return ctx.db.asset.findUniqueOrThrow({ where: { id: input.id } });
     }),
+  listForOwner: publicProcedure
+    .input(z.object({ eventId: z.string(), publicKey: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const categories = await ctx.db.asset.findMany({
+        where: { eventId: input.eventId, distributor: input.publicKey },
+      });
+      return categories;
+    }),
   list: publicProcedure
     .input(z.object({ eventId: z.string() }))
     .query(async ({ ctx, input }) => {
       const event = await ctx.db.event.findFirstOrThrow({
         where: { id: input.eventId },
         include: {
-          Asset: {
-            where: { address: { not: null } },
-          },
+          Asset: true,
+          // Asset: {
+          //   where: { address: { not: null } },
+          // },
         },
       });
 
       const { distributorKey } = event;
       if (!distributorKey) return [];
-
       return event.Asset;
     }),
   availability: publicProcedure
@@ -123,6 +132,14 @@ export const assetsRouter = createTRPCRouter({
             asset: tokenizedAsset,
           }),
         )
+        .addOperation(
+          Operation.payment({
+            source: asset.distributor,
+            destination: asset.issuer,
+            amount: Fees.SELLER_PUBLISHING_FEE.toString(),
+            asset: Asset.native(),
+          }),
+        )
         .setTimeout(standardTimebounds)
         .build();
       transaction.sign(Keypair.fromSecret(env.ISSUER_PRIVATE_KEY));
@@ -150,6 +167,7 @@ export const assetsRouter = createTRPCRouter({
         }
         return transactionResult;
       } catch (e) {
+        console.log("Error", e);
         handleHorizonServerError(e);
       }
     }),

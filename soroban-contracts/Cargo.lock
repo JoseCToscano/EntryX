@@ -1250,6 +1250,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ticket"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "ticket-auction"
 version = "0.0.0"
 dependencies = [

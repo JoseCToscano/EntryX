@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="mx-6"
             sections={[
               { name: "Events", href: "/account/events" },
-              { name: "Wallet", href: "/account/wallet" },
+              { name: "Wallet", href: "/wallet" },
             ]}
           />
           <div className="ml-auto flex items-center space-x-4">

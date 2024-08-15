@@ -286,7 +286,8 @@ export const eventsRouter = createTRPCRouter({
           },
         },
       });
-      return ctx.db.asset.create({
+      console.log("creating cat for event:", event);
+      const newasset = await ctx.db.asset.create({
         data: {
           label: input.label,
           code: createUniqueAssetCode(1, event._count.Asset + 1, input.size),
@@ -298,6 +299,8 @@ export const eventsRouter = createTRPCRouter({
           distributor: event.distributorKey!,
         },
       });
+      console.log("newasset:", newasset);
+      return newasset;
     }),
   updateTicketCategory: publicProcedure
     .input(
