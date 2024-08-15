@@ -20,14 +20,13 @@ ORG_GITHUB="yourorg"
 
 # ASSET DETAILS
 [[CURRENCIES]]
-code="MYASSET"
-issuer="GISSUERACCOUNTPUBLICKEY" # Replace with your issuer account's public key
+code="ENTRYXX10001"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
-name="My Asset Name"
-desc="A detailed description of what this asset represents"
-conditions="Any special conditions or requirements"
-image="https://localhost:3000/myasset.png" # Update with a local image URL if needed
+name="Ticket Entry"
+desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+conditions="EntryX is a digital ticket for events and concerts."
+image="/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
-anchor_asset_type="crypto"
