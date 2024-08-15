@@ -29,6 +29,7 @@ export const TicketTypeToAssetForm: React.FC<{
     useWallet();
   // React state
   const [isLocked, setIsLocked] = React.useState(!!asset?.address);
+  const [isSaving, setisSaving] = React.useState(false);
   const [loadingSignature, setLoadingSignature] = React.useState(false);
   const [loadingIPO, setLoadingIPO] = React.useState(false);
   const ctx = api.useContext();
@@ -74,16 +75,17 @@ export const TicketTypeToAssetForm: React.FC<{
         "Invalid or missing public key. Make sure your wallet is connected",
       );
     }
+    setisSaving(true);
 
     if (asset?.id) {
-      updateTicketCategory.mutate({
+      await updateTicketCategory.mutateAsync({
         id: asset.id,
         label: data.label as string,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
       });
     } else {
-      createTicketCategory.mutate({
+      await createTicketCategory.mutateAsync({
         label: data.label as string,
         totalUnits: Number(data.totalUnits),
         pricePerUnit: Number(data.pricePerUnit),
@@ -92,11 +94,12 @@ export const TicketTypeToAssetForm: React.FC<{
         distributorPublicKey: publicKey,
       });
     }
+    setisSaving(false);
     reset();
   };
 
   /**
-   * Transfer new Assets into ledger. From issuer account (saved in server) into
+   * Minting process: Transfer new Assets into ledger. From issuer account (saved in server) into
    * the distributor account (user's account)
    */
   const addToLedger = api.asset.addToLedger.useMutation({
@@ -263,14 +266,18 @@ export const TicketTypeToAssetForm: React.FC<{
             <Tooltip>
               <TooltipTrigger asChild className="">
                 <Button
-                  disabled={isLocked || isLoading}
+                  disabled={isLocked || isLoading || isSaving}
                   onClick={() => {
                     if (!isLocked) void handleSubmit(onSubmit)();
                   }}
                   variant="outline"
                   size="icon"
                 >
-                  <Icons.save className="h-4 w-4" />
+                  {isSaving ? (
+                    <Icons.spinner className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Icons.save className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -351,7 +358,7 @@ export const TicketTypeToAssetForm: React.FC<{
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Create sell Offer</p>
+                <p>Publish tickets for sale</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

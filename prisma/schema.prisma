@@ -75,23 +75,32 @@ enum EventStatus {
   IN_PROGRESS
 }
 
+model StellaAssetContract {
+  code    String
+  issuer  String
+  address String @id
+
+  @@index([code, issuer, address])
+}
+
 model Asset {
-  id           String         @id @default(cuid())
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  address      String?
-  label        String
-  code         String
-  issuer       String
-  sacAddress   String?        @unique // Refers to the Stock Asset Contract Address
-  distributor  String
-  type         String
-  eventId      String
-  pricePerUnit Decimal        @db.Decimal(10, 2)
-  status       String         @default("ACTIVE")
-  totalUnits   Int
-  event        Event          @relation(fields: [eventId], references: [id])
-  AssetAuction AssetAuction[]
+  id             String         @id @default(cuid())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  address        String?
+  label          String
+  code           String
+  issuer         String
+  sacAddress     String?        @unique // Refers to the Stock Asset Contract Address
+  distributor    String
+  type           String
+  eventId        String
+  pricePerUnit   Decimal        @db.Decimal(10, 2)
+  status         String         @default("ACTIVE")
+  totalUnits     Int
+  availableUnits Int            @default(0)
+  event          Event          @relation(fields: [eventId], references: [id])
+  AssetAuction   AssetAuction[]
 
   @@index([code, issuer])
   @@index([eventId])

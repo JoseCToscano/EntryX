@@ -15,6 +15,7 @@ export const env = createEnv({
     ISSUER_PUBLIC_KEY: z.string(),
     ISSUER_PRIVATE_KEY: z.string(),
     CLERK_SECRET_KEY: z.string(),
+    DOMAIN: z.string(),
   },
 
   /**
@@ -33,6 +34,7 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    DOMAIN: process.env.DOMAIN,
     POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
     POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
     NODE_ENV: process.env.NODE_ENV,

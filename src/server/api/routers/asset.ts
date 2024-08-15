@@ -54,16 +54,8 @@ export const assetsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findUniqueOrThrow({
         where: { id: input.assetId },
       });
-      let availability = 0;
-      const sellOffers = await server
-        .orderbook(new Asset(asset.code, asset.issuer), Asset.native())
-        .call();
-      if (sellOffers) {
-        availability = sellOffers.asks.reduce((acc, { amount }) => {
-          return acc + Number(amount);
-        }, 0);
-      }
-      return availability;
+
+      return asset.availableUnits;
     }),
   addTrustline: publicProcedure
     .input(z.object({ assetId: z.string(), distributorKey: z.string() }))
@@ -133,6 +125,12 @@ export const assetsRouter = createTRPCRouter({
           }),
         )
         .addOperation(
+          Operation.setOptions({
+            source: asset.distributor,
+            homeDomain: env.DOMAIN,
+          }),
+        )
+        .addOperation(
           Operation.payment({
             source: asset.distributor,
             destination: asset.issuer,
@@ -158,10 +156,15 @@ export const assetsRouter = createTRPCRouter({
         const transactionResult = await server.submitTransaction(transaction);
 
         if (transactionResult.successful) {
+          const asset = await ctx.db.asset.findUniqueOrThrow({
+            where: { id: input.id },
+          });
+
           await ctx.db.asset.update({
             where: { id: input.id },
             data: {
               address: transactionResult.hash,
+              availableUnits: asset.totalUnits,
             },
           });
         }

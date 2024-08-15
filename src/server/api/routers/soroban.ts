@@ -66,12 +66,19 @@ export const sorobanRouter = createTRPCRouter({
           id: input.assetId,
         },
       });
-      console.log("buying asset:", asset);
+      const { address: sacAddress } =
+        await ctx.db.stellaAssetContract.findFirstOrThrow({
+          where: {
+            code: asset.code,
+            issuer: asset.issuer,
+          },
+          select: {
+            address: true,
+          },
+        });
 
       const contractParams = [
-        addressToScVal(
-          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
-        ),
+        addressToScVal(sacAddress),
         numberToi128(input.quantity),
         addressToScVal(input.userPublicKey),
       ];
@@ -107,15 +114,22 @@ export const sorobanRouter = createTRPCRouter({
           message: "Only the asset distributor can start a sale",
         });
       }
-      console.log("asset", asset);
+      const { address: sacAddress } =
+        await ctx.db.stellaAssetContract.findFirstOrThrow({
+          where: {
+            code: asset.code,
+            issuer: asset.issuer,
+          },
+          select: {
+            address: true,
+          },
+        });
 
       const contractParams = [
         addressToScVal(asset.issuer),
         addressToScVal(asset.distributor),
         stringToSymbol(asset.code),
-        addressToScVal(
-          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
-        ),
+        addressToScVal(sacAddress),
         addressToScVal(xlmSAC),
         numberToi128(Number(asset.pricePerUnit)),
         numberToi128(asset.totalUnits),
@@ -197,14 +211,23 @@ export const sorobanRouter = createTRPCRouter({
         },
       });
 
+      const { address: sacAddress } =
+        await ctx.db.stellaAssetContract.findFirstOrThrow({
+          where: {
+            code: asset.code,
+            issuer: asset.issuer,
+          },
+          select: {
+            address: true,
+          },
+        });
+
       console.log("Auction created:", auction.id);
 
       const contractParams = [
         addressToScVal(input.ownerPublicKey),
         stringToSymbol(`AU${auction.id}`), // TODO: Auction ID
-        addressToScVal(
-          "CBJ4O23N44QNCNRKNBRYLSRO7JP62HQQHRG5FD5LMIM724USIXQPJ5WX",
-        ),
+        addressToScVal(sacAddress),
         addressToScVal(xlmSAC), // Native Asset
         numberToi128(input.quantity),
         numberToi128(input.startPrice), // TODO: editar el front

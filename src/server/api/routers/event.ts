@@ -281,28 +281,36 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const event = await ctx.db.event.findUniqueOrThrow({
-        where: { id: input.eventId },
-        select: {
-          distributorKey: true,
-          _count: {
-            select: {
-              Asset: true,
-            },
-          },
+      const event = await ctx.db.event.aggregate({
+        where: {
+          id: input.eventId,
+          distributorKey: input.distributorPublicKey,
         },
+        _count: true,
       });
+
+      const asset = await ctx.db.asset.aggregate({
+        where: {
+          eventId: input.eventId,
+        },
+        _count: true,
+      });
+
       console.log("creating cat for event:", event);
       const newasset = await ctx.db.asset.create({
         data: {
           label: input.label,
-          code: createUniqueAssetCode(1, event._count.Asset + 1, input.size),
+          code: createUniqueAssetCode(
+            event._count + 1,
+            asset._count + 1,
+            input.size,
+          ),
           type: "ticket",
           pricePerUnit: Number(input.pricePerUnit.toFixed(2)),
           totalUnits: input.totalUnits,
           eventId: input.eventId,
           issuer: env.ISSUER_PUBLIC_KEY,
-          distributor: event.distributorKey!,
+          distributor: input.distributorPublicKey,
         },
       });
       console.log("newasset:", newasset);

@@ -5,6 +5,7 @@ import {
   Horizon,
   Keypair,
   BASE_FEE,
+  Asset,
 } from "@stellar/stellar-sdk";
 import { postRouter } from "~/server/api/routers/post";
 import {
@@ -22,6 +23,7 @@ import { organizerRouter } from "~/server/api/routers/organizer";
 import { sorobanRouter } from "~/server/api/routers/soroban";
 import { marketplaceRouter } from "~/server/api/routers/marketplace";
 import { handleHorizonServerError } from "~/lib/utils";
+import { exe } from "~/lib/soroban";
 
 /**
  * This is the primary router for your server.
@@ -60,6 +62,14 @@ export const appRouter = createTRPCRouter({
     return await server
       .submitTransaction(transaction)
       .catch(handleHorizonServerError);
+  }),
+  fetchavailability: publicProcedure.query(async () => {
+    const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+    const av = await server
+      .operations()
+      .forAccount(env.ISSUER_PUBLIC_KEY)
+      .call();
+    return av;
   }),
   createStellarAccount: publicProcedure.query(async () => {
     console.log("createStellarAccount");
