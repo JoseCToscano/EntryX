@@ -98,6 +98,19 @@ model Asset {
   @@index([address])
 }
 
+model Bid {
+  id           Int          @id @default(autoincrement())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  amount       Decimal      @db.Decimal(10, 2)
+  bidder       String // Stellar Address
+  assetAuction Int
+  AssetAuction AssetAuction @relation(fields: [assetAuction], references: [id])
+
+  @@index([bidder])
+  @@index([assetAuction])
+}
+
 model AssetAuction {
   id                         Int       @id @default(autoincrement())
   createdAt                  DateTime  @default(now())
@@ -120,6 +133,7 @@ model AssetAuction {
   contractMethodViewBids     String
   assetUnits                 Int
   asset                      Asset     @relation(fields: [assetId], references: [id])
+  Bid                        Bid[]
 
   @@index([assetId])
 }

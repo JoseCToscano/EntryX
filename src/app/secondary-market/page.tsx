@@ -5,13 +5,8 @@
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Input } from "~/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-} from "~/components/ui/dropdown-menu";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -20,66 +15,32 @@ import {
   CardDescription,
   CardContent,
 } from "~/components/ui/card";
-import { Icons } from "~/components/icons";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import Image from "next/image";
 import Link from "next/link";
-import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
 import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
 import ListYourTicketsBanner from "~/app/secondary-market/components/list-your-tickets-banner";
 import { useWallet } from "~/hooks/useWallet";
 import { env } from "~/env";
 import ConnectYourWallet from "~/app/_components/connect-your-wallet";
 import NoAuctions from "~/app/_components/events/no-auctions";
-import { plurify } from "~/lib/utils";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { plurify, shortStellarAddress } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
+import { useSearch } from "~/hooks/useSearch";
 
 export default function Component() {
   const { account, publicKey } = useWallet();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-  const [filters, setFilters] = useState({
-    category: ["Music Festival", "Sports", "Theater"],
-    price: {
-      min: 0,
-      max: 1000,
-    },
-    timeRemaining: {
-      min: 0,
-      max: 72,
-    },
-  });
+  const {
+    searchTerm,
+    debouncedSearchTerm,
+    setSearchTerm,
+    addToSeacrhParams,
+    searchParams,
+  } = useSearch();
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  // Get a new searchParams string by merging the current
-  // searchParams with a provided key/value pair
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(name, value);
-
-      return params.toString();
-    },
-    [searchParams],
-  );
-
-  // Debouncing the search term
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      router.push(pathname + "?" + createQueryString("search", searchTerm));
-    }, 300); // Adjust the delay as needed
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
+  const filterFromUser = !!searchParams.get("fromUser");
+  const filterMyBids = !!searchParams.get("myBids");
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -90,6 +51,8 @@ export default function Component() {
     {
       search: debouncedSearchTerm,
       eventId: searchParams.get("eventId") ?? undefined,
+      fromUserKey: filterFromUser ? publicKey : undefined,
+      bidder: filterMyBids ? publicKey : undefined,
     },
     {},
   );
@@ -109,7 +72,7 @@ export default function Component() {
     <div className="border-t">
       {hasAssets && <ListYourTicketsBanner />}
       {!publicKey && <ConnectYourWallet />}
-      <div className="bg-background px-4">
+      <div className="bg-background-red px-4">
         <div className="h-full px-4 py-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -132,144 +95,6 @@ export default function Component() {
                 onChange={handleSearch}
                 className="mr-4 flex-1"
               />
-              <DropdownMenu>
-                {/*<DropdownMenuTrigger asChild>*/}
-                {/*  <Button*/}
-                {/*    variant="ghost"*/}
-                {/*    className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"*/}
-                {/*  >*/}
-                {/*    <Icons.filter className="mr-2 h-4 w-4" />*/}
-                {/*    Filters*/}
-                {/*  </Button>*/}
-                {/*</DropdownMenuTrigger>*/}
-                <DropdownMenuContent className="w-64 p-4">
-                  <div className="grid gap-4">
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">Category</h3>
-                      <div className="grid gap-2">
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={filters.category.includes(
-                              "Music Festival",
-                            )}
-                            // onCheckedChange={(checked) =>
-                            //   handleFilterChange(
-                            //     "category",
-                            //     checked
-                            //       ? [...filters.category, "Music Festival"]
-                            //       : filters.category.filter(
-                            //           (c) => c !== "Music Festival",
-                            //         ),
-                            //   )
-                            // }
-                          />
-                          Music Festival
-                        </Label>
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={filters.category.includes("Sports")}
-                            // onCheckedChange={(checked) =>
-                            //   handleFilterChange(
-                            //     "category",
-                            //     checked
-                            //       ? [...filters.category, "Sports"]
-                            //       : filters.category.filter(
-                            //           (c) => c !== "Sports",
-                            //         ),
-                            //   )
-                            // }
-                          />
-                          Sports
-                        </Label>
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={filters.category.includes("Theater")}
-                            // onCheckedChange={(checked) =>
-                            //   handleFilterChange(
-                            //     "category",
-                            //     checked
-                            //       ? [...filters.category, "Theater"]
-                            //       : filters.category.filter(
-                            //           (c) => c !== "Theater",
-                            //         ),
-                            //   )
-                            // }
-                          />
-                          Theater
-                        </Label>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">Price</h3>
-                      <div className="grid gap-2">
-                        <div className="flex items-center gap-2">
-                          <span>Min:</span>
-                          <input
-                            type="number"
-                            value={filters.price.min}
-                            // onChange={(e) =>
-                            //   handleFilterChange("price", {
-                            //     ...filters.price,
-                            //     min: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>Max:</span>
-                          <input
-                            type="number"
-                            value={filters.price.max}
-                            // onChange={(e) =>
-                            //   handleFilterChange("price", {
-                            //     ...filters.price,
-                            //     max: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">
-                        Time Remaining
-                      </h3>
-                      <div className="grid gap-2">
-                        <div className="flex items-center gap-2">
-                          <span>Min (hours):</span>
-                          <input
-                            type="number"
-                            value={filters.timeRemaining.min}
-                            // onChange={(e) =>
-                            //   handleFilterChange("timeRemaining", {
-                            //     ...filters.timeRemaining,
-                            //     min: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>Max (hours):</span>
-                          <input
-                            type="number"
-                            value={filters.timeRemaining.max}
-                            // onChange={(e) =>
-                            //   handleFilterChange("timeRemaining", {
-                            //     ...filters.timeRemaining,
-                            //     max: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
             {searchParams.get("eventId") && (
               <Badge className="mb-2">
@@ -278,9 +103,33 @@ export default function Component() {
                   className="ml-2 cursor-pointer text-white hover:scale-105"
                   onClick={() => {
                     console.log("clearing filter");
-                    router.push(
-                      pathname + "?" + createQueryString("eventId", ""),
-                    );
+                    addToSeacrhParams("eventId", "");
+                  }}
+                >
+                  x
+                </span>
+              </Badge>
+            )}
+            {filterFromUser && (
+              <Badge className="mb-2">
+                My Auctions
+                <span
+                  className="ml-2 cursor-pointer text-white hover:scale-105"
+                  onClick={() => {
+                    addToSeacrhParams("fromUser", "");
+                  }}
+                >
+                  x
+                </span>
+              </Badge>
+            )}
+            {filterMyBids && (
+              <Badge className="mb-2">
+                Auctions I&apos;ve bid on
+                <span
+                  className="ml-2 cursor-pointer text-white hover:scale-105"
+                  onClick={() => {
+                    addToSeacrhParams("myBids", "");
                   }}
                 >
                   x
@@ -327,14 +176,19 @@ export default function Component() {
                     </CardHeader>
                     <CardContent className="">
                       <div className="mb-4 flex flex-col items-start justify-between">
-                        <div className="text-sm font-bold text-primary">
+                        <div className="flex items-center justify-between text-sm font-bold text-primary">
                           Current Bid: ${Number(auction.highestBid ?? 0)}
                         </div>
+                        {auction.highestBidder && (
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            • {shortStellarAddress(auction.highestBidder)}
+                          </div>
+                        )}
                         <div className="text-sm text-muted-foreground">
-                          Total bids: {Number(auction.bidCount ?? 0)}
+                          • Total bids: {Number(auction.bidCount ?? 0)}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {dayjs(auction.endsAt).diff(dayjs(), "day")} days
+                          • {dayjs(auction.endsAt).diff(dayjs(), "day")} days
                           remaining
                         </div>
                       </div>

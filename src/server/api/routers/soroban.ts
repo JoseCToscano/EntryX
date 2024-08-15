@@ -357,6 +357,13 @@ export const sorobanRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       try {
+        await ctx.db.bid.create({
+          data: {
+            bidder: input.bidder,
+            assetAuction: Number(input.auctionId),
+            amount: input.highestBid,
+          },
+        });
         await ctx.db.assetAuction.update({
           where: {
             id: Number(input.auctionId),

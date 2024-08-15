@@ -1,14 +1,5 @@
 "use client";
 import { Input } from "~/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import { Button } from "~/components/ui/button";
-import { Icons } from "~/components/icons";
-import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
 import { TciketSkeleton } from "~/app/events/components/ticket-skeleton";
 import { AlbumArtwork } from "~/app/account/events/components/album-artwork";
 import { Separator } from "~/components/ui/separator";
@@ -17,17 +8,27 @@ import React from "react";
 import { api } from "~/trpc/react";
 import NoEvents from "~/app/_components/events/no-events";
 import ErrorElement from "~/app/_components/error-element";
+import { useSearch } from "~/hooks/useSearch";
 
 const today = new Date().toISOString();
 export const DisplayEvents: React.FC<{ fromUserKey?: string }> = ({
   fromUserKey,
 }) => {
+  const {} = useSearch();
+  const { searchTerm, debouncedSearchTerm, setSearchTerm } = useSearch();
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setSearchTerm(e.target.value);
+  };
+
   const {
     data: events,
     error,
     isLoading,
   } = api.event.search.useQuery({
     minDate: today,
+    search: debouncedSearchTerm,
     fromUserKey,
   });
 
@@ -61,148 +62,10 @@ export const DisplayEvents: React.FC<{ fromUserKey?: string }> = ({
                 id="event-filter"
                 type="text"
                 placeholder="Search events..."
-                // value={searchTerm}
-                // onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchTerm}
+                onChange={handleSearch}
                 className="mr-4 flex-1"
               />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
-                  >
-                    <Icons.filter className="mr-2 h-4 w-4" />
-                    Filters
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 p-4">
-                  <div className="grid gap-4">
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">Category</h3>
-                      <div className="grid gap-2">
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                          // checked={filters.category.includes(
-                          //     "Music Festival",
-                          // )}
-                          // onCheckedChange={(checked) =>
-                          //   handleFilterChange(
-                          //     "category",
-                          //     checked
-                          //       ? [...filters.category, "Music Festival"]
-                          //       : filters.category.filter(
-                          //           (c) => c !== "Music Festival",
-                          //         ),
-                          //   )
-                          // }
-                          />
-                          Music Festival
-                        </Label>
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                          // checked={filters.category.includes("Sports")}
-                          // onCheckedChange={(checked) =>
-                          //   handleFilterChange(
-                          //     "category",
-                          //     checked
-                          //       ? [...filters.category, "Sports"]
-                          //       : filters.category.filter(
-                          //           (c) => c !== "Sports",
-                          //         ),
-                          //   )
-                          // }
-                          />
-                          Sports
-                        </Label>
-                        <Label className="flex items-center gap-2">
-                          <Checkbox
-                          // checked={filters.category.includes("Theater")}
-                          // onCheckedChange={(checked) =>
-                          //   handleFilterChange(
-                          //     "category",
-                          //     checked
-                          //       ? [...filters.category, "Theater"]
-                          //       : filters.category.filter(
-                          //           (c) => c !== "Theater",
-                          //         ),
-                          //   )
-                          // }
-                          />
-                          Theater
-                        </Label>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">Price</h3>
-                      <div className="grid gap-2">
-                        <div className="flex items-center gap-2">
-                          <span>Min:</span>
-                          <input
-                            type="number"
-                            // value={filters.price.min}
-                            // onChange={(e) =>
-                            //   handleFilterChange("price", {
-                            //     ...filters.price,
-                            //     min: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>Max:</span>
-                          <input
-                            type="number"
-                            // value={filters.price.max}
-                            // onChange={(e) =>
-                            //   handleFilterChange("price", {
-                            //     ...filters.price,
-                            //     max: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-lg font-medium">
-                        Time Remaining
-                      </h3>
-                      <div className="grid gap-2">
-                        <div className="flex items-center gap-2">
-                          <span>Min (hours):</span>
-                          <input
-                            type="number"
-                            // value={filters.timeRemaining.min}
-                            // onChange={(e) =>
-                            //   handleFilterChange("timeRemaining", {
-                            //     ...filters.timeRemaining,
-                            //     min: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>Max (hours):</span>
-                          <input
-                            type="number"
-                            // value={filters.timeRemaining.max}
-                            // onChange={(e) =>
-                            //   handleFilterChange("timeRemaining", {
-                            //     ...filters.timeRemaining,
-                            //     max: Number(e.target.value),
-                            //   })
-                            // }
-                            className="w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
             <div className="flex max-w-[90vw] space-x-4 overflow-x-scroll pb-4">
               {isLoading &&

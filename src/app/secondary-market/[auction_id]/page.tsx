@@ -161,18 +161,23 @@ const AuctionCard: React.FC = () => {
       {loading && <Loading />}
       {!publicKey && <ConnectYourWallet />}
       <main className="flex-1">
-        <section className="bg-gradient-to-b from-muted to-white py-12 md:py-16 lg:py-20">
+        <section
+          className="bg-cover py-12 md:py-16 lg:py-20"
+          style={{
+            backgroundImage: `url(${auction.data?.asset.event.coverUrl ?? ""})`,
+          }}
+        >
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12">
               <div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                <h2 className="w-fit rounded-md bg-gray-200 bg-opacity-50 px-2 text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
                   {auction.isLoading ? (
                     <Icons.spinner className="animate-spin" />
                   ) : (
                     auction.data?.asset.event.name
                   )}
                 </h2>
-                <p className="text-lg text-muted-foreground md:text-xl">
+                <p className="w-fit rounded-md bg-gray-200 bg-opacity-50 px-2 text-lg text-black md:text-xl">
                   {dayjs(auction.data?.asset.event.date).format("MMMM D, YYYY")}
                   | {auction.data?.asset.event.location}
                 </p>

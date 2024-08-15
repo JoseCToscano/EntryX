@@ -63,6 +63,21 @@ export function Sidebar({ className }: { className?: string }) {
               </Button>
             </Link>
           </div>
+          <div className="space-y-1">
+            <Link href="/secondary-market?fromUser=true">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "h-8 w-full justify-start",
+                  pathname === "/my-tickets" &&
+                    "text-primary-500 border-primary-500 bg-muted",
+                )}
+              >
+                <Icons.TwoCoins className="mx-2 h-4 w-4" />
+                My Auctions
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

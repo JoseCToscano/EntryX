@@ -212,6 +212,7 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z
         .object({
+          search: z.string().optional(),
           fromUserKey: z.string().optional(),
           orderBy: z.string().optional(),
           minDate: z.string().optional(),
@@ -222,7 +223,12 @@ export const eventsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       // Build WHERE object
       const findManyArgs: EventFindManyArgs = {
-        where: {},
+        where: {
+          name: {
+            contains: input?.search,
+            mode: "insensitive",
+          },
+        },
         orderBy: { date: "asc" },
       };
       if (input?.minDate) {
@@ -260,7 +266,7 @@ export const eventsRouter = createTRPCRouter({
           },
         });
       }
-
+      console.log("findManyArgs:", findManyArgs);
       return await ctx.db.event.findMany(findManyArgs);
     }),
   addTicketCategory: publicProcedure

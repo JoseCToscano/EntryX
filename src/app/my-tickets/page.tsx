@@ -2,7 +2,7 @@
 import { DisplayEvents } from "../_components/events/display-events";
 import { useWallet } from "~/hooks/useWallet";
 import { ConnectWallet } from "~/app/wallet/connect/connect-component";
-import React from "react";
+import React, { Suspense } from "react";
 import Loading from "~/app/account/components/loading";
 
 export default function MyEventPage() {
@@ -16,5 +16,9 @@ export default function MyEventPage() {
     return <Loading />;
   }
 
-  return <DisplayEvents fromUserKey={publicKey} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <DisplayEvents fromUserKey={publicKey} />;
+    </Suspense>
+  );
 }

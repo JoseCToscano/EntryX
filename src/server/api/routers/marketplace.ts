@@ -1,34 +1,6 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import {
-  addressToScVal,
-  callWithSignedXDR,
-  getContractXDR,
-  nativize,
-  numberToi128,
-  numberToU64,
-  stringToSymbol,
-} from "~/lib/soroban";
-import { Horizon, Networks, TransactionBuilder } from "@stellar/stellar-sdk";
-import {
-  getAssetBalanceFromAccount,
-  handleHorizonServerError,
-} from "~/lib/utils";
-import { TRPCError } from "@trpc/server";
-import dayjs from "dayjs";
-import { env } from "~/env";
-
-interface TicketAuction {
-  asset_address: string;
-  end_time: bigint;
-  event_start_time: bigint;
-  highest_bid: bigint;
-  highest_bidder: string | null;
-  max_resell_price: bigint;
-  owner: string;
-  starting_price: bigint;
-}
 
 export const marketplaceRouter = createTRPCRouter({
   searchAuctions: publicProcedure
@@ -36,6 +8,8 @@ export const marketplaceRouter = createTRPCRouter({
       z.object({
         search: z.string().optional(),
         eventId: z.string().optional(),
+        fromUserKey: z.string().optional(),
+        bidder: z.string().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -45,8 +19,29 @@ export const marketplaceRouter = createTRPCRouter({
           eventId: input.eventId,
         };
       }
+
+      let fromUserKeyFilter = {};
+      if (input.fromUserKey) {
+        fromUserKeyFilter = {
+          owner: input.fromUserKey,
+        };
+      }
+
+      let bidderFilter = {};
+      if (input.bidder) {
+        bidderFilter = {
+          Bid: {
+            some: {
+              bidder: input.bidder,
+            },
+          },
+        };
+      }
+
       const auctions = await ctx.db.assetAuction.findMany({
         where: {
+          ...bidderFilter,
+          ...fromUserKeyFilter,
           endsAt: {
             gt: new Date(),
           },

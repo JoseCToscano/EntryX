@@ -1,14 +1,24 @@
 import React from "react";
 import Link from "next/link";
+import { cn } from "~/lib/utils";
+import { Icons } from "~/components/icons";
+import { Badge } from "~/components/ui/badge";
 
 const Footer = () => (
   <footer className="bottom-0 mt-40 flex w-full flex-col items-center justify-center bg-muted p-6 md:py-12">
     <div className="container grid max-w-7xl grid-cols-2 gap-8 text-sm sm:grid-cols-3 md:grid-cols-4">
       <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold">Entry•X</h1>
+        <h1 className="text-2xl font-semibold">
+          <Badge
+            className={cn("border-0 bg-gradient-to-r from-black to-gray-700")}
+          >
+            ENTRY
+            <Icons.LogoNoBg className="color h-5 w-5 text-black" />
+          </Badge>
+        </h1>
         <p className="text-xs font-light">
-          Entry•X is a decentralized platform designed to distribute and manage
-          digital tickets.
+          Decentralized platform designed to distribute and manage digital
+          tickets.
         </p>
         <p className="text-xs font-light text-muted-foreground">
           A transparent, secure and reliable solution for event organizers and

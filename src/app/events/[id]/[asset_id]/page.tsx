@@ -259,6 +259,34 @@ const TicketCard: React.FC = () => {
                       </div>
                     </div>
                   )}
+                  {sellAmount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild className="">
+                              <span className="flex items-center justify-start">
+                                Auction Commission
+                                <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>
+                                Percentage-based commission on the final
+                                purchase price
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+
+                      <div className="flex flex-col items-end justify-end">
+                        <div>
+                          {Fees.RESELLER_UNITARY_COMMISSION_PERCENTAGE}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <Separator />
                   <div className="flex items-center gap-2">
                     <Button
@@ -286,7 +314,22 @@ const TicketCard: React.FC = () => {
 
                   <Separator />
                   <div className="flex items-center justify-between font-bold">
-                    <div>Auction start price</div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild className="">
+                          <span className="flex items-center justify-start">
+                            Auction starting price
+                            <Icons.moreInfo className="ml-1 h-3 w-3 bg-muted" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>
+                            The sarting price must be equal to the ticket&apos;s
+                            original price to promote fair trading
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
 
                     <div className="flex flex-col items-end justify-end">
                       <div>

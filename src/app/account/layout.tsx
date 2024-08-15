@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MainNav } from "~/app/account/components/main-nav";
 import { Sidebar } from "~/app/account/components/sidebar";
 import { Icons } from "~/components/icons";
@@ -8,6 +8,10 @@ import Footer from "~/components/components/footer";
 import { useWallet } from "~/hooks/useWallet";
 import { Badge } from "~/components/ui/badge";
 import { shortStellarAddress } from "~/lib/utils";
+import { ConnectWallet } from "~/app/wallet/connect/connect-component";
+import WalletSkeleton from "~/app/wallet/components/wallet-skeleton";
+import Loading from "~/app/account/components/loading";
+import Logo from "~/app/_components/logo";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { publicKey, network, isLoading } = useWallet();
@@ -16,6 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <div className="sticky top-0 border-b">
         <div className="z-50 flex h-16 items-center bg-white px-4 opacity-95">
+          <Logo />
           <MainNav
             className="mx-6"
             sections={[
