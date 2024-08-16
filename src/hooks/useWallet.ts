@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   isConnected,
   isAllowed,
@@ -11,14 +11,13 @@ import {
 } from "@stellar/freighter-api";
 import toast from "react-hot-toast";
 import { api } from "~/trpc/react";
-import { Horizon } from "@stellar/stellar-sdk";
 
 export const useWallet = () => {
   const [hasFreighter, setHasFreighter] = useState<boolean>(false);
   const [isFreighterAllowed, setIsFreighterAllowed] = useState<boolean>(false);
   const [publicKey, setPublicKey] = useState<string>();
   const [network, setNetwork] = useState<string>();
-  const [trustline, setTrustline] = useState<{ [key: string]: number }>({});
+  const [trustline, setTrustline] = useState<Record<string, number>>({});
 
   const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
     {
@@ -42,7 +41,6 @@ export const useWallet = () => {
         tl[b.asset_code] = Number(b.balance);
       }
     });
-    console.log("trustline", tl);
     setTrustline(tl);
   }, [data]);
 
