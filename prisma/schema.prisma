@@ -23,6 +23,7 @@ model Event {
   description    String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  deletedAt      DateTime? // Nullable field to track soft deletes
   distributorKey String?
   sequence       Int         @default(0)
   Asset          Asset[]

@@ -60,7 +60,10 @@ export default function Component() {
               {analytics.isLoading ? (
                 <Icons.spinner className="h-4 w-4 animate-spin" />
               ) : (
-                analytics.data?.sales
+                analytics.data?.sales.toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })
               )}
             </div>
             <div className="text-sm text-muted-foreground">

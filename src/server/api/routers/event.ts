@@ -59,6 +59,7 @@ export const eventsRouter = createTRPCRouter({
       return ctx.db.event.findMany({
         where: {
           distributorKey: input.publicKey,
+          deletedAt: null,
         },
         orderBy: {
           date: "desc",
@@ -68,7 +69,9 @@ export const eventsRouter = createTRPCRouter({
   get: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(({ ctx, input }) => {
-      return ctx.db.event.findUniqueOrThrow({ where: { id: input.id } });
+      return ctx.db.event.findUniqueOrThrow({
+        where: { id: input.id, deletedAt: null },
+      });
     }),
   myTickets: publicProcedure
     .input(
@@ -164,6 +167,9 @@ export const eventsRouter = createTRPCRouter({
       const assets = await ctx.db.asset.findMany({
         where: {
           eventId: input.id,
+          event: {
+            deletedAt: null,
+          },
         },
         include: { event: true },
       });
@@ -224,6 +230,7 @@ export const eventsRouter = createTRPCRouter({
       // Build WHERE object
       const findManyArgs: EventFindManyArgs = {
         where: {
+          deletedAt: null,
           name: {
             contains: input?.search,
             mode: "insensitive",
@@ -255,6 +262,7 @@ export const eventsRouter = createTRPCRouter({
         }) as Horizon.HorizonApi.BalanceLineAsset<"credit_alphanum12">[];
         return ctx.db.event.findMany({
           where: {
+            deletedAt: null,
             ...findManyArgs.where,
             Asset: {
               some: {
@@ -281,28 +289,37 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const event = await ctx.db.event.aggregate({
+      const event = await ctx.db.event.findFirstOrThrow({
         where: {
           id: input.eventId,
           distributorKey: input.distributorPublicKey,
+          deletedAt: null,
         },
-        _count: true,
       });
 
-      const asset = await ctx.db.asset.aggregate({
+      const asset = await ctx.db.asset.findFirst({
         where: {
           eventId: input.eventId,
         },
-        _count: true,
+        orderBy: {
+          sequence: "desc",
+        },
       });
+
+      if (!event.sequence) {
+        throw new TRPCError({
+          message: "Invalid event configuration. Please contact support",
+          code: "UNAUTHORIZED",
+        });
+      }
 
       console.log("creating cat for event:", event);
       const newasset = await ctx.db.asset.create({
         data: {
           label: input.label,
           code: createUniqueAssetCode(
-            event._count + 1,
-            asset._count + 1,
+            event.sequence,
+            (asset?.sequence ?? 0) + 1,
             input.size,
           ),
           type: "ticket",
@@ -347,6 +364,7 @@ export const eventsRouter = createTRPCRouter({
   removeTicketCategory: publicProcedure
     .input(
       z.object({
+        publicKey: z.string().min(1),
         id: z.string().min(1),
       }),
     )
@@ -354,9 +372,9 @@ export const eventsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findUniqueOrThrow({
         where: { id: input.id },
       });
-      if (asset.address) {
+      if (asset.distributor !== input.publicKey) {
         throw new TRPCError({
-          message: "Asset already tokenized",
+          message: "Only the distributor can remove a ticket category",
           code: "UNAUTHORIZED",
         });
       }
@@ -374,9 +392,19 @@ export const eventsRouter = createTRPCRouter({
         description: z.string().min(1),
         date: z.string().min(1).or(z.date()),
         imageUrl: z.string().optional(),
+        coverUrl: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const organizersEvents = await ctx.db.event.findFirst({
+        where: {
+          distributorKey: input.publicKey,
+          deletedAt: null,
+        },
+        orderBy: {
+          sequence: "desc",
+        },
+      });
       return ctx.db.event.create({
         data: {
           name: input.name,
@@ -386,7 +414,8 @@ export const eventsRouter = createTRPCRouter({
           distributorKey: input.publicKey,
           location: input.location,
           imageUrl: input.imageUrl,
-          // organizerId: ctx.session.user.id,
+          coverUrl: input.coverUrl,
+          sequence: (organizersEvents?.sequence ?? 0) + 1,
         },
       });
     }),

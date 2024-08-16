@@ -18,6 +18,7 @@ export const organizerRouter = createTRPCRouter({
       const findManyArgs: EventFindManyArgs = {
         where: {
           distributorKey: input.publicKey,
+          deletedAt: null,
         },
         orderBy: { date: "desc" },
       };
@@ -41,8 +42,22 @@ export const organizerRouter = createTRPCRouter({
     .input(z.object({ publicKey: z.string(), eventId: z.string() }))
     .query(async ({ ctx, input }) => {
       const event = await ctx.db.event.findUnique({
-        where: { id: input.eventId, distributorKey: input.publicKey },
+        where: {
+          id: input.eventId,
+          distributorKey: input.publicKey,
+          deletedAt: null,
+        },
       });
       return event ?? undefined;
+    }),
+  delete: publicProcedure
+    .input(z.object({ id: z.string().min(1), publicKey: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.event.update({
+        where: { id: input.id, distributorKey: input.publicKey },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
     }),
 });

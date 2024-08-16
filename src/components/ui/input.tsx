@@ -30,6 +30,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }) => {
     return (
       <input
+        autoComplete="off"
         id={id}
         {...(register ? register(id, { required, ...registerOptions }) : {})}
         type={type}

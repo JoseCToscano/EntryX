@@ -26,7 +26,7 @@ import {
   TableBody,
 } from "~/components/ui/table";
 import { useParams, useRouter } from "next/navigation";
-import { cn } from "~/lib/utils";
+import { ClientTRPCErrorHandler, cn } from "~/lib/utils";
 import Image from "next/image";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import { TicketTypeToAssetForm } from "~/app/account/events/[id]/components/ticket-type-to-asset-form";
@@ -55,6 +55,11 @@ export default function EventEditor() {
     { eventId: id as string, publicKey: publicKey! },
     { enabled: !!id && !!publicKey },
   );
+
+  const deleteEvent = api.organizer.delete.useMutation({
+    onError: ClientTRPCErrorHandler,
+    onSuccess: () => router.push("/account/events"),
+  });
 
   const categories = api.asset.listForOwner.useQuery(
     { eventId: id as string, publicKey: publicKey! },
@@ -104,8 +109,23 @@ export default function EventEditor() {
               {event.data?.location ?? event.data?.venue}
             </Badge>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Button variant="outline" size="sm">
-                Discard
+              <Button
+                onClick={() =>
+                  window.confirm(
+                    "Are you sure you want to delete this event?",
+                  ) &&
+                  publicKey &&
+                  id &&
+                  deleteEvent.mutate({ publicKey, id: id as string })
+                }
+                variant="outline"
+                size="sm"
+              >
+                {deleteEvent.isPending ? (
+                  <Icons.spinner className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Delete Event"
+                )}
               </Button>
               <Button size="sm">Save Event</Button>
             </div>

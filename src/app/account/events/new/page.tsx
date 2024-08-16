@@ -66,6 +66,8 @@ export default function CreateEvent() {
       description: data.description as string,
       location: data.location as string,
       publicKey,
+      imageUrl: "/images/event-placeholder-1.png",
+      coverUrl: "/images/event-placeholder-1.png",
     });
     await ctx.event.search.invalidate();
     router.push(`/account/events/${id}`);
@@ -123,7 +125,7 @@ export default function CreateEvent() {
                       </div>
                       <div className="">
                         <Image
-                          src={`/images/event-placeholder-${1 + (parseInt(String(100 * Math.random()), 10) % 4)}.png`}
+                          src={`/images/event-placeholder-1.png`}
                           alt={"album.name"}
                           width={300}
                           height={330}
