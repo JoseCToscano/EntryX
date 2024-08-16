@@ -79,12 +79,12 @@ export default function CreateEvent() {
           <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
             <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
               <Card x-chunk="dashboard-07-chunk-0">
-                <CardHeader>
+                <CardHeader className="pb-0">
                   <CardTitle>Event Details</CardTitle>
                   <CardDescription>Insert the event details</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid -translate-y-10 gap-6">
+                <CardContent className="">
+                  <div className="grid gap-6 pb-4">
                     <div className="flex flex-row items-end justify-between gap-3">
                       <div className="flex flex-grow flex-col gap-3">
                         <div className="grid gap-3">
@@ -128,7 +128,7 @@ export default function CreateEvent() {
                           width={300}
                           height={330}
                           className={cn(
-                            "aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:scale-105",
+                            "aspect-[3/4] h-auto w-[250px] cursor-pointer rounded-md object-cover transition-all hover:border-2",
                           )}
                         />
                       </div>
@@ -166,7 +166,8 @@ export default function CreateEvent() {
                     </div>
                   </div>
                   <Button
-                    className="border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
+                    variant="ghost"
+                    className="h-8 border-[1px] border-black bg-black px-4 text-white hover:bg-white hover:text-black"
                     onClick={handleSubmit(onSubmit)}
                   >
                     {createEvent.isPending ? (

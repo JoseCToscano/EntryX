@@ -59,7 +59,7 @@ function CompanyContactForm(step: number) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone number</Label>
-              <Input id="phone" type="tel" placeholder="(+52) 331 341 5550" />
+              <Input id="phone" type="tel" placeholder="(+##) ### ### ####" />
               <label
                 className={`-translate-y-2 translate-x-1 text-xs font-light text-neutral-400 duration-150 hover:cursor-text`}
               >
@@ -70,7 +70,7 @@ function CompanyContactForm(step: number) {
               <Label htmlFor="event-description">Event</Label>
               <Textarea
                 id="event-description"
-                placeholder="Tell us about a little about the event you want to list"
+                placeholder="Tell us about the event you want to list"
                 rows={4}
               />
             </div>
@@ -136,11 +136,7 @@ function IndividualContactForm(step = 0) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-              />
+              <Input id="phone" type="tel" placeholder="(+##) ### ### ####" />
               <label
                 className={`-translate-y-2 translate-x-1 text-xs font-light text-neutral-400 duration-150 hover:cursor-text`}
               >
@@ -151,7 +147,7 @@ function IndividualContactForm(step = 0) {
               <Label htmlFor="event-description">Event</Label>
               <Textarea
                 id="event-description"
-                placeholder="Tell us about a little about the event you want to list"
+                placeholder="Tell us about the event you want to list"
                 rows={4}
               />
             </div>

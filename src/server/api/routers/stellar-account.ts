@@ -121,6 +121,35 @@ export const stellarAccountRouter = createTRPCRouter({
         (asset) => !!getAssetBalanceFromAccount(account.balances, asset),
       );
     }),
+  addTrustline: publicProcedure
+    .input(
+      z.object({
+        publicKey: z.string(),
+        assetId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const asset = await ctx.db.asset.findFirstOrThrow({
+        where: {
+          id: input.assetId,
+        },
+      });
+      const account = await server.loadAccount(input.publicKey);
+      const transaction = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase: Networks.TESTNET,
+      })
+        .addOperation(
+          Operation.changeTrust({
+            asset: new Asset(asset.code, asset.issuer),
+            source: input.publicKey,
+          }),
+        )
+        .setTimeout(standardTimebounds)
+        .build();
+
+      return transaction.toXDR();
+    }),
   operations: publicProcedure
     .input(
       z.object({

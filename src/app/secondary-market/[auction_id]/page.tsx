@@ -184,12 +184,9 @@ const AuctionCard: React.FC = () => {
               </div>
               {auction.data && (
                 <div className="flex flex-col items-start gap-4">
-                  <Card className="w-full">
+                  <Card className="sticky top-20 w-full">
                     <CardHeader>
                       <CardTitle>{auction.data.asset.label}</CardTitle>
-                      <CardDescription>
-                        Includes access to VIP lounge and exclusive experiences
-                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">

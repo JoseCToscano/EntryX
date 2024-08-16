@@ -113,12 +113,12 @@ export default function EventEditor() {
           <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
             <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
               <Card x-chunk="dashboard-07-chunk-0">
-                <CardHeader>
+                <CardHeader className="pb-0">
                   <CardTitle>Event Details</CardTitle>
                   <CardDescription>Update the event details</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid -translate-y-10 gap-6">
+                  <div className="grid gap-6">
                     <div className="flex flex-row items-end justify-between gap-3">
                       <div className="flex flex-grow flex-col gap-3">
                         <div className="grid gap-3">

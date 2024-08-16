@@ -9,7 +9,7 @@ export function Sidebar({ className }: { className?: string }) {
   console.log(pathname);
   return (
     <div className={cn("pb-8", className)}>
-      <div className="space-y-4 py-4">
+      <div className="sticky top-20 space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Discover
@@ -93,7 +93,7 @@ export function Sidebar({ className }: { className?: string }) {
                     "text-primary-500 border-primary-500 bg-muted",
                 )}
               >
-                <Icons.ticket className="mx-2 h-4 w-4" />
+                <Icons.creditCard className="mx-2 h-4 w-4" />
                 Partner Dashboard
               </Button>
             </Link>
@@ -108,7 +108,7 @@ export function Sidebar({ className }: { className?: string }) {
                     "text-primary-500 border-primary-500 bg-muted",
                 )}
               >
-                <Icons.ticket className="mx-2 h-4 w-4" />
+                <Icons.browseGrid className="mx-2 h-4 w-4" />
                 My Events
               </Button>
             </Link>

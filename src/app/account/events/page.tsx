@@ -3,7 +3,6 @@ import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { AlbumArtwork } from "./components/album-artwork";
 import { api } from "~/trpc/react";
-import { madeForYouAlbums } from "../data/albums";
 import { MenuBreadcumb } from "~/app/account/events/components/menu-breadcumb";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
@@ -12,7 +11,7 @@ import { useWallet } from "~/hooks/useWallet";
 const today = new Date().toISOString();
 
 export default function EventsPage() {
-  const { publicKey, isLoading: isLoadingKey } = useWallet();
+  const { publicKey } = useWallet();
   const { data: upcomingEvents } = api.organizer.myEvents.useQuery(
     {
       publicKey: publicKey!,
@@ -75,24 +74,21 @@ export default function EventsPage() {
               </p>
             </div>
             <Separator className="my-4" />
-            <div className="relative">
-              <ScrollArea>
-                <div className="flex space-x-4 pb-4">
-                  {previousEvents?.map((album) => (
-                    <AlbumArtwork
-                      key={album.name}
-                      album={album}
-                      className="w-[150px]"
-                      aspectRatio="square"
-                      width={150}
-                      height={150}
-                      showAttendance
-                      href={`/account/events/#`}
-                    />
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+            <div className="">
+              <div className="flex space-x-4 pb-4">
+                {previousEvents?.map((album) => (
+                  <AlbumArtwork
+                    key={album.name}
+                    album={album}
+                    className="w-[150px]"
+                    aspectRatio="square"
+                    width={150}
+                    height={150}
+                    showAttendance
+                    href={`/account/events/#`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

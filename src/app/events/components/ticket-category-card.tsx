@@ -1,25 +1,21 @@
 import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import React from "react";
 import { api } from "~/trpc/react";
 import { Icons } from "~/components/icons";
 import { Skeleton } from "~/components/ui/skeleton";
 import { type Asset as DBAsset } from "@prisma/client";
 import Image from "next/image";
+import { cn } from "~/lib/utils";
 
 interface TicketCategoryCardProps {
   category: DBAsset;
-  cart: Map<string, { asset: DBAsset; total: number }>;
   addToCart: (item: DBAsset) => void;
-  removeFromCart: (item: DBAsset) => void;
-  processStep: number;
+  selected: boolean;
 }
 export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   category,
-  processStep,
   addToCart,
-  removeFromCart,
-  cart,
+  selected,
 }) => {
   const availability = api.asset.availability.useQuery(
     { assetId: category.id },
@@ -27,7 +23,15 @@ export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
   );
 
   return (
-    <Card className="rounded-lg bg-gradient-to-br from-white to-primary-foreground p-4 shadow-sm hover:scale-[1.01]">
+    <Card
+      onClick={() => {
+        addToCart(category);
+      }}
+      className={cn(
+        "cursor-pointer rounded-lg bg-gradient-to-br from-white to-primary-foreground p-4 shadow-sm hover:shadow-md",
+        selected && "bg-gradient-to-br from-white to-muted-foreground",
+      )}
+    >
       <h3 className="text-lg font-bold">
         {category.label} {category.code}
         <p className="text-xs font-light">
@@ -56,28 +60,6 @@ export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
           })}{" "}
           XLM
         </span>
-        {processStep === 1 && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => removeFromCart(category)}
-            >
-              -
-            </Button>
-            <span>{cart.get(category.id)?.total ?? 0}</span>
-            <Button
-              disabled={!availability?.data}
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (availability.data! > 1) addToCart(category);
-              }}
-            >
-              +
-            </Button>
-          </div>
-        )}
       </div>
     </Card>
   );

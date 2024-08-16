@@ -46,7 +46,7 @@ export default function RootLayout({
             <div className="grid lg:grid-cols-7">
               <Sidebar className="hidden lg:block" />
               <div className="col-span-5 lg:col-span-6 lg:border-l">
-                <Suspense fallback={<Loading />}>{children}</Suspense>;
+                <Suspense fallback={<Loading />}>{children}</Suspense>
                 <Footer />
               </div>
             </div>

@@ -17,13 +17,8 @@ import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
-import {
-  ClientTRPCErrorHandler,
-  computeTransactionFees,
-  fromXLMToUSD,
-} from "~/lib/utils";
+import { ClientTRPCErrorHandler, fromXLMToUSD, plurify } from "~/lib/utils";
 import { type Asset as DBAsset } from "@prisma/client";
-import { Asset } from "@stellar/stellar-sdk";
 
 export default function Purchase() {
   const router = useRouter();
@@ -31,12 +26,12 @@ export default function Purchase() {
   const { id } = params;
 
   /* State variables */
-  const { publicKey, signXDR, hasFreighter } = useWallet();
+  const { publicKey, signXDR, hasFreighter, trustline, isFreighterAllowed } =
+    useWallet();
   const [processStep, setProcessStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [cart, setCart] = React.useState<
-    Map<string, { asset: DBAsset; total: number }>
-  >(new Map());
+  const [assetToBuy, setAssetToBuy] = useState<string | null>(null);
+  const [unitsToBuy, setUnitsToBuy] = useState<number>(0);
 
   /* tRPC api calls */
   const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
@@ -44,10 +39,7 @@ export default function Purchase() {
     { eventId: id as string },
     { enabled: !!id },
   );
-  const account = api.stellarAccountRouter.details.useQuery(
-    { id: publicKey! },
-    { enabled: !!publicKey },
-  );
+
   const ctx = api.useContext();
 
   const submitTransaction =
@@ -61,10 +53,6 @@ export default function Purchase() {
       },
     });
 
-  const purchase = api.stellarOffer.purchase.useMutation({
-    onError: ClientTRPCErrorHandler,
-  });
-
   const contractPurchase = api.soroban.contractPurchase.useMutation({
     onError: ClientTRPCErrorHandler,
   });
@@ -77,20 +65,9 @@ export default function Purchase() {
   });
 
   const addToCart = (asset: DBAsset) => {
-    const currentQuantity = cart.get(asset.id)?.total ?? 0;
-    setCart((prev) => {
-      return new Map(prev.set(asset.id, { asset, total: currentQuantity + 1 }));
-    });
-  };
-
-  const removeFromCart = (asset: DBAsset) => {
-    const currentQuantity = cart.get(asset.id)?.total ?? 0;
-    if (currentQuantity > 0) {
-      setCart((prev) => {
-        return new Map(
-          prev.set(asset.id, { asset, total: currentQuantity - 1 }),
-        );
-      });
+    if (assetToBuy !== asset.id) {
+      setAssetToBuy(asset.id);
+      setUnitsToBuy(1);
     }
   };
 
@@ -100,24 +77,23 @@ export default function Purchase() {
       if (!publicKey) {
         return toast.error("Please connect your wallet");
       }
-      if (!cart.keys()) {
+      if (!assetToBuy || !unitsToBuy) {
         return toast.error("Please select a ticket to purchase");
       }
       setProcessStep(2);
-      const item = Array.from(cart.entries())[0];
-      if (!item) {
-        return toast.error("Please select a ticket to purchase");
-      }
       const xdr = await contractPurchase.mutateAsync({
         userPublicKey: publicKey,
-        quantity: item[1].total,
-        assetId: item[0],
+        quantity: unitsToBuy,
+        assetId: assetToBuy,
       });
       const signedTransaction = await signXDR(xdr);
       setProcessStep(3);
       await soroban.mutateAsync({
         xdr: signedTransaction,
       });
+      if (typeof id === "string") {
+        router.push(`/events/${id}`);
+      }
       setProcessStep(4);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       void ctx.asset.availability.invalidate();
@@ -126,40 +102,8 @@ export default function Purchase() {
     } finally {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setProcessStep(1);
-      setLoading(false);
-    }
-  };
-
-  const handlePurchase = async () => {
-    setLoading(true);
-    try {
-      if (!publicKey) {
-        return toast.error("Please connect your wallet");
-      }
-      if (!cart.keys()) {
-        return toast.error("Please select a ticket to purchase");
-      }
-      setProcessStep(2);
-      const xdr = await purchase.mutateAsync({
-        userPublicKey: publicKey,
-        items: Array.from(cart.entries()).map(([assetId, cartItem]) => ({
-          assetId,
-          unitsToBuy: cartItem.total,
-        })),
-      });
-      const signedTransaction = await signXDR(xdr);
-      setProcessStep(3);
-      await submitTransaction.mutateAsync({
-        xdr: signedTransaction,
-      });
-      setProcessStep(4);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      void ctx.asset.availability.invalidate();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setProcessStep(1);
+      setUnitsToBuy(0);
+      setAssetToBuy(null);
       setLoading(false);
     }
   };
@@ -169,41 +113,60 @@ export default function Purchase() {
     { enabled: !!id },
   );
 
+  const addToTrustline = api.stellarAccountRouter.addTrustline.useMutation({
+    onError: ClientTRPCErrorHandler,
+  });
+
   const categories = React.useMemo(() => {
     return new Map(
       ticketCategories.data?.map((category) => [category.id, category]) ?? [],
     );
   }, [ticketCategories.data]);
 
-  const totalFees = React.useMemo(() => {
-    if (!account.data) return 0;
-    const itemsInCart = new Set(
-      Array.from(cart.entries())
-        .filter(([, { total }]) => total > 0)
-        .map(([, a]) => new Asset(a.asset.code, a.asset.issuer)),
-    );
-
-    return computeTransactionFees(itemsInCart, account.data.balances);
-  }, [cart, account.data]);
-
   const total = React.useMemo(() => {
-    if (!ticketCategories.data) return 0;
-    return (
-      Array.from(cart.entries()).reduce((acc, [categoryId, item]) => {
-        const category = categories.get(categoryId);
-        const { pricePerUnit } = category ?? { pricePerUnit: 0 };
-        return acc + item.total * Number(pricePerUnit);
-      }, 0) + Number(totalFees)
-    );
-  }, [cart, ticketCategories.data, categories, totalFees]);
+    const price = categories.get(assetToBuy ?? "")?.pricePerUnit ?? 0;
+    return Number(price) * unitsToBuy;
+  }, [categories, unitsToBuy, assetToBuy]);
+
+  const increaseSellAmount = () => {
+    setUnitsToBuy((p) => p + 1);
+  };
+
+  const reduceSellAmount = () => {
+    if (unitsToBuy > 0) {
+      setUnitsToBuy((p) => p - 1);
+    }
+  };
+
+  const addAssetToTrustline = async () => {
+    if (!assetToBuy) {
+      return toast("Please select a ticket to buy");
+    }
+    if (!publicKey || !hasFreighter || !isFreighterAllowed) {
+      return toast("Please connect your wallet");
+    }
+    setLoading(true);
+    try {
+      let xdr = await addToTrustline.mutateAsync({
+        publicKey,
+        assetId: assetToBuy,
+      });
+      xdr = await signXDR(xdr);
+      await submitTransaction.mutateAsync({ xdr });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (typeof id !== "string") return null;
 
   return (
     <div className="w-full p-4">
       <MenuBreadcumb id={id} actionSection={"Buy tickets"} />
-      <div className="container mx-auto grid grid-cols-1 gap-12 px-4 py-12 md:grid-cols-[1fr_400px] md:gap-16 md:px-6 lg:px-8">
-        <div className="space-y-8">
+      <div className="container mx-auto grid grid-cols-1 gap-12 px-4 pt-0 md:grid-cols-[1fr_400px] md:gap-16 md:px-6 lg:px-8">
+        <div className="h-[100vh] space-y-8 pt-10">
           <div>
             <h2 className="text-2xl font-bold">{event.data?.name}</h2>
             <p className="mt-4 text-muted-foreground">
@@ -220,12 +183,10 @@ export default function Purchase() {
                 ))}
               {ticketCategories.data?.map((category) => (
                 <TicketCategoryCard
-                  processStep={processStep}
                   key={category.id}
                   category={category}
-                  cart={cart}
                   addToCart={addToCart}
-                  removeFromCart={removeFromCart}
+                  selected={category.id === assetToBuy}
                 />
               ))}
               <Card className="rounded-lg bg-background p-4 shadow-sm">
@@ -238,7 +199,7 @@ export default function Purchase() {
                 {/* <p className="text-muted-foreground">Desc...</p> */}
                 <div className="flex w-full items-center justify-end">
                   <Link href={`/secondary-market?eventId=${id}`}>
-                    <Button className="group w-48 border-[1px] border-black bg-black text-sm text-white hover:bg-white hover:text-black">
+                    <Button className="group w-48 border-[1px] border-black bg-black pl-0 text-sm text-white hover:bg-white hover:text-black">
                       Go to marketplace
                       <Icons.expandingArrow className="ml-2 h-4 w-4" />
                     </Button>
@@ -248,48 +209,63 @@ export default function Purchase() {
             </div>
           </div>
         </div>
-        <div className="space-y-8">
-          <Card>
+        <div className="flex-grow space-y-8">
+          <Card className="sticky top-20">
             <CardHeader>
               <CardTitle>Your purchase</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Array.from(cart.entries())
-                  .filter(([, { total }]) => total > 0)
-                  .map(([categoryId, qty]) => {
-                    return (
-                      <div
-                        key={categoryId}
-                        className="flex items-center justify-between"
-                      >
-                        <div>
-                          ({qty.total}) {categories.get(categoryId)?.label}
-                        </div>
-                        <div>
-                          {Number(categories.get(categoryId)?.pricePerUnit) ??
-                            0}{" "}
-                          XLM
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center justify-between">
+                  {assetToBuy && (
+                    <div>
+                      ({unitsToBuy}) {categories.get(assetToBuy)?.label}
+                    </div>
+                  )}
+                  <div>
+                    {assetToBuy &&
+                      Number(categories.get(assetToBuy)?.pricePerUnit)}{" "}
+                    {assetToBuy && "XLM"}
+                  </div>
+                </div>
                 <div className="flex items-center justify-between font-medium">
                   <div>Subtotal</div>
                   <div>
-                    {total.toLocaleString("en-US", {
-                      minimumFractionDigits: 5,
-                      maximumFractionDigits: 5,
-                    })}{" "}
+                    {unitsToBuy
+                      ? total.toLocaleString("en-US", {
+                          minimumFractionDigits: 5,
+                          maximumFractionDigits: 5,
+                        })
+                      : 0}{" "}
                     XLM
                   </div>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <div>Stellar Transaction Fees</div>
-                  <div>{totalFees} XLM</div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    disabled={!assetToBuy || soroban.isPending || loading}
+                    onClick={reduceSellAmount}
+                    variant="outline"
+                    size="sm"
+                    className="bg-black text-white hover:bg-white hover:text-black"
+                  >
+                    -
+                  </Button>
+                  <span>
+                    {unitsToBuy} {plurify("ticket", unitsToBuy)}
+                  </span>
+                  <Button
+                    disabled={!assetToBuy || soroban.isPending || loading}
+                    onClick={increaseSellAmount}
+                    variant="outline"
+                    size="sm"
+                    className="bg-black text-white hover:bg-white hover:text-black"
+                  >
+                    +
+                  </Button>
                 </div>
 
+                <Separator />
                 <div className="flex items-center justify-between text-muted-foreground">
                   <div>Service Fee</div>
                   <div>{Fees.SERVICE_FEE} XLM</div>
@@ -314,34 +290,60 @@ export default function Purchase() {
                 {loading && (
                   <div className="py-4">
                     <TransactionSteps
-                      assets={Array.from(cart.keys())}
+                      assets={[assetToBuy ?? ""]}
                       processStep={processStep}
                     />
                   </div>
                 )}
                 {hasFreighter ? (
-                  <Button
-                    disabled={cart.size === 0 || loading}
-                    onClick={() => {
-                      if (processStep === 4) {
-                        void router.push(`/events/${id}`);
-                      } else {
-                        void handleContractPurchase();
+                  assetToBuy &&
+                  !Object.hasOwn(
+                    trustline,
+                    categories.get(assetToBuy)?.code ?? "",
+                  ) ? (
+                    <Button
+                      disabled={!assetToBuy || loading}
+                      onClick={addAssetToTrustline}
+                      className="h-8 w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
+                    >
+                      {loading ? (
+                        <Icons.spinner className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Add to Trustline"
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled={
+                        !assetToBuy ||
+                        !Object.hasOwn(
+                          trustline,
+                          categories.get(assetToBuy)?.code ?? "",
+                        ) ||
+                        !unitsToBuy ||
+                        loading
                       }
-                    }}
-                    size="lg"
-                    className="h-8 w-full bg-black text-white"
-                  >
-                    {loading ? (
-                      <Icons.spinner className="h-4 w-4 animate-spin" />
-                    ) : cart.size <= 0 ? (
-                      "Select tickets to buy"
-                    ) : processStep === 4 ? (
-                      "Go to Wallet"
-                    ) : (
-                      "Buy Tickets"
-                    )}
-                  </Button>
+                      onClick={() => {
+                        if (processStep === 4) {
+                          void router.push(`/events/${id}`);
+                        } else {
+                          void handleContractPurchase();
+                        }
+                      }}
+                      size="lg"
+                      className="h-8 w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
+                    >
+                      {loading ? (
+                        <Icons.spinner className="h-4 w-4 animate-spin" />
+                      ) : unitsToBuy <= 0 ? (
+                        "Select tickets to buy"
+                      ) : processStep === 4 ? (
+                        "Go to Wallet"
+                      ) : (
+                        "Buy Tickets"
+                      )}
+                    </Button>
+                  )
                 ) : (
                   <a
                     href="https://freighter.app"

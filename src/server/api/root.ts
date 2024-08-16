@@ -23,7 +23,6 @@ import { organizerRouter } from "~/server/api/routers/organizer";
 import { sorobanRouter } from "~/server/api/routers/soroban";
 import { marketplaceRouter } from "~/server/api/routers/marketplace";
 import { handleHorizonServerError } from "~/lib/utils";
-import { exe } from "~/lib/soroban";
 import { z } from "zod";
 
 /**

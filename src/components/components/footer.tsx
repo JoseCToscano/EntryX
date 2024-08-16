@@ -27,15 +27,15 @@ const Footer = () => (
       </div>
       <div className="grid gap-1">
         <h3 className="font-semibold">Resources</h3>
-        <Link href="/blog" prefetch={false}>
-          Blog
+        <Link href="/how-to-resell" prefetch={false}>
+          How to resell tickets
         </Link>
 
-        <Link href="/support" prefetch={false}>
-          Support
+        <Link href="/pricing" prefetch={false}>
+          Pricing
         </Link>
-        <Link href="/faq" prefetch={false}>
-          FAQs
+        <Link href="/account?joinWaitlist=true" prefetch={false}>
+          Partner with us
         </Link>
       </div>
       <div className="grid gap-1">
