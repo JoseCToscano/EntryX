@@ -423,21 +423,27 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string().min(1),
+        publicKey: z.string().min(1),
         name: z.string().min(1),
         venue: z.string().min(1),
+        location: z.string().min(1),
         description: z.string().min(1),
         date: z.string().min(1).or(z.date()),
+        imageUrl: z.string().optional(),
+        coverUrl: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.db.event.update({
-        where: { id: input.id },
+        where: { id: input.id, distributorKey: input.publicKey },
         data: {
           name: input.name,
           venue: input.venue,
           description: input.description,
           date: input.date,
-          // organizerId: ctx.session.user.id,
+          location: input.location,
+          imageUrl: input.imageUrl,
+          coverUrl: input.coverUrl,
         },
       });
     }),

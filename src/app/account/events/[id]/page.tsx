@@ -42,6 +42,7 @@ import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { useWallet } from "~/hooks/useWallet";
 import Loading from "~/app/account/components/loading";
+import { type FieldValues, type SubmitHandler, useForm } from "react-hook-form";
 
 export default function EventEditor() {
   const { publicKey, isLoading } = useWallet();
@@ -50,6 +51,7 @@ export default function EventEditor() {
   const router = useRouter();
   // Extract the id from the params object
   const { id } = params;
+  const ctx = api.useContext();
 
   const event = api.organizer.event.useQuery(
     { eventId: id as string, publicKey: publicKey! },
@@ -76,6 +78,37 @@ export default function EventEditor() {
       toast.success("Event updated successfully");
     },
   });
+
+  // void api.post.getLatest.prefetch();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FieldValues>({
+    defaultValues: {
+      ...event.data,
+    },
+  });
+
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
+    if (!publicKey) return toast.error("Please connect your wallet");
+    if (!id) return toast.error("Event not found");
+    if (!event.data) return toast.error("Event not found");
+
+    await update.mutateAsync({
+      ...event.data,
+      name: data.name as string,
+      date: dayjs.utc(data.date as string).toDate(),
+      venue: data.venue as string,
+      description: data.description as string,
+      location: data.location as string,
+      publicKey,
+      imageUrl: event.data.imageUrl ?? "/images/event-placeholder-1.png",
+      coverUrl: event.data.coverUrl ?? "/images/event-placeholder-1.png",
+    });
+    await ctx.event.search.invalidate();
+  };
 
   if (!id) return null;
 
@@ -144,6 +177,7 @@ export default function EventEditor() {
                         <div className="grid gap-3">
                           <Label htmlFor="name">Title</Label>
                           <Input
+                            register={register}
                             id="name"
                             type="text"
                             className="w-full"
@@ -153,6 +187,7 @@ export default function EventEditor() {
                         <div className="grid gap-3">
                           <Label htmlFor="venue">Venue</Label>
                           <Input
+                            register={register}
                             id="venue"
                             value={event.data?.venue}
                             defaultValue="Join us for the annual Acme Tech Conference, where industry leaders and innovators come together to share their insights and shape the future of technology."
@@ -161,6 +196,7 @@ export default function EventEditor() {
                         <div className="grid gap-3">
                           <Label htmlFor="description">Description</Label>
                           <Textarea
+                            register={register}
                             id="description"
                             value={
                               event.data?.description ??
@@ -188,15 +224,18 @@ export default function EventEditor() {
                         <Label htmlFor="date">Date</Label>
                         <Input
                           id="date"
+                          register={register}
                           type="date"
+                          value={dayjs(event.data?.date).format("YYYY-MM-DD")}
                           className="w-full"
-                          defaultValue="2024-06-15"
                         />
                       </div>
                       <div className="grid gap-3">
                         <Label htmlFor="time">Time</Label>
                         <Input
                           id="time"
+                          register={register}
+                          value={dayjs(event.data?.date).format("HH:mm")}
                           type="time"
                           className="w-full"
                           defaultValue="09:00"
@@ -207,9 +246,10 @@ export default function EventEditor() {
                       <Label htmlFor="location">Location</Label>
                       <Input
                         id="location"
+                        register={register}
+                        value={event.data?.location ?? "TBD"}
                         type="text"
                         className="w-full"
-                        defaultValue="San Francisco, CA"
                       />
                     </div>
                   </div>

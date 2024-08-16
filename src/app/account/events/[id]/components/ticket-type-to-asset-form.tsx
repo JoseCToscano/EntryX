@@ -328,12 +328,15 @@ export const TicketTypeToAssetForm: React.FC<{
                   {loadingSignature ? (
                     <Icons.spinner className="h-4 w-4 animate-spin text-gray-200 group-hover:text-zinc-700" />
                   ) : (
-                    <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                    <Icons.Hammer className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Mints Assets in Stellar Blockchain</p>
+                <p>
+                  Mints Assets in Stellar Blockchain. New Assets will be
+                  transferred to your Wallet
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -353,12 +356,12 @@ export const TicketTypeToAssetForm: React.FC<{
                   {loadingIPO ? (
                     <Icons.spinner className="h-4 w-4 animate-spin text-gray-200 group-hover:text-zinc-700" />
                   ) : (
-                    <Icons.chain className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
+                    <Icons.Publish className="h-4 w-4 fill-gray-200 text-gray-200 group-hover:fill-zinc-700 group-hover:text-zinc-700" />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Publish tickets for sale</p>
+                <p>Sign Soroban Smart Contract to start sale</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
