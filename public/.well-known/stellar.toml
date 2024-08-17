@@ -13,10 +13,9 @@ ACCOUNTS=[
 ORG_NAME="Your Organization Name"
 ORG_URL="https://localhost:3000"
 ORG_LOGO="https://localhost:3000/logo.png" # Update with a local image URL if needed
-ORG_DESCRIPTION="Description of your organization and its mission"
-ORG_PHYSICAL_ADDRESS="123 Main Street, Anytown, Country"
-ORG_TWITTER="yourorg"
-ORG_GITHUB="yourorg"
+ORG_DESCRIPTION="EntryX is a decentralized ticketing platform"
+ORG_PHYSICAL_ADDRESS="Guadalajara, Jalisco, Mexico"
+ORG_GITHUB="https://github.com/JoseCToscano"
 
 # ASSET DETAILS
 [[CURRENCIES]]
@@ -25,33 +24,45 @@ issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
 name="Ticket Entry"
-desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-conditions="EntryX is a digital ticket for events and concerts."
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
 image="https://entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
 
 [[CURRENCIES]]
-code="ENTRY0010003"
+code="ENTRY0010002"
 issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
 name="Ticket Entry"
-desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-conditions="EntryX is a digital ticket for events and concerts."
-image="https://entryx.me/entryx.png"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
 
 [[CURRENCIES]]
-code="TIXGeneralAd"
+code="ENTRYXX10002"
 issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
 name="Ticket Entry"
-desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-conditions="EntryX is a digital ticket for events and concerts."
-image="entryx.me/entryx.png"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10003"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
 
@@ -62,8 +73,293 @@ issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
 status="live"
 display_decimals=2
 name="Ticket Entry"
-desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-conditions="EntryX is a digital ticket for events and concerts."
-image="www.entryx.me/entryx.png"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10005"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10006"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10007"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10008"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10009"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10010"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10011"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10012"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX10013"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20001"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20002"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20003"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+
+[[CURRENCIES]]
+code="ENTRYXX20004"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20005"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20006"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20007"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20008"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20009"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20010"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20011"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20012"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
+fixed_number=1000000
+max_number=10000000
+
+[[CURRENCIES]]
+code="ENTRYXX20013"
+issuer="GCUKFNNR35HDXU5GPFPMVTVWKNHFP7KK2VRWP7PJBZB2RKKXXWLALXIH"
+status="live"
+display_decimals=2
+name="Ticket Entry"
+desc="EntryX is a decentralized ticketing platform"
+conditions="Decentralized Ticket Entry"
+desc="Decentralized Ticker Entry"
+image="https://entryx.me/entryx-icon.svg"
 fixed_number=1000000
 max_number=10000000
