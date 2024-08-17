@@ -23,7 +23,7 @@ import Link from "next/link";
 import ConnectYourWallet from "~/app/_components/connect-your-wallet";
 
 const AuctionCard: React.FC = () => {
-  const { publicKey, signXDR } = useWallet();
+  const { publicKey, signXDR, trustline } = useWallet();
   const params = useParams();
   const { auction_id } = params;
   const ctx = api.useContext();
@@ -73,6 +73,21 @@ const AuctionCard: React.FC = () => {
     onError: ClientTRPCErrorHandler,
   });
 
+  const addToTrustline = api.stellarAccountRouter.addTrustline.useMutation({
+    onError: ClientTRPCErrorHandler,
+  });
+
+  const submitTransaction =
+    api.stellarAccountRouter.submitTransaction.useMutation({
+      onError: (e) => {
+        console.error(e);
+      },
+      onSuccess: () => {
+        void ctx.stellarAccountRouter.details.invalidate();
+        toast.success("Trustline updated");
+      },
+    });
+
   const soroban = api.soroban.submitContractCall.useMutation({
     onSuccess: () => {
       reset();
@@ -83,6 +98,28 @@ const AuctionCard: React.FC = () => {
   });
 
   if (!auction_id) return null;
+
+  const addAssetToTrustline = async () => {
+    if (!auction.data?.asset) {
+      return toast("Invalid Auction configuration");
+    }
+    if (!publicKey) {
+      return toast("Please connect your wallet");
+    }
+    setLoading(true);
+    try {
+      let xdr = await addToTrustline.mutateAsync({
+        publicKey,
+        assetId: auction.data.asset.id,
+      });
+      xdr = await signXDR(xdr);
+      await submitTransaction.mutateAsync({ xdr });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleViewAuction = async () => {
     if (!publicKey) {
@@ -267,7 +304,7 @@ const AuctionCard: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      <form className="mt-4 flex gap-2">
+                      <form className="mb-2 mt-4 flex gap-2">
                         <Input
                           id="bid"
                           register={register}
@@ -277,7 +314,10 @@ const AuctionCard: React.FC = () => {
                           disabled={isSigning}
                         />
                         <Button
-                          disabled={isSigning}
+                          disabled={
+                            isSigning ||
+                            !Object.hasOwn(trustline, auction.data.asset.code)
+                          }
                           type="button"
                           variant="ghost"
                           className="h-8 border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
@@ -292,6 +332,32 @@ const AuctionCard: React.FC = () => {
                           )}
                         </Button>
                       </form>
+                      {!Object.hasOwn(trustline, auction.data.asset.code) && (
+                        <>
+                          <Button
+                            type="button"
+                            disabled={
+                              loading ||
+                              submitTransaction.isPending ||
+                              addToTrustline.isPending
+                            }
+                            onClick={addAssetToTrustline}
+                            variant="ghost"
+                            className="h-8 w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
+                          >
+                            {submitTransaction.isPending ||
+                            addToTrustline.isPending ? (
+                              <Icons.spinner className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Add to Trustline"
+                            )}
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            You must add the asset to your trustline to place a
+                            bid
+                          </span>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                   {publicKey && publicKey === auction.data.owner && (
@@ -335,6 +401,7 @@ const AuctionCard: React.FC = () => {
                               "Close Auction"
                             )}
                           </Button>
+
                           <Button
                             type="button"
                             variant="ghost"
