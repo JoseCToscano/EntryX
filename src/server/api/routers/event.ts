@@ -328,6 +328,7 @@ export const eventsRouter = createTRPCRouter({
           eventId: input.eventId,
           issuer: env.ISSUER_PUBLIC_KEY,
           distributor: input.distributorPublicKey,
+          sequence: (asset?.sequence ?? 0) + 1,
         },
       });
       console.log("newasset:", newasset);

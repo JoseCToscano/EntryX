@@ -6,6 +6,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { type Asset as DBAsset } from "@prisma/client";
 import Image from "next/image";
 import { cn } from "~/lib/utils";
+import { Badge } from "~/components/ui/badge";
 
 interface TicketCategoryCardProps {
   category: DBAsset;
@@ -33,7 +34,8 @@ export const TicketCategoryCard: React.FC<TicketCategoryCardProps> = ({
       )}
     >
       <h3 className="text-lg font-bold">
-        {category.label} {category.code}
+        {category.label}
+        <Badge className="ml-2">{category.code}</Badge>
         <p className="text-xs font-light">
           Available tickets:{" "}
           {availability.isLoading && (

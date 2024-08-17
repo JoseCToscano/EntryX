@@ -129,7 +129,7 @@ export default function EventEditor() {
     <div className="flex min-h-screen w-full flex-col bg-muted/40 p-4">
       <MenuBreadcumb name={event.data?.name} />
 
-      <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+      <main className="grid flex-1 items-start gap-4 p-4 pb-10 sm:px-6 sm:py-0 md:gap-8">
         <div className="grid auto-rows-max items-start gap-4 pt-4 md:gap-8">
           <div className="flex items-center gap-4">
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
