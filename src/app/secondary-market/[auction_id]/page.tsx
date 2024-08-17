@@ -31,6 +31,7 @@ const AuctionCard: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
   const [isSigning, setIsSigning] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+  const [isCanceling, setIsCanceloing] = React.useState(false);
 
   const auction = api.marketplace.getAuction.useQuery(
     { id: auction_id as string },
@@ -45,6 +46,10 @@ const AuctionCard: React.FC = () => {
     defaultValues: {
       bid: undefined,
     },
+  });
+
+  const cancelAuction = api.soroban.cancelAuction.useMutation({
+    onError: ClientTRPCErrorHandler,
   });
 
   const closeAuction = api.soroban.closeAuction.useMutation({
@@ -63,6 +68,11 @@ const AuctionCard: React.FC = () => {
   const viewAuction = api.soroban.viewAuction.useMutation({
     onError: ClientTRPCErrorHandler,
   });
+
+  const closeAuctionOffChain = api.soroban.closeAuctionOffChain.useMutation({
+    onError: ClientTRPCErrorHandler,
+  });
+
   const soroban = api.soroban.submitContractCall.useMutation({
     onSuccess: () => {
       reset();
@@ -84,12 +94,10 @@ const AuctionCard: React.FC = () => {
     });
     if (xdr) {
       const signedXDR = await signXDR(xdr);
-      const res = await soroban.mutateAsync({ xdr: signedXDR });
-      console.log("res:", res);
+      await soroban.mutateAsync({ xdr: signedXDR });
     } else {
       toast.error("Error on view auction");
     }
-    console.log(xdr);
   };
 
   const handleBid: SubmitHandler<FieldValues> = async (data) => {
@@ -118,7 +126,6 @@ const AuctionCard: React.FC = () => {
         highestBid: Number(data.bid),
         bidder: publicKey,
       });
-      console.log("res:", res);
     } catch (error) {
       toast.error("Failed to place bid");
     } finally {
@@ -145,10 +152,46 @@ const AuctionCard: React.FC = () => {
       });
       const signedXDR = await signXDR(xdr);
       await soroban.mutateAsync({ xdr: signedXDR });
+      closeAuctionOffChain.mutate({
+        auctionId: auction_id as string,
+        ownerPublicKey: publicKey,
+      });
     } catch (error) {
       console.error(error);
     } finally {
       setIsClosing(false);
+    }
+  };
+
+  const handleCancelAuction = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.preventDefault();
+    try {
+      if (!publicKey) {
+        toast.error("Please connect your wallet");
+        return;
+      }
+      if (!auction_id) {
+        toast.error("Invalid auction");
+        return;
+      }
+      setIsCanceloing(true);
+
+      const xdr = await cancelAuction.mutateAsync({
+        auctionId: auction_id as string,
+        publicKey,
+      });
+      const signedXDR = await signXDR(xdr);
+      await soroban.mutateAsync({ xdr: signedXDR });
+      closeAuctionOffChain.mutate({
+        auctionId: auction_id as string,
+        ownerPublicKey: publicKey,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsCanceloing(false);
     }
   };
 
@@ -290,6 +333,19 @@ const AuctionCard: React.FC = () => {
                               <Icons.spinner className="animate-spin" />
                             ) : (
                               "Close Auction"
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={isCanceling}
+                            className="mt-4 h-8 w-full border-[1px] border-black bg-black px-2 text-white hover:bg-white hover:text-black"
+                            onClick={handleCancelAuction}
+                          >
+                            {isCanceling ? (
+                              <Icons.spinner className="animate-spin" />
+                            ) : (
+                              "Cancel Auction"
                             )}
                           </Button>
                         </div>

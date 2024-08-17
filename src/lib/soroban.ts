@@ -2,7 +2,6 @@ import { promisify } from "util";
 import { exec } from "child_process";
 import {
   Contract,
-  Keypair,
   SorobanRpc,
   TransactionBuilder,
   nativeToScVal,
@@ -12,7 +11,6 @@ import {
   xdr,
   Address,
 } from "@stellar/stellar-sdk";
-import { env } from "~/env";
 const execute = promisify(exec);
 
 const rpcUrl = "https://soroban-testnet.stellar.org";

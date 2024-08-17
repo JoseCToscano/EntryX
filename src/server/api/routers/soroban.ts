@@ -10,15 +10,7 @@ import {
   numberToU64,
   stringToSymbol,
 } from "~/lib/soroban";
-import {
-  Asset,
-  BASE_FEE,
-  Horizon,
-  Keypair,
-  Networks,
-  Operation,
-  TransactionBuilder,
-} from "@stellar/stellar-sdk";
+import { Horizon } from "@stellar/stellar-sdk";
 import {
   getAssetBalanceFromAccount,
   getXLMBalanceFromAccount,
@@ -26,7 +18,6 @@ import {
 } from "~/lib/utils";
 import { TRPCError } from "@trpc/server";
 import dayjs from "dayjs";
-import { env } from "~/env";
 import { Fees, MAX_UNITS_PER_PURCHASE } from "~/constants";
 
 interface TicketAuction {
@@ -42,7 +33,7 @@ interface TicketAuction {
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 const ticketAuctionContractAddress =
-  "CBNBZPMQ7NV5BEM5VSVYPWYBWCTPOAHZWIODULI6MFTDDXGPRDJ3AV3A";
+  "CCRRYRL3OMD2PHAOS772RUZTGCQ55NFCHXMRP573DPF4JYAXCXIVZFMC";
 
 // Stellar's Native Asset (XLM) Stellar Asset Contract Address
 const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
@@ -206,7 +197,7 @@ export const sorobanRouter = createTRPCRouter({
           contractMethodBid: "place_bid",
           contractMethodWithdraw: "not_defined",
           contractMethodClaim: "not_defined",
-          contractMethodCancel: "not_defined",
+          contractMethodCancel: "cancel_auction",
           highestBid: Number(input.startPrice),
         },
       });
@@ -222,20 +213,18 @@ export const sorobanRouter = createTRPCRouter({
           },
         });
 
-      console.log("Auction created:", auction.id);
-
       const contractParams = [
+        addressToScVal(asset.issuer),
         addressToScVal(input.ownerPublicKey),
-        stringToSymbol(`AU${auction.id}`), // TODO: Auction ID
+        stringToSymbol(`AU${auction.id}`),
         addressToScVal(sacAddress),
         addressToScVal(xlmSAC), // Native Asset
         numberToi128(input.quantity),
-        numberToi128(input.startPrice), // TODO: editar el front
-        numberToi128(Number(asset.pricePerUnit)),
+        numberToi128(input.startPrice),
         numberToU64(dayjs(asset.event.date).unix()),
+        numberToi128(Fees.RESELLER_PUBLISHING_FEE),
+        numberToi128(Fees.RESELLER_UNITARY_COMMISSION_PERCENTAGE),
       ];
-
-      console.log("contractParams", contractParams);
 
       return await getContractXDR(
         auction.contractAddress,
@@ -275,6 +264,45 @@ export const sorobanRouter = createTRPCRouter({
       return await getContractXDR(
         auction.contractAddress,
         auction.contractMethodEndAuction,
+        input.publicKey,
+        contractParams,
+      );
+    }),
+  cancelAuction: publicProcedure
+    .input(
+      z.object({
+        publicKey: z.string(),
+        auctionId: z.string().or(z.number()),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const auction = await ctx.db.assetAuction.findFirstOrThrow({
+        where: {
+          id: Number(input.auctionId),
+        },
+      });
+
+      if (input.publicKey !== auction.owner) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only the auction owner can close the auction",
+        });
+      }
+
+      if (!auction.contractMethodCancel) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This auction does not support canceling",
+        });
+      }
+      const contractParams = [
+        stringToSymbol(`AU${auction.id}`),
+        addressToScVal(auction.owner),
+      ];
+
+      return await getContractXDR(
+        auction.contractAddress,
+        auction.contractMethodCancel,
         input.publicKey,
         contractParams,
       );
@@ -340,34 +368,16 @@ export const sorobanRouter = createTRPCRouter({
         });
 
         // Query the contract's state
-        const contractParams = [
-          stringToSymbol(`AU${Number(input.auctionId)}`), // TODO: Auction ID
-        ];
+        const contractParams = [stringToSymbol(`AU${Number(input.auctionId)}`)];
 
-        const xdr = await getContractXDR(
+        return await getContractXDR(
           auction.contractAddress,
           "view_auction",
           input.ownerPublicKey,
           contractParams,
         );
-
-        return xdr;
-
-        // const result = await callContract(
-        //   SACAddress,
-        //   "balance",
-        //   input.ownerPublicKey,
-        //   [addressToScVal(input.ownerPublicKey)],
-        // );
-        // console.log("result", result);
-        // if (result) {
-        //   console.log("nativize", nativize(result));
-        //   console.log("result", result);
-        // }
-        // return result;
       } catch (e) {
-        console.log(e);
-        // handleHorizonServerError(e);
+        handleHorizonServerError(e);
       }
     }),
   updateAuction: publicProcedure
@@ -406,9 +416,8 @@ export const sorobanRouter = createTRPCRouter({
   closeAuctionOffChain: publicProcedure
     .input(
       z.object({
-        bidder: z.string(),
         auctionId: z.string().or(z.number()),
-        highestBid: z.number(),
+        ownerPublicKey: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -416,6 +425,7 @@ export const sorobanRouter = createTRPCRouter({
         await ctx.db.assetAuction.update({
           where: {
             id: Number(input.auctionId),
+            owner: input.ownerPublicKey,
           },
           data: {
             closedAt: dayjs().toDate(),

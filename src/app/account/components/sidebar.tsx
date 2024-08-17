@@ -2,11 +2,12 @@ import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
-  console.log(pathname);
+  const sarchParams = useSearchParams();
+
   return (
     <div className={cn("pb-8", className)}>
       <div className="sticky top-20 space-y-4 py-4">
@@ -16,13 +17,28 @@ export function Sidebar({ className }: { className?: string }) {
           </h2>
           <div className="space-y-1">
             <Link href="/events">
-              <Button variant="ghost" className="h-8 w-full justify-start">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "h-8 w-full justify-start",
+                  pathname === "/events" &&
+                    "text-primary-500 border-primary-500 bg-muted",
+                )}
+              >
                 <Icons.browseGrid className="mx-2 h-4 w-4" />
                 Browse
               </Button>
             </Link>
             <Link href="/secondary-market">
-              <Button variant="ghost" className="h-8 w-full justify-start">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "h-8 w-full justify-start",
+                  pathname === "/secondary-market" &&
+                    sarchParams.get("fromUser") !== "true" &&
+                    "text-primary-500 border-primary-500 bg-muted",
+                )}
+              >
                 <Icons.market className="mx-2 h-4 w-4" />
                 Secondary Market
               </Button>
@@ -69,7 +85,9 @@ export function Sidebar({ className }: { className?: string }) {
                 variant="ghost"
                 className={cn(
                   "h-8 w-full justify-start",
-                  pathname === "/my-tickets" &&
+                  pathname === "/secondary-market" &&
+                    sarchParams.has("fromUser") &&
+                    sarchParams.get("fromUser") === "true" &&
                     "text-primary-500 border-primary-500 bg-muted",
                 )}
               >
@@ -89,7 +107,7 @@ export function Sidebar({ className }: { className?: string }) {
                 variant="ghost"
                 className={cn(
                   "h-8 w-full justify-start",
-                  pathname === "/my-tickets" &&
+                  pathname === "/account" &&
                     "text-primary-500 border-primary-500 bg-muted",
                 )}
               >
@@ -104,7 +122,7 @@ export function Sidebar({ className }: { className?: string }) {
                 variant="ghost"
                 className={cn(
                   "h-8 w-full justify-start",
-                  pathname === "/my-tickets" &&
+                  pathname === "/account/events" &&
                     "text-primary-500 border-primary-500 bg-muted",
                 )}
               >
