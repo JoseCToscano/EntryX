@@ -1,3 +1,5 @@
+<img width="1295" alt="Screenshot 2024-08-17 at 12 11 16 a m" src="https://github.com/user-attachments/assets/48a976be-1c40-4d8a-b254-0795f53fb7a1">
+
 # Entry•X Decentralized Ticketing and Reselling dApp
 Welcome to Entry•X! This platform leverages the power of the Stellar blockchain to create a secure, transparent, and efficient marketplace for event tickets. 
 Users can purchase, manage, and resell their tickets with ease, all while ensuring the authenticity of their assets.
