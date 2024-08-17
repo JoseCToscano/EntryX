@@ -30,6 +30,13 @@ export default function CreateEvent() {
   const router = useRouter();
   const { publicKey } = useWallet();
 
+  const isAuthorizedPartner =
+    api.stellarAccountRouter.isAllowedPartner.useQuery(
+      {
+        publicKey: publicKey!,
+      },
+      { enabled: !!publicKey },
+    );
   function onSuccess() {
     console.log("Event registered successfully");
     toast.success("Event registered successfully");
@@ -72,6 +79,10 @@ export default function CreateEvent() {
     await ctx.event.search.invalidate();
     router.push(`/account/events/${id}`);
   };
+
+  if (!isAuthorizedPartner.data && publicKey) {
+    void router.push("/?joinWaitlist=true");
+  }
 
   return (
     <div className="p-4">
