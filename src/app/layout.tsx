@@ -44,7 +44,9 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <div className="grid lg:grid-cols-7">
-              <Sidebar className="hidden lg:block" />
+              <Suspense fallback={<Loading />}>
+                <Sidebar className="hidden lg:block" />
+              </Suspense>
               <div className="col-span-5 lg:col-span-6 lg:border-l">
                 <Suspense fallback={<Loading />}>{children}</Suspense>
                 <Footer />
