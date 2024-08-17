@@ -10,7 +10,7 @@ export default function AuthorizedPartners({
 }: {
   children?: ReactNode;
 }) {
-  const { isLoading, publicKey } = useWallet();
+  const { isLoading, publicKey, isFreighterAllowed } = useWallet();
   const router = useRouter();
 
   const isAuthorizedPartner =
@@ -26,6 +26,10 @@ export default function AuthorizedPartners({
   }
 
   if (!isAuthorizedPartner.data && publicKey) {
+    void router.push("/?joinWaitlist=true");
+  }
+
+  if (!isAuthorizedPartner.data && !isFreighterAllowed) {
     void router.push("/?joinWaitlist=true");
   }
 

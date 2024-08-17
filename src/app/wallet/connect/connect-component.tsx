@@ -48,7 +48,12 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({
                     </Button>
                   ) : (
                     <Link href="https://www.freighter.app/" target="_blank">
-                      Install Freighter wallet
+                      <Button
+                        onClick={connect}
+                        className="h-10 rounded-md border-2 bg-black p-2 text-white hover:bg-white hover:text-black"
+                      >
+                        Install Freighter wallet
+                      </Button>
                     </Link>
                   )}
                 </div>

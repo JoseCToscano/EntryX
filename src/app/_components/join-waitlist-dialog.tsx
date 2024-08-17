@@ -443,7 +443,7 @@ export default function JoinWaitlistDialog() {
               type="submit"
               className="w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
             >
-              Join waitlist {JSON.stringify(acceptTerms)}
+              Join waitlist
             </Button>
           )}
         </DialogFooter>
