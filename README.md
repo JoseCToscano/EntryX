@@ -1,4 +1,4 @@
-![Join EntryX Image]([/path/to/image.png](https://utfs.io/f/1a2fb0fd-a49e-4ba4-bcd6-60d7f477bcc3-e5vxbx.m..png) "Join EntryX").
+![Join EntryX Image](https://utfs.io/f/1a2fb0fd-a49e-4ba4-bcd6-60d7f477bcc3-e5vxbx.m..png)
 
 # Entry•X Decentralized Ticketing and Reselling dApp
 Welcome to Entry•X! This platform leverages the power of the Stellar blockchain to create a secure, transparent, and efficient marketplace for event tickets. 
