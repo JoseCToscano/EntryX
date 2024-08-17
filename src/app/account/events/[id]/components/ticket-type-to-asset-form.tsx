@@ -39,6 +39,8 @@ export const TicketTypeToAssetForm: React.FC<{
       if (onSubmitted) onSubmitted();
       void ctx.asset.list.invalidate({ eventId });
       toast.success("Category saved successfully");
+      // Reload
+      window.location.reload();
     },
     onError: ClientTRPCErrorHandler,
   });
@@ -48,6 +50,7 @@ export const TicketTypeToAssetForm: React.FC<{
       if (onSubmitted) onSubmitted();
       void ctx.asset.list.invalidate({ eventId });
       toast.success("Category updated successfully");
+      window.location.reload();
     },
     onError: ClientTRPCErrorHandler,
   });
@@ -115,12 +118,14 @@ export const TicketTypeToAssetForm: React.FC<{
       setIsLocked(true);
       void ctx.asset.list.invalidate({ eventId });
       toast.success("Assets minted successfully");
+      window.location.reload();
     },
   });
 
   const soroban = api.soroban.submitContractCall.useMutation({
     onSuccess: () => {
       toast.success("Blockchain updated");
+      window.location.reload();
     },
     onError: ClientTRPCErrorHandler,
   });
@@ -186,7 +191,6 @@ export const TicketTypeToAssetForm: React.FC<{
       // Submit signed XDR to the server
       await soroban.mutateAsync({
         xdr,
-        // requiresSignature: true,
       });
     } catch (e) {
       console.error(e);
