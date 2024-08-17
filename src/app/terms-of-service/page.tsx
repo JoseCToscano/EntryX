@@ -56,11 +56,6 @@ export default function Component() {
               terminate your account if we believe it has been compromised or is
               being used in an unauthorized manner.
             </p>
-            <p>
-              You may not use the Platform if you are under the age of 18 or if
-              you are prohibited from using the Platform under the laws of the
-              jurisdiction in which you are located.
-            </p>
           </div>
         </section>
         <section>
@@ -198,27 +193,9 @@ export default function Component() {
             </p>
           </div>
         </section>
+
         <section>
-          <h2 className="text-2xl font-bold">
-            9. Governing Law and Dispute Resolution
-          </h2>
-          <div className="mt-4 space-y-4">
-            <p>
-              These Terms and any disputes arising out of or related to your use
-              of the Platform will be governed by and construed in accordance
-              with the laws of [Jurisdiction], without giving effect to any
-              choice or conflict of law provision or rule.
-            </p>
-            <p>
-              Any disputes, claims, or controversies arising out of or related
-              to these Terms or your use of the Platform will be resolved
-              through binding arbitration in accordance with the rules of the
-              [Arbitration Organization].
-            </p>
-          </div>
-        </section>
-        <section>
-          <h2 className="text-2xl font-bold">10. General Provisions</h2>
+          <h2 className="text-2xl font-bold">9. General Provisions</h2>
           <div className="mt-4 space-y-4">
             <p>
               These Terms, along with our Privacy Policy, constitute the entire
@@ -243,7 +220,7 @@ export default function Component() {
         </section>
         <div className="text-sm text-muted-foreground">
           If you have any questions or concerns about these Terms, please
-          contact us at [support@ticketing-platform.com].
+          contact us at [toscano0210@gmail.com].
         </div>
       </div>
     </div>

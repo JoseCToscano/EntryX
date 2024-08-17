@@ -27,7 +27,7 @@ export default function Component() {
           </p>
           <ul className="mt-4 space-y-2 text-muted-foreground">
             <li>
-              - Your Freighter&apos;s Wallt public key for Asset purchases
+              - Your Freighter&apos;s Wallet public key for Asset purchases
             </li>
           </ul>
         </div>
@@ -50,33 +50,8 @@ export default function Component() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">
-            Data Security and Retention
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            We take the security of your personal information seriously. We use
-            industry-standard encryption and security measures to protect your
-            data from unauthorized access, disclosure, or misuse. Your
-            information is stored securely and is only accessible to authorized
-            personnel.
-          </p>
-          <p className="mt-4 text-muted-foreground">
-            We retain your personal information for as long as necessary to
-            fulfill the purposes for which it was collected, or as required by
-            law. We regularly review and delete or anonymize your information
-            when it is no longer needed.
-          </p>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground">
             Data Sharing and Third-Party Providers
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            We may share your personal information with third-party service
-            providers who assist us in operating our platform, such as payment
-            processors, event organizers, and analytics providers. These third
-            parties are contractually obligated to protect your data and use it
-            only for the purposes we specify.
-          </p>
           <p className="mt-4 text-muted-foreground">
             We do not sell or rent your personal information to any third
             parties for their own marketing purposes.
@@ -93,19 +68,14 @@ export default function Component() {
           </p>
           <p className="mt-4 text-muted-foreground">
             To exercise these rights, please contact us at
-            privacy@blockchaintickets.com. We will respond to your request
-            within 30 days.
+            toscano0210@gmail.com. We will respond to your request within 30
+            days.
           </p>
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">
-            Cookies and Blockchain Technology
+            Blockchain Technology
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            We use cookies and similar technologies to enhance your experience
-            on our platform. Cookies help us remember your preferences, analyze
-            how you use our services, and improve our offerings.
-          </p>
           <p className="mt-4 text-muted-foreground">
             We also use blockchain technology to securely process your ticket
             purchases and ensure the integrity of your event attendance records.
