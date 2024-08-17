@@ -43,21 +43,29 @@ export const appRouter = createTRPCRouter({
   joinWaitlist: publicProcedure
     .input(
       z.object({
-        name: z.string(),
-        phone: z.string(),
-        email: z.string(),
-        event: z.string(),
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        email: z.string().optional(),
+        event: z.string().optional(),
+        isFamiliarWithStllar: z.boolean().optional(),
+        acceptMarketing: z.boolean().optional(),
+        referalSource: z.string().optional(),
+        experienceWithBlockchain: z.string().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
-      console.log({
-        name: input.name,
-        phone: input.phone,
-        email: input.email,
-        event: input.event,
+    .mutation(async ({ input, ctx }) => {
+      await ctx.db.waitlistRequest.create({
+        data: {
+          phone: input.phone ?? "",
+          name: input.name ?? "",
+          email: input.email ?? "",
+          description: input.event ?? "",
+          referralSource: input.referalSource ?? "",
+          isFamiliarWithStellar: !!input.isFamiliarWithStllar,
+          acceptingMarketing: !!input.acceptMarketing,
+          experienceWithBlockchain: input.experienceWithBlockchain ?? "",
+        },
       });
-
-      // INSERT INTO "AuthorizedPartners" (name, phone, email, event) VALUES (input.name, input.phone, input.email, input.event);
     }),
   setDomain: publicProcedure.query(async () => {
     const domain = "entryx.me";

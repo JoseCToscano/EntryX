@@ -21,7 +21,7 @@ import Link from "next/link";
 import { Icons } from "~/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Select,
@@ -40,6 +40,7 @@ import {
 } from "next/navigation";
 import {
   type FieldValues,
+  type SubmitHandler,
   useForm,
   type UseFormRegister,
 } from "react-hook-form";
@@ -50,6 +51,8 @@ import toast from "react-hot-toast";
 function CompanyContactForm(
   step: number,
   register: UseFormRegister<FieldValues>,
+  experiencedBlockchain: string,
+  setExperiencedBlockchain: (value: string) => void,
 ) {
   return (
     <TabsContent value="company" className="mt-4">
@@ -88,10 +91,10 @@ function CompanyContactForm(
               </label>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="event-description">Event</Label>
+              <Label htmlFor="event">Event</Label>
               <Textarea
                 register={register}
-                id="event-description"
+                id="event"
                 placeholder="Tell us about the event you want to list"
                 rows={4}
               />
@@ -105,7 +108,10 @@ function CompanyContactForm(
               <Label htmlFor="blockchain-familiarity">
                 Familiarity with Blockchain
               </Label>
-              <Select>
+              <Select
+                onValueChange={setExperiencedBlockchain}
+                value={experiencedBlockchain}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="What's your experience with blockchain" />
                 </SelectTrigger>
@@ -118,10 +124,10 @@ function CompanyContactForm(
                     <SelectItem value="some">
                       I have basic understanding of blockchain concepts
                     </SelectItem>
-                    <SelectItem value="blueberry">
+                    <SelectItem value="comfortable">
                       I am comfortable using blockchain technology
                     </SelectItem>
-                    <SelectItem value="grapes">
+                    <SelectItem value="deep">
                       I have deep knowledge of blockchain technology
                     </SelectItem>
                   </SelectGroup>
@@ -129,9 +135,9 @@ function CompanyContactForm(
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="referral-source">Referral Source</Label>
+              <Label htmlFor="source">Referral Source</Label>
               <Input
-                id="referral-source"
+                id="source"
                 register={register}
                 placeholder="How did you hear about us?"
               />
@@ -146,6 +152,8 @@ function CompanyContactForm(
 function IndividualContactForm(
   step = 0,
   register: UseFormRegister<FieldValues>,
+  experiencedBlockchain: string,
+  setExperiencedBlockchain: (value: string) => void,
 ) {
   return (
     <TabsContent value="individual" className="mt-4">
@@ -184,9 +192,9 @@ function IndividualContactForm(
               </label>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="event-description">Event</Label>
+              <Label htmlFor="event">Event</Label>
               <Textarea
-                id="event-description"
+                id="event"
                 register={register}
                 placeholder="Tell us about the event you want to list"
                 rows={4}
@@ -201,7 +209,10 @@ function IndividualContactForm(
               <Label htmlFor="blockchain-familiarity">
                 Familiarity with Blockchain
               </Label>
-              <Select>
+              <Select
+                onValueChange={setExperiencedBlockchain}
+                value={experiencedBlockchain}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="What's your experience with blockchain" />
                 </SelectTrigger>
@@ -214,10 +225,10 @@ function IndividualContactForm(
                     <SelectItem value="some">
                       I have basic understanding of blockchain concepts
                     </SelectItem>
-                    <SelectItem value="blueberry">
+                    <SelectItem value="comfortable">
                       I am comfortable using blockchain technology
                     </SelectItem>
-                    <SelectItem value="grapes">
+                    <SelectItem value="deep">
                       I have deep knowledge of blockchain technology
                     </SelectItem>
                   </SelectGroup>
@@ -225,10 +236,10 @@ function IndividualContactForm(
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="referral-source">Referral Source</Label>
+              <Label htmlFor="source">Referral Source</Label>
               <Input
                 register={register}
-                id="referral-source"
+                id="source"
                 placeholder="How did you hear about us?"
               />
             </div>
@@ -241,6 +252,10 @@ function IndividualContactForm(
 export default function JoinWaitlistDialog() {
   const [step, setStep] = useState(0);
   const searchParams = useSearchParams();
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isFamiliarWithStellar, isFamiliarWitheptStellar] = useState(false);
+  const [acceptMarketingUpdates, setAcceptMarketingUpdates] = useState(false);
+  const [experiencedBlockchain, setExperiencedBlockchain] = useState("");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -268,18 +283,34 @@ export default function JoinWaitlistDialog() {
       name: "",
       email: "",
       phone: "",
-      description: "",
+      source: "",
+      event: "",
     },
   });
 
-  const onSubmit = handleSubmit((data) => {
+  useEffect(() => {
+    console.log(experiencedBlockchain);
+  }, [experiencedBlockchain]);
+
+  const onSubmit: SubmitHandler<FieldValues> = (data) => {
     sendForm.mutate({
       name: data.name as string,
       email: data.email as string,
       phone: data.phone as string,
-      event: data.description as string,
+      event: data.event as string,
+      referalSource: data.source as string,
+      isFamiliarWithStllar: isFamiliarWithStellar,
+      acceptMarketing: acceptMarketingUpdates,
+      experienceWithBlockchain: experiencedBlockchain,
     });
-  });
+    reset();
+    setStep(0);
+  };
+
+  const toggleTerms = () => setAcceptTerms((prev) => !prev);
+  const toggleStellar = () => isFamiliarWitheptStellar((prev) => !prev);
+  const toggleMarketingUpdates = () =>
+    setAcceptMarketingUpdates((prev) => !prev);
 
   return (
     <Dialog
@@ -318,13 +349,27 @@ export default function JoinWaitlistDialog() {
               Company
             </TabsTrigger>
           </TabsList>
-          {IndividualContactForm(step, register)}
-          {CompanyContactForm(step, register)}
+          {IndividualContactForm(
+            step,
+            register,
+            experiencedBlockchain,
+            setExperiencedBlockchain,
+          )}
+          {CompanyContactForm(
+            step,
+            register,
+            experiencedBlockchain,
+            setExperiencedBlockchain,
+          )}
         </Tabs>
         {step === 1 && (
           <div className="m-2 grid gap-4">
             <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
+              <Checkbox
+                id="terms"
+                checked={acceptTerms}
+                onClick={toggleTerms}
+              />
               <Label htmlFor="terms">
                 I agree to the{" "}
                 <Link
@@ -338,7 +383,11 @@ export default function JoinWaitlistDialog() {
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="stellar-account" />
+              <Checkbox
+                id="stellar-account"
+                checked={isFamiliarWithStellar}
+                onClick={toggleStellar}
+              />
               <Label htmlFor="stellar-account">
                 <span className="flex">
                   Are you familiar with{" "}
@@ -357,7 +406,11 @@ export default function JoinWaitlistDialog() {
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="marketing-updates" />
+              <Checkbox
+                id="marketing-updates"
+                checked={acceptMarketingUpdates}
+                onClick={toggleMarketingUpdates}
+              />
               <Label htmlFor="marketing-updates">
                 I would like to receive updates and news about the platform
               </Label>
@@ -389,11 +442,12 @@ export default function JoinWaitlistDialog() {
           )}
           {step === 1 && (
             <Button
-              onClick={() => setStep(0)}
+              disabled={!acceptTerms}
+              onClick={handleSubmit(onSubmit)}
               type="submit"
               className="w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
             >
-              Join waitlist
+              Join waitlist {JSON.stringify(acceptTerms)}
             </Button>
           )}
         </DialogFooter>
