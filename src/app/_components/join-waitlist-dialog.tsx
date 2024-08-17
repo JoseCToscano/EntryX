@@ -38,12 +38,19 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { type FieldValues, useForm } from "react-hook-form";
+import {
+  type FieldValues,
+  useForm,
+  type UseFormRegister,
+} from "react-hook-form";
 import { api } from "~/trpc/react";
 import { ClientTRPCErrorHandler } from "~/lib/utils";
 import toast from "react-hot-toast";
 
-function CompanyContactForm(step: number) {
+function CompanyContactForm(
+  step: number,
+  register: UseFormRegister<FieldValues>,
+) {
   return (
     <TabsContent value="company" className="mt-4">
       <form className="grid gap-4">
@@ -51,15 +58,29 @@ function CompanyContactForm(step: number) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Company name</Label>
-              <Input id="name" placeholder="Enter your name" />
+              <Input
+                register={register}
+                id="name"
+                placeholder="Enter your name"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Company Email</Label>
-              <Input id="email" type="email" placeholder="Enter your email" />
+              <Input
+                register={register}
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone number</Label>
-              <Input id="phone" type="tel" placeholder="(+##) ### ### ####" />
+              <Input
+                register={register}
+                id="phone"
+                type="tel"
+                placeholder="(+##) ### ### ####"
+              />
               <label
                 className={`-translate-y-2 translate-x-1 text-xs font-light text-neutral-400 duration-150 hover:cursor-text`}
               >
@@ -69,6 +90,7 @@ function CompanyContactForm(step: number) {
             <div className="grid gap-2">
               <Label htmlFor="event-description">Event</Label>
               <Textarea
+                register={register}
                 id="event-description"
                 placeholder="Tell us about the event you want to list"
                 rows={4}
@@ -110,6 +132,7 @@ function CompanyContactForm(step: number) {
               <Label htmlFor="referral-source">Referral Source</Label>
               <Input
                 id="referral-source"
+                register={register}
                 placeholder="How did you hear about us?"
               />
             </div>
@@ -120,7 +143,10 @@ function CompanyContactForm(step: number) {
   );
 }
 
-function IndividualContactForm(step = 0) {
+function IndividualContactForm(
+  step = 0,
+  register: UseFormRegister<FieldValues>,
+) {
   return (
     <TabsContent value="individual" className="mt-4">
       <form className="grid gap-4">
@@ -128,15 +154,29 @@ function IndividualContactForm(step = 0) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Enter your name" />
+              <Input
+                id="name"
+                register={register}
+                placeholder="Enter your name"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Enter your email" />
+              <Input
+                id="email"
+                type="email"
+                register={register}
+                placeholder="Enter your email"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" placeholder="(+##) ### ### ####" />
+              <Input
+                id="phone"
+                type="tel"
+                register={register}
+                placeholder="(+##) ### ### ####"
+              />
               <label
                 className={`-translate-y-2 translate-x-1 text-xs font-light text-neutral-400 duration-150 hover:cursor-text`}
               >
@@ -147,6 +187,7 @@ function IndividualContactForm(step = 0) {
               <Label htmlFor="event-description">Event</Label>
               <Textarea
                 id="event-description"
+                register={register}
                 placeholder="Tell us about the event you want to list"
                 rows={4}
               />
@@ -186,6 +227,7 @@ function IndividualContactForm(step = 0) {
             <div className="grid gap-2">
               <Label htmlFor="referral-source">Referral Source</Label>
               <Input
+                register={register}
                 id="referral-source"
                 placeholder="How did you hear about us?"
               />
@@ -276,8 +318,8 @@ export default function JoinWaitlistDialog() {
               Company
             </TabsTrigger>
           </TabsList>
-          {IndividualContactForm(step)}
-          {CompanyContactForm(step)}
+          {IndividualContactForm(step, register)}
+          {CompanyContactForm(step, register)}
         </Tabs>
         {step === 1 && (
           <div className="m-2 grid gap-4">

@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^1.6.0",
-    "@clerk/nextjs": "^5.2.14",
     "@prisma/client": "^5.14.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.1",

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { clerkClient } from "@clerk/nextjs/server";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
@@ -26,9 +25,7 @@ const standardTimebounds = 300; // 5 minutes for the user to review/sign/submit
 
 export const stellarAccountRouter = createTRPCRouter({
   validateChallenge: publicProcedure
-    .input(
-      z.object({ clerkId: z.string(), publicKey: z.string(), xdr: z.string() }),
-    )
+    .input(z.object({ publicKey: z.string(), xdr: z.string() }))
     .mutation(async ({ input }) => {
       const transaction = TransactionBuilder.fromXDR(
         input.xdr,
@@ -40,14 +37,6 @@ export const stellarAccountRouter = createTRPCRouter({
       const isValid = transaction.signatures.some((signature) =>
         keypair.verify(transaction.hash(), signature.signature()),
       );
-
-      if (isValid) {
-        await clerkClient.users.updateUserMetadata(input.clerkId, {
-          publicMetadata: {
-            stellarPublicKey: keypair.publicKey(),
-          },
-        });
-      }
 
       return isValid;
     }),

@@ -24,7 +24,6 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
     NEXT_PUBLIC_WHATSAPP_NUMBER: z.string(),
     NEXT_PUBLIC_ISSUER_PUBLIC_KEY: z.string(),
   },
@@ -41,8 +40,6 @@ export const env = createEnv({
     ISSUER_PUBLIC_KEY: process.env.ISSUER_PUBLIC_KEY,
     ISSUER_PRIVATE_KEY: process.env.ISSUER_PRIVATE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
     NEXT_PUBLIC_ISSUER_PUBLIC_KEY: process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY,
   },
