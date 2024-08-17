@@ -288,10 +288,6 @@ export default function JoinWaitlistDialog() {
     },
   });
 
-  useEffect(() => {
-    console.log(experiencedBlockchain);
-  }, [experiencedBlockchain]);
-
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     sendForm.mutate({
       name: data.name as string,

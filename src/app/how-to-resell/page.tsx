@@ -1,9 +1,6 @@
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/eyJbJCFyU2g
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
+"use client";
 import Link from "next/link";
+import YouTube from "react-youtube";
 import { Icons } from "~/components/icons";
 
 export default function Component() {
@@ -19,7 +16,21 @@ export default function Component() {
               Discover the benefits of reselling your tickets
             </p>
           </div>
-          <div className="space-y-6">
+          <div className="items-center justify-center space-y-6">
+            <YouTube
+              videoId="Vwx78gwfvWY"
+              id="video"
+              className="mx-auto w-full"
+              opts={{
+                height: "390",
+                width: "640",
+                playerVars: {
+                  autoplay: 0,
+                  controls: 1,
+                  start: 49,
+                },
+              }}
+            />
             <div>
               <h2 className="text-2xl font-bold">What is Reselling?</h2>
               <p className="mt-2 text-muted-foreground md:text-lg">

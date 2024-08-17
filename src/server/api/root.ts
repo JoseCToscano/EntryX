@@ -67,6 +67,25 @@ export const appRouter = createTRPCRouter({
         },
       });
     }),
+  contact: publicProcedure
+    .input(
+      z.object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        subject: z.string().optional(),
+        message: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await ctx.db.contactForm.create({
+        data: {
+          name: input.name ?? "",
+          email: input.email ?? "",
+          subject: input.subject ?? "",
+          message: input.message ?? "",
+        },
+      });
+    }),
   setDomain: publicProcedure.query(async () => {
     const domain = "entryx.me";
     const server = new Horizon.Server("https://horizon-testnet.stellar.org");

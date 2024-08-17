@@ -58,6 +58,16 @@ model WaitlistRequest {
   experienceWithBlockchain String?
 }
 
+model ContactForm {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String?
+  email     String?
+  subject   String?
+  message   String?
+}
+
 model StellaAssetContract {
   code    String
   issuer  String
