@@ -22,9 +22,9 @@ function Section() {
           </h2>
           <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
             Join our exclusive beta program and be the first revolutionize your
-            event ticketing with our cutting-edge crypto-based platform. Unlock
-            early access, exclusive perks, and the opportunity to shape the
-            future of event ticketing.
+            event ticketing with our cutting-edge blockchain-based platform.
+            Unlock early access, exclusive perks, and the opportunity to shape
+            the future of event ticketing.
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <JoinWaitlistDialog />
