@@ -23,7 +23,7 @@ import Link from "next/link";
 import ConnectYourWallet from "~/app/_components/connect-your-wallet";
 
 const AuctionCard: React.FC = () => {
-  const { publicKey, signXDR, trustline } = useWallet();
+  const { publicKey, signXDR, trustline, setReload } = useWallet();
   const params = useParams();
   const { auction_id } = params;
   const ctx = api.useContext();
@@ -84,6 +84,7 @@ const AuctionCard: React.FC = () => {
       },
       onSuccess: () => {
         void ctx.stellarAccountRouter.details.invalidate();
+        setReload((t) => !t);
         toast.success("Trustline updated");
       },
     });
@@ -157,7 +158,7 @@ const AuctionCard: React.FC = () => {
         bidderKey: publicKey,
       });
       const signedXDR = await signXDR(xdr);
-      const res = await soroban.mutateAsync({ xdr: signedXDR });
+      await soroban.mutateAsync({ xdr: signedXDR });
       // TODO: This would better be handled as a multi-step transaction on database
       persistBid.mutate({
         auctionId: auction_id as string,
