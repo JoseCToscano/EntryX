@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
 import { ClientTRPCErrorHandler, fromXLMToUSD, plurify } from "~/lib/utils";
 import { type Asset as DBAsset } from "@prisma/client";
+import { useCart } from "~/hooks/useCart";
 
 export default function Purchase() {
   const router = useRouter();
@@ -34,10 +35,9 @@ export default function Purchase() {
     trustline,
     isFreighterAllowed,
   } = useWallet();
+  const { assetId, addToSearchParams, amount } = useCart();
   const [processStep, setProcessStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [assetToBuy, setAssetToBuy] = useState<string | null>(null);
-  const [unitsToBuy, setUnitsToBuy] = useState<number>(0);
 
   /* tRPC api calls */
   const event = api.event.get.useQuery({ id: id as string }, { enabled: !!id });
@@ -55,8 +55,10 @@ export default function Purchase() {
       },
       onSuccess: () => {
         setReload((p) => !p);
-        setUnitsToBuy(0);
         void ctx.stellarAccountRouter.details.invalidate();
+        // Reload
+        addToSearchParams({ assetId, amount: amount.toString() });
+        window.location.reload();
         toast.success("Transaction sent to blockchain successfully");
       },
     });
@@ -73,9 +75,8 @@ export default function Purchase() {
   });
 
   const addToCart = (asset: DBAsset) => {
-    if (assetToBuy !== asset.id) {
-      setAssetToBuy(asset.id);
-      setUnitsToBuy(0);
+    if (assetId !== asset.id) {
+      addToSearchParams({ assetId: asset.id, amount: "0" });
     }
   };
 
@@ -85,14 +86,14 @@ export default function Purchase() {
       if (!publicKey) {
         return toast.error("Please connect your wallet");
       }
-      if (!assetToBuy || !unitsToBuy) {
+      if (!assetId || !amount) {
         return toast.error("Please select a ticket to purchase");
       }
       setProcessStep(2);
       const xdr = await contractPurchase.mutateAsync({
         userPublicKey: publicKey,
-        quantity: unitsToBuy,
-        assetId: assetToBuy,
+        quantity: amount,
+        assetId: assetId,
       });
       const signedTransaction = await signXDR(xdr);
       setProcessStep(3);
@@ -110,8 +111,7 @@ export default function Purchase() {
     } finally {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setProcessStep(1);
-      setUnitsToBuy(0);
-      setAssetToBuy(null);
+      addToSearchParams({ amount: "0", assetId: "" });
       setLoading(false);
     }
   };
@@ -132,22 +132,22 @@ export default function Purchase() {
   }, [ticketCategories.data]);
 
   const total = React.useMemo(() => {
-    const price = categories.get(assetToBuy ?? "")?.pricePerUnit ?? 0;
-    return Number(price) * unitsToBuy;
-  }, [categories, unitsToBuy, assetToBuy]);
+    const price = categories.get(assetId ?? "")?.pricePerUnit ?? 0;
+    return Number(price) * amount;
+  }, [categories, amount, assetId]);
 
   const increaseSellAmount = () => {
-    setUnitsToBuy((p) => p + 1);
+    addToSearchParams({ amount: (amount + 1).toString(), assetId });
   };
 
   const reduceSellAmount = () => {
-    if (unitsToBuy > 0) {
-      setUnitsToBuy((p) => p - 1);
+    if (amount > 0) {
+      addToSearchParams({ amount: (amount - 1).toString(), assetId });
     }
   };
 
   const addAssetToTrustline = async () => {
-    if (!assetToBuy) {
+    if (!assetId) {
       return toast("Please select a ticket to buy");
     }
     if (!publicKey || !hasFreighter || !isFreighterAllowed) {
@@ -157,7 +157,7 @@ export default function Purchase() {
     try {
       let xdr = await addToTrustline.mutateAsync({
         publicKey,
-        assetId: assetToBuy,
+        assetId: assetId,
       });
       xdr = await signXDR(xdr);
       await submitTransaction.mutateAsync({ xdr });
@@ -194,7 +194,7 @@ export default function Purchase() {
                   key={category.id}
                   category={category}
                   addToCart={addToCart}
-                  selected={category.id === assetToBuy}
+                  selected={category.id === assetId}
                 />
               ))}
               <Card className="rounded-lg bg-background p-4 shadow-sm">
@@ -225,21 +225,20 @@ export default function Purchase() {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  {assetToBuy && (
+                  {assetId && (
                     <div>
-                      ({unitsToBuy}) {categories.get(assetToBuy)?.label}
+                      ({amount}) {categories.get(assetId)?.label}
                     </div>
                   )}
                   <div>
-                    {assetToBuy &&
-                      Number(categories.get(assetToBuy)?.pricePerUnit)}{" "}
-                    {assetToBuy && "XLM"}
+                    {assetId && Number(categories.get(assetId)?.pricePerUnit)}{" "}
+                    {assetId && "XLM"}
                   </div>
                 </div>
                 <div className="flex items-center justify-between font-medium">
                   <div>Subtotal</div>
                   <div>
-                    {unitsToBuy
+                    {amount
                       ? total.toLocaleString("en-US", {
                           minimumFractionDigits: 5,
                           maximumFractionDigits: 5,
@@ -251,7 +250,7 @@ export default function Purchase() {
                 <Separator />
                 <div className="flex items-center gap-2">
                   <Button
-                    disabled={!assetToBuy || soroban.isPending || loading}
+                    disabled={!assetId || soroban.isPending || loading}
                     onClick={reduceSellAmount}
                     variant="outline"
                     size="sm"
@@ -260,10 +259,10 @@ export default function Purchase() {
                     -
                   </Button>
                   <span>
-                    {unitsToBuy} {plurify("ticket", unitsToBuy)}
+                    {amount} {plurify("ticket", amount)}
                   </span>
                   <Button
-                    disabled={!assetToBuy || soroban.isPending || loading}
+                    disabled={!assetId || soroban.isPending || loading}
                     onClick={increaseSellAmount}
                     variant="outline"
                     size="sm"
@@ -298,19 +297,19 @@ export default function Purchase() {
                 {loading && (
                   <div className="py-4">
                     <TransactionSteps
-                      assets={[assetToBuy ?? ""]}
+                      assets={[assetId ?? ""]}
                       processStep={processStep}
                     />
                   </div>
                 )}
                 {hasFreighter ? (
-                  assetToBuy &&
+                  assetId &&
                   !Object.hasOwn(
                     trustline,
-                    categories.get(assetToBuy)?.code ?? "",
+                    categories.get(assetId)?.code ?? "",
                   ) ? (
                     <Button
-                      disabled={!assetToBuy || loading}
+                      disabled={!assetId || loading}
                       onClick={addAssetToTrustline}
                       className="h-8 w-full border-[1px] border-black bg-black text-white hover:bg-white hover:text-black"
                     >
@@ -323,12 +322,12 @@ export default function Purchase() {
                   ) : (
                     <Button
                       disabled={
-                        !assetToBuy ||
+                        !assetId ||
                         !Object.hasOwn(
                           trustline,
-                          categories.get(assetToBuy)?.code ?? "",
+                          categories.get(assetId)?.code ?? "",
                         ) ||
-                        !unitsToBuy ||
+                        !amount ||
                         loading
                       }
                       onClick={() => {
@@ -343,7 +342,7 @@ export default function Purchase() {
                     >
                       {loading ? (
                         <Icons.spinner className="h-4 w-4 animate-spin" />
-                      ) : unitsToBuy <= 0 ? (
+                      ) : amount <= 0 ? (
                         "Select tickets to buy"
                       ) : processStep === 4 ? (
                         "Go to Wallet"
