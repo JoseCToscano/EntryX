@@ -26,8 +26,14 @@ export default function Purchase() {
   const { id } = params;
 
   /* State variables */
-  const { publicKey, signXDR, hasFreighter, trustline, isFreighterAllowed } =
-    useWallet();
+  const {
+    publicKey,
+    setReload,
+    signXDR,
+    hasFreighter,
+    trustline,
+    isFreighterAllowed,
+  } = useWallet();
   const [processStep, setProcessStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [assetToBuy, setAssetToBuy] = useState<string | null>(null);
@@ -48,6 +54,8 @@ export default function Purchase() {
         console.error(e);
       },
       onSuccess: () => {
+        setReload((p) => !p);
+        setUnitsToBuy(0);
         void ctx.stellarAccountRouter.details.invalidate();
         toast.success("Transaction sent to blockchain successfully");
       },
@@ -67,7 +75,7 @@ export default function Purchase() {
   const addToCart = (asset: DBAsset) => {
     if (assetToBuy !== asset.id) {
       setAssetToBuy(asset.id);
-      setUnitsToBuy(1);
+      setUnitsToBuy(0);
     }
   };
 

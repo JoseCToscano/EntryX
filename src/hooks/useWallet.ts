@@ -18,6 +18,7 @@ export const useWallet = () => {
   const [publicKey, setPublicKey] = useState<string>();
   const [network, setNetwork] = useState<string>();
   const [trustline, setTrustline] = useState<Record<string, number>>({});
+  const [reload, setReload] = useState<boolean>(false);
 
   const { data, isLoading } = api.stellarAccountRouter.details.useQuery(
     {
@@ -34,7 +35,6 @@ export const useWallet = () => {
   );
 
   useEffect(() => {
-    console.log("data", data?.balances);
     const tl = trustline;
     data?.balances?.forEach((b) => {
       if (b.asset_type === "credit_alphanum12") {
@@ -42,7 +42,7 @@ export const useWallet = () => {
       }
     });
     setTrustline(tl);
-  }, [data]);
+  }, [data, reload]);
 
   useEffect(() => {
     const fetchWalletData = () => {
@@ -83,7 +83,7 @@ export const useWallet = () => {
     const intervalId = setInterval(fetchWalletData, 5000); // Polling every 5 seconds
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  }, []);
+  }, [reload]);
 
   async function connect() {
     setAllowed()
@@ -110,10 +110,6 @@ export const useWallet = () => {
       })
       .catch(() => toast.error("Error requesting Freighter Wallet"));
   }
-
-  useEffect(() => {
-    console.log("hasFreighter", hasFreighter);
-  }, [hasFreighter]);
 
   async function signXDR(xdr: string) {
     if (!isFreighterAllowed) {
@@ -143,5 +139,6 @@ export const useWallet = () => {
     isFreighterAllowed,
     connect,
     trustline,
+    setReload,
   };
 };

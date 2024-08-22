@@ -7,6 +7,8 @@ import Image from "next/image";
 import { shortStellarAddress } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
 import { useWallet } from "~/hooks/useWallet";
+import { Button } from "~/components/ui/button";
+import Link from "next/link";
 
 export default function Navbar() {
   const { publicKey, network, isLoading } = useWallet();
@@ -28,16 +30,25 @@ export default function Navbar() {
             <Icons.spinner className="animate-spin" />
           ) : (
             <span className="flex flex-row items-center gap-1 font-semibold">
-              <Image
-                width={20}
-                height={20}
-                src={"/icons/stellar-xlm-logo.svg"}
-                alt={"Stellar XLM icon"}
-              />
-              {publicKey
-                ? shortStellarAddress(publicKey)
-                : "Wallet not connected"}
-              {network && (
+              {publicKey && (
+                <Image
+                  width={20}
+                  height={20}
+                  src={"/icons/stellar-xlm-logo.svg"}
+                  alt={"Stellar XLM icon"}
+                />
+              )}
+              {publicKey ? (
+                shortStellarAddress(publicKey)
+              ) : (
+                <Link href="/wallet" className="flex items-center">
+                  <Button className="group border-[1px] border-black bg-black px-4 pr-8 text-sm text-white hover:bg-white hover:text-black">
+                    Connect wallet
+                    <Icons.expandingArrow className="" />
+                  </Button>
+                </Link>
+              )}
+              {publicKey && network && (
                 <Badge className="ml-2 border-0 bg-gradient-to-br from-black to-gray-400 py-0.5 text-xs">
                   {network}
                 </Badge>
