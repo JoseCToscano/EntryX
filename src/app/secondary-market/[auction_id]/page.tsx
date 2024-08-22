@@ -114,6 +114,7 @@ const AuctionCard: React.FC = () => {
       });
       xdr = await signXDR(xdr);
       await submitTransaction.mutateAsync({ xdr });
+      window.location.reload();
     } catch (e) {
       console.error(e);
     } finally {
