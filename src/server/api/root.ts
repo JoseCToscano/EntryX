@@ -5,7 +5,6 @@ import {
   Horizon,
   Keypair,
   BASE_FEE,
-  Asset,
 } from "@stellar/stellar-sdk";
 import { postRouter } from "~/server/api/routers/post";
 import {
@@ -24,6 +23,7 @@ import { sorobanRouter } from "~/server/api/routers/soroban";
 import { marketplaceRouter } from "~/server/api/routers/marketplace";
 import { handleHorizonServerError } from "~/lib/utils";
 import { z } from "zod";
+import { walletRouter } from "~/server/api/routers/wallet";
 
 /**
  * This is the primary router for your server.
@@ -32,6 +32,7 @@ import { z } from "zod";
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
+  wallet: walletRouter,
   organizer: organizerRouter,
   analytics: analyticsRouter,
   event: eventsRouter,

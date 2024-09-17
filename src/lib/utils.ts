@@ -290,3 +290,165 @@ export function generateQrCode(data: string): string {
   const size = "100x100";
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(data)}`;
 }
+
+// Convert string to ArrayBuffer
+export function str2ab(str: string): ArrayBuffer {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
+// Convert Uint8Array to number[]
+function uint8ArrayToNumberArray(uint8Array: Uint8Array): number[] {
+  return Array.from(uint8Array);
+}
+
+// Convert ArrayBuffer back to string
+function ab2str(buf: ArrayBuffer): string {
+  return String.fromCharCode.apply(
+    null,
+    uint8ArrayToNumberArray(new Uint8Array(buf)),
+  );
+}
+
+// AES encryption using WebCrypto API
+async function encryptWithPasskey(
+  passkey: number[],
+  data: string,
+): Promise<{ encryptedData: ArrayBuffer; iv: Uint8Array }> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    new Uint8Array(passkey), // Convert back to Uint8Array
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"],
+  );
+
+  const derivedKey = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encoder.encode("salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt"],
+  );
+
+  const iv = window.crypto.getRandomValues(new Uint8Array(12)); // AES-GCM IV
+  const encryptedData = await window.crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    derivedKey,
+    encoder.encode(data),
+  );
+
+  return { encryptedData, iv };
+}
+
+// AES decryption using WebCrypto API
+async function decryptWithPasskey(
+  passkey: number[],
+  encryptedData: ArrayBuffer,
+  iv: Uint8Array,
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    new Uint8Array(passkey), // Convert back to Uint8Array
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"],
+  );
+
+  const derivedKey = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encoder.encode("salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["decrypt"],
+  );
+
+  const decryptedData = await window.crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    derivedKey,
+    encryptedData,
+  );
+
+  return new TextDecoder().decode(decryptedData);
+}
+
+async function encryptStellarSecretKey(secretKey: string): Promise<void> {
+  // Request passkey authentication (WebAuthn)
+  const credential = (await navigator.credentials.get({
+    publicKey: {
+      challenge: new Uint8Array(32), // Random challenge
+      allowCredentials: [], // Empty array for first-time registration
+      userVerification: "preferred",
+    },
+  })) as PublicKeyCredential;
+
+  const passkey = new Uint8Array(credential.response.clientDataJSON); // Passkey based on WebAuthn response
+
+  // Store the credential ID for future use
+  const credentialId = credential.rawId;
+  localStorage.setItem("credentialId", ab2str(credentialId));
+
+  // Encrypt the Stellar secret key using the passkey
+  const passkeyAsNumberArray = uint8ArrayToNumberArray(passkey);
+  const { encryptedData, iv } = await encryptWithPasskey(
+    passkeyAsNumberArray,
+    secretKey,
+  );
+
+  // Store encrypted key and IV in local storage
+  localStorage.setItem("encryptedStellarSecretKey", ab2str(encryptedData));
+  localStorage.setItem("encryptionIv", ab2str(iv));
+  setEncrypted(true);
+}
+
+async function decryptStellarSecretKey(): Promise<string> {
+  // Retrieve encrypted secret key and IV from storage
+  const encryptedData = str2ab(
+    localStorage.getItem("encryptedStellarSecretKey") || "",
+  );
+  const iv = new Uint8Array(str2ab(localStorage.getItem("encryptionIv") || ""));
+
+  // Request passkey authentication to decrypt
+  const credential = (await navigator.credentials.get({
+    publicKey: {
+      challenge: new Uint8Array(32), // Uint8Array is fine here
+      allowCredentials: [{ type: "public-key" }],
+      userVerification: "preferred",
+    },
+  })) as PublicKeyCredential;
+
+  // Convert Uint8Array to number[] where necessary
+  const passkey = new Uint8Array(credential.response.clientDataJSON);
+  const passkeyAsNumberArray = uint8ArrayToNumberArray(passkey);
+
+  // Decrypt the secret key using the passkey
+  const secretKey = await decryptWithPasskey(
+    passkeyAsNumberArray,
+    encryptedData,
+    iv,
+  );
+
+  return secretKey;
+}
