@@ -29,7 +29,7 @@ export const walletRouter = createTRPCRouter({
         credentialId: z.string(),
         clientDataJSON: z.string(),
         authenticatorData: z.string(),
-        signature: z.string(),
+        signature: z.string().optional(),
         publicKey: z.string().optional(),
       }),
     )

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { api } from "~/trpc/react";
 import { Keypair } from "@stellar/stellar-sdk";
+import { getKey, storeKey } from "~/lib/utils";
 
 const StellarWallet: React.FC = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -80,16 +81,12 @@ const StellarWallet: React.FC = () => {
       // Step 5: Generate a random AES key
       const aesKey = await crypto.subtle.generateKey(
         { name: "AES-GCM", length: 256 },
-        true,
+        false,
         ["encrypt", "decrypt"],
       );
 
-      // Export the AES key to store it securely after user verification
-      const exportedAesKey = await crypto.subtle.exportKey("raw", aesKey);
-      const aesKeyBase64 = Buffer.from(exportedAesKey).toString("base64");
-
-      // Store the AES key in localStorage (only after user verification)
-      localStorage.setItem("aesKey", aesKeyBase64);
+      // After generating the aesKey
+      await storeKey("aes-key", aesKey);
 
       // Step 6: Encrypt the Stellar secret key using the AES key
       const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -171,19 +168,8 @@ const StellarWallet: React.FC = () => {
         signature: Buffer.from(signature).toString("base64"),
       });
 
-      // Step 6: Retrieve the AES key from local storage
-      const aesKeyBase64 = localStorage.getItem("aesKey");
-      if (!aesKeyBase64) {
-        throw new Error("AES key not found. Please register a passkey first.");
-      }
-      const exportedAesKey = Buffer.from(aesKeyBase64, "base64");
-      const aesKey = await crypto.subtle.importKey(
-        "raw",
-        exportedAesKey,
-        { name: "AES-GCM" },
-        true,
-        ["decrypt"],
-      );
+      // Retrieve the AES key from IndexedDB
+      const aesKey = await getKey("aes-key");
 
       // Step 7: Retrieve the encrypted Stellar secret key and IV from local storage
       const encryptedDataBase64 = localStorage.getItem(
