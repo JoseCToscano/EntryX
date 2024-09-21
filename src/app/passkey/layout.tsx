@@ -7,7 +7,6 @@ const CORBADO_PROJECT_ID = "pro-7635031262679338570";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-      <>
     <CorbadoProvider
       projectId={CORBADO_PROJECT_ID}
       setShortSessionCookie
@@ -18,8 +17,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
       {/*All children go here*/}
     </CorbadoProvider>
-        <StellarWallet />
-      </>
   );
 };
 
