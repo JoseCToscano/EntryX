@@ -22,9 +22,9 @@ const ProfilePage: React.FC = () => {
     router.push("/passkey/signin");
   };
 
-  if (!user) {
-    return <Link href="passkey/signin">Sign in</Link>;
-  }
+  // if (!user) {
+  //   return <Link href="passkey/signin">Sign in</Link>;
+  // }
 
   return (
     <div>
