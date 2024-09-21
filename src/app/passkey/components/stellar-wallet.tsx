@@ -44,11 +44,31 @@ const StellarWallet: React.FC = () => {
   // Register a new passkey and encrypt the Stellar secret key
   const registerPasskey = async (secretKey: string) => {
     try {
-      // Step 1: Request a challenge from the server using tRPC
-      const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-      if (!challengeData?.challenge) {
-        throw new Error("Failed to retrieve challenge");
+      try {
+        // Step 1: Request a challenge from the server using tRPC
+        const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
+        if (!challengeData?.challenge) {
+          throw new Error("Failed to retrieve challenge");
+        }
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge: new TextEncoder().encode(challengeData.challenge),
+            rp: { name: "My Web3 Wallet", id: "yourdomain.com" }, // Explicit domain
+            user: {
+              id: new TextEncoder().encode("unique-user-id-base64url"), // Stable user ID
+              name: "user@example.com",
+              displayName: "User Example",
+            },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+            authenticatorSelection: { userVerification: "preferred" }, // Try "required" or "discouraged"
+            attestation: "none", // Try with "none" instead of "direct"
+          },
+        });
+        console.log("Credential created successfully:", credential);
+      } catch (error) {
+        console.error("Error creating credentials:", error);
       }
+      console.log("test ends");
       console.log("Challenge data:", challengeData);
 
       // Step 2: Register a new passkey using WebAuthn
