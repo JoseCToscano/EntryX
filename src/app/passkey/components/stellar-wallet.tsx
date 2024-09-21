@@ -21,6 +21,8 @@ const StellarWallet: React.FC = () => {
       console.log("WebAuthn is supported.");
       setConsoleResult("WebAuthn is supported.");
     }
+    console.log("protocol: ", window.location.protocol);
+    console.log("hostname: ", window.location.hostname);
   }, []);
 
   // Generate or import a Stellar key pair
@@ -245,6 +247,15 @@ const StellarWallet: React.FC = () => {
           onClick={() => registerPasskey("MY SUPER SECRET KEY")}
         >
           Test
+        </Button>
+        <Button
+          className="mt-4 rounded-md bg-black p-2 text-white"
+          onClick={() => {
+            console.log(navigator.credentials);
+            setConsoleResult(JSON.stringify(navigator.credentials));
+          }}
+        >
+          Navigator.credentials
         </Button>
       </p>
       {encrypted && (
