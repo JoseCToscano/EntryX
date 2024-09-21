@@ -14,7 +14,7 @@ export default function Navbar() {
   const { publicKey, network, isLoading } = useWallet();
 
   return (
-    <div className="sticky top-0 border-b">
+    <div className="sticky top-0 hidden border-b sm:block">
       <div className="z-50 flex h-16 items-center bg-white px-4 opacity-95">
         <Logo />
         <MainNav
