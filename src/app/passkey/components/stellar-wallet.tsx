@@ -252,6 +252,15 @@ const StellarWallet: React.FC = () => {
           className="mt-4 rounded-md bg-black p-2 text-white"
           onClick={() => {
             console.log(navigator.credentials);
+            if (!window.PublicKeyCredential) {
+              console.error("WebAuthn is not supported on this platform.");
+              setConsoleResult("WebAuthn is not supported on this platform.");
+            } else {
+              console.log("WebAuthn is supported.");
+              setConsoleResult("WebAuthn is supported.");
+            }
+            console.log("protocol: ", window.location.protocol);
+            console.log("hostname: ", window.location.hostname);
             setConsoleResult(JSON.stringify(navigator.credentials));
           }}
         >
