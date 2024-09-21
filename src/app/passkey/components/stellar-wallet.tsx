@@ -62,7 +62,7 @@ const StellarWallet: React.FC = () => {
             displayName: "User Example", // User's display name
           },
           pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-          authenticatorSelection: { userVerification: "required" }, // Prefer biometric or PIN-based authentication
+          authenticatorSelection: { userVerification: "discouraged" }, // Prefer biometric or PIN-based authentication
           attestation: "direct", // Request attestation for device verification
         },
       })) as PublicKeyCredential;
