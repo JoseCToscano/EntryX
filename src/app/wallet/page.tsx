@@ -142,7 +142,7 @@ export default function Component() {
                   <span className="font-medium">{Number(asset.balance)}</span>
                 </li>
               ))}
-              {tokens.map((token) => (
+              {/*{tokens.map((token) => (
                 <li
                   key={token.id}
                   className="flex items-center justify-between rounded-md bg-gray-50 p-2"
@@ -156,7 +156,7 @@ export default function Component() {
                   </div>
                   <span className="font-medium">{token.balance}</span>
                 </li>
-              ))}
+              ))}*/}
             </ul>
           </div>
           <div>
