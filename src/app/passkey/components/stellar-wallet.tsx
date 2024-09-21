@@ -49,6 +49,7 @@ const StellarWallet: React.FC = () => {
       if (!challengeData?.challenge) {
         throw new Error("Failed to retrieve challenge");
       }
+      console.log("Challenge data:", challengeData);
 
       // Step 2: Register a new passkey using WebAuthn
       const credential = (await navigator.credentials.create({
@@ -65,6 +66,7 @@ const StellarWallet: React.FC = () => {
           attestation: "direct", // Request attestation for device verification
         },
       })) as PublicKeyCredential;
+      console.log("WebAuthn registration response:", credential);
 
       // Step 3: Extract WebAuthn registration response components
       const attestationObject = (
@@ -73,6 +75,8 @@ const StellarWallet: React.FC = () => {
       const clientDataJSON = credential.response.clientDataJSON;
       const credentialId = credential.rawId;
 
+      console.log("credentialId: ", credentialId);
+
       // Step 4: Send the registration data to the server for verification and storage
       await verifyWebAuthn.mutateAsync({
         credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
@@ -80,6 +84,8 @@ const StellarWallet: React.FC = () => {
         authenticatorData: Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
         publicKey: publicKey ?? "", // Stellar public key
       });
+
+      console.log("Passkey registration successful.");
 
       // TODO: use server
       //  Store the credential ID after registering the passkey
@@ -90,6 +96,8 @@ const StellarWallet: React.FC = () => {
       console.log(
         `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
       );
+
+      console.log("here :)");
 
       // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
       // Step 5: Generate a random AES key
