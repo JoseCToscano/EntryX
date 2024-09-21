@@ -44,9 +44,9 @@ const StellarWallet: React.FC = () => {
   // Register a new passkey and encrypt the Stellar secret key
   const registerPasskey = async (secretKey: string) => {
     try {
+      const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
       try {
         // Step 1: Request a challenge from the server using tRPC
-        const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
         if (!challengeData?.challenge) {
           throw new Error("Failed to retrieve challenge");
         }
