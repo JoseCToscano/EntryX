@@ -4,6 +4,7 @@ import { Keypair } from "@stellar/stellar-sdk";
 import { getKey, storeKey } from "~/lib/utils";
 import toast from "react-hot-toast";
 import { Button } from "~/components/ui/button";
+import crypto from "crypto";
 
 const StellarWallet: React.FC = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -43,39 +44,14 @@ const StellarWallet: React.FC = () => {
 
   // Register a new passkey and encrypt the Stellar secret key
   const registerPasskey = async (secretKey: string) => {
-    const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
+    // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
     try {
-      console.log("test starts");
-      try {
-        // Step 1: Request a challenge from the server using tRPC
-        if (!challengeData?.challenge) {
-          throw new Error("Failed to retrieve challenge");
-        }
-        const credential = await navigator.credentials.create({
-          publicKey: {
-            challenge: new TextEncoder().encode(challengeData.challenge),
-            rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Explicit domain
-            user: {
-              id: new TextEncoder().encode("unique-user-id-base64url"), // Stable user ID
-              name: "user@example.com",
-              displayName: "User Example",
-            },
-            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-            authenticatorSelection: { userVerification: "preferred" }, // Try "required" or "discouraged"
-            attestation: "none", // Try with "none" instead of "direct"
-          },
-        });
-        console.log("Credential created successfully:", credential);
-      } catch (error) {
-        console.error("Error creating credentials:", error);
-      }
-      console.log("test ends");
-      console.log("Challenge data:", challengeData);
-
       // Step 2: Register a new passkey using WebAuthn
       const credential = (await navigator.credentials.create({
         publicKey: {
-          challenge: new TextEncoder().encode(challengeData!.challenge), // Use the challenge provided by the server
+          challenge: new TextEncoder().encode(
+            crypto.randomBytes(32).toString("hex"),
+          ), // Use the challenge provided by the server
           rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
           user: {
             id: new Uint8Array(16), // Unique user ID (can be user ID from your backend or a randomly generated ID)
@@ -261,9 +237,9 @@ const StellarWallet: React.FC = () => {
       <h2>Stellar Web3 Wallet with tRPC</h2>
       <button
         onClick={async () => {
-          const { publicKey, secretKey } = await createOrImportStellarKey();
-          alert("Stellar key pair generated:\nPublic Key: " + publicKey);
-          await registerPasskey(secretKey);
+          // const { publicKey, secretKey } = await createOrImportStellarKey();
+          // alert("Stellar key pair generated:\nPublic Key: " + publicKey);
+          await registerPasskey("secretKey");
           alert("Secret Key encrypted and stored.");
         }}
       >
