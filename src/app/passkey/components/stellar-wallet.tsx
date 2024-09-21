@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Keypair } from "@stellar/stellar-sdk";
 import { getKey, storeKey } from "~/lib/utils";
+import toast from "react-hot-toast";
+import { Button } from "~/components/ui/button";
 
 const StellarWallet: React.FC = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [encrypted, setEncrypted] = useState<boolean>(false);
-
+  const [consoleResult, setConsoleResult] = useState<string>("");
   // tRPC queries and mutations
   const generateChallenge = api.wallet.generateChallenge.useQuery();
   const verifyWebAuthn = api.wallet.verifyWebAuthn.useMutation();
+
+  useEffect(() => {
+    if (!window.PublicKeyCredential) {
+      console.error("WebAuthn is not supported on this platform.");
+      setConsoleResult("WebAuthn is not supported on this platform.");
+    } else {
+      console.log("WebAuthn is supported.");
+      setConsoleResult("WebAuthn is supported.");
+    }
+  }, []);
 
   // Generate or import a Stellar key pair
   const createOrImportStellarKey = async (): Promise<{
@@ -111,6 +123,7 @@ const StellarWallet: React.FC = () => {
 
       console.log("Passkey registration successful, secret key encrypted.");
     } catch (error) {
+      toast.error("Passkey registration failed");
       console.error("Passkey registration failed:", error);
       throw new Error("Passkey registration failed");
     }
@@ -225,7 +238,15 @@ const StellarWallet: React.FC = () => {
       >
         Generate Stellar Key
       </button>
-
+      <Button
+        className="mt-4 rounded-md bg-black p-2 text-white"
+        onClick={() => authenticatePasskey()}
+      >
+        Test
+      </Button>
+      <p>
+        <strong>Console:</strong> {consoleResult}
+      </p>
       {encrypted && (
         <>
           <button onClick={signAndSubmitTransaction}>

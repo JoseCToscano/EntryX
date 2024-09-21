@@ -4,6 +4,7 @@ import { useCorbado } from "@corbado/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import StellarWallet from "~/app/passkey/components/stellar-wallet";
+import { Button } from "~/components/ui/button";
 
 const ProfilePage: React.FC = () => {
   const { loading, isAuthenticated, user, logout } = useCorbado();
@@ -28,10 +29,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div>
-      <p>Welcome</p>
-      <p>Hi {user?.name}, you are logged in.</p>
       <StellarWallet />
-      <button onClick={onLogout}>Logout</button>
     </div>
   );
 };
