@@ -17,9 +17,15 @@ import { useRouter } from "next/navigation";
 import { Icons } from "~/components/icons";
 import Link from "next/link";
 import { useWallet } from "~/hooks/useWallet";
-import { ClientTRPCErrorHandler, fromXLMToUSD, plurify } from "~/lib/utils";
+import {
+  ClientTRPCErrorHandler,
+  fromXLMToUSD,
+  handleHorizonServerError,
+  plurify,
+} from "~/lib/utils";
 import { type Asset as DBAsset } from "@prisma/client";
 import { useCart } from "~/hooks/useCart";
+import { TRPCClientError } from "@trpc/client";
 
 export default function Purchase() {
   const router = useRouter();
@@ -50,9 +56,7 @@ export default function Purchase() {
 
   const submitTransaction =
     api.stellarAccountRouter.submitTransaction.useMutation({
-      onError: (e) => {
-        console.error(e);
-      },
+      onError: ClientTRPCErrorHandler,
       onSuccess: () => {
         setReload((p) => !p);
         void ctx.stellarAccountRouter.details.invalidate();

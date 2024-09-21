@@ -5,6 +5,30 @@ import { getKey, storeKey } from "~/lib/utils";
 import toast from "react-hot-toast";
 import { Button } from "~/components/ui/button";
 import crypto from "crypto";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  RefreshCwIcon,
+  ScanIcon,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Icons } from "~/components/icons";
+import Image from "next/image";
+
+const address = "0x1234...5678";
+const transactions = [
+  { id: 1, type: "receive", amount: "0.1 ETH", from: "0xabcd...efgh" },
+  { id: 2, type: "send", amount: "0.05 ETH", to: "0x9876...5432" },
+  { id: 3, type: "receive", amount: "0.2 ETH", from: "0xijkl...mnop" },
+];
+
+const tokens = [
+  { id: 1, name: "Ethereum", symbol: "ETH", balance: "1.2345", icon: "🔷" },
+  { id: 2, name: "USD Coin", symbol: "USDC", balance: "100.00", icon: "💵" },
+  { id: 3, name: "Chainlink", symbol: "LINK", balance: "50.75", icon: "⛓️" },
+  { id: 4, name: "Uniswap", symbol: "UNI", balance: "25.5", icon: "🦄" },
+];
 
 const StellarWallet: React.FC = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -233,793 +257,116 @@ const StellarWallet: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Stellar Web3 Wallet with tRPC</h2>
-      <button
-        onClick={async () => {
-          // const { publicKey, secretKey } = await createOrImportStellarKey();
-          // alert("Stellar key pair generated:\nPublic Key: " + publicKey);
-          await registerPasskey("secretKey");
-          alert("Secret Key encrypted and stored.");
-        }}
-      >
-        Generate Stellar Key
-      </button>
-      <p>
-        <strong>Console:</strong> {consoleResult}
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={() => registerPasskey("MY SUPER SECRET KEY")}
-        >
-          Test
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={() => {
-            console.log(navigator.credentials);
-            if (!window.PublicKeyCredential) {
-              console.error("WebAuthn is not supported on this platform.");
-              setConsoleResult("WebAuthn is not supported on this platform.");
-            } else {
-              console.log("WebAuthn is supported.");
-              setConsoleResult("WebAuthn is supported.");
-            }
-            console.log("protocol: ", window.location.protocol);
-            console.log("hostname: ", window.location.hostname);
-            setConsoleResult(JSON.stringify(navigator.credentials));
-          }}
-        >
-          Navigator.credentials
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                  authenticatorSelection: { userVerification: "preferred" }, // Prefer biometric or PIN-based authentication
-                  attestation: "none", // Request attestation for device verification
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 1
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                  authenticatorSelection: { userVerification: "preferred" }, // Prefer biometric or PIN-based authentication
-                  attestation: "none", // Request attestation for device verification
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 2
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new Uint8Array(crypto.randomBytes(32)), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                  authenticatorSelection: { userVerification: "preferred" }, // Prefer biometric or PIN-based authentication
-                  attestation: "none", // Request attestation for device verification
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 3
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                  authenticatorSelection: { userVerification: "preferred" }, // Prefer biometric or PIN-based authentication
-                  attestation: "none", // Request attestation for device verification
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 3
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new Uint8Array([79, 252, 83, 72, 214, 7, 89, 26]),
-                    name: "jamiedoe",
-                    displayName: "Jamie Doe",
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                  authenticatorSelection: { userVerification: "preferred" }, // Prefer biometric or PIN-based authentication
-                  attestation: "none", // Request attestation for device verification
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 4
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Step 3: Extract WebAuthn registration response components
-              const attestationObject = (
-                credential.response as AuthenticatorAttestationResponse
-              ).attestationObject;
-              const clientDataJSON = credential.response.clientDataJSON;
-              const credentialId = credential.rawId;
-
-              console.log("credentialId: ", credentialId);
-
-              // Step 4: Send the registration data to the server for verification and storage
-              await verifyWebAuthn.mutateAsync({
-                credentialId: Buffer.from(credentialId).toString("base64"), // Convert credential ID to base64
-                clientDataJSON: Buffer.from(clientDataJSON).toString("base64"), // Convert clientDataJSON to base64
-                authenticatorData:
-                  Buffer.from(attestationObject).toString("base64"), // Convert attestationObject to base64
-                publicKey: publicKey ?? "", // Stellar public key
-              });
-
-              console.log("Passkey registration successful.");
-
-              // TODO: use server
-              //  Store the credential ID after registering the passkey
-              localStorage.setItem(
-                "credentialId",
-                Buffer.from(credentialId).toString("base64"),
-              );
-              console.log(
-                `Saved credential ID: ${Buffer.from(credentialId).toString("base64")}`,
-              );
-
-              console.log("here :)");
-
-              // Step 5: Generate an AES encryption key using the WebAuthn passkey (derived from clientDataJSON)
-              // Step 5: Generate a random AES key
-              const aesKey = await crypto.subtle.generateKey(
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"],
-              );
-
-              // After generating the aesKey
-              await storeKey("aes-key", aesKey);
-
-              // Step 6: Encrypt the Stellar secret key using the AES key
-              const iv = crypto.getRandomValues(new Uint8Array(12));
-              const encryptedData = await crypto.subtle.encrypt(
-                {
-                  name: "AES-GCM",
-                  iv: iv,
-                },
-                aesKey,
-                new TextEncoder().encode("secretKey"),
-              );
-
-              // Store the encrypted data and IV
-              localStorage.setItem(
-                "encryptedStellarSecretKey",
-                Buffer.from(encryptedData).toString("base64"),
-              );
-              localStorage.setItem(
-                "encryptionIv",
-                Buffer.from(iv).toString("base64"),
-              );
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 5
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 6
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new TextEncoder().encode(
-                    crypto.randomBytes(32).toString("hex"),
-                  ), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 7
-        </Button>
-        <Button
-          className="mt-4 rounded-md bg-black p-2 text-white"
-          onClick={async () => {
-            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
-            try {
-              // Step 2: Register a new passkey using WebAuthn
-              const credential = (await navigator.credentials.create({
-                publicKey: {
-                  challenge: new Uint8Array([79, 252, 83, 72, 214, 7, 89, 26]), // Use the challenge provided by the server
-                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
-                  user: {
-                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
-                    name: "user@example.com", // User's email address
-                    displayName: "User Example", // User's display name
-                  },
-                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
-                },
-              })) as PublicKeyCredential;
-              console.log("WebAuthn registration response:", credential);
-
-              // Mark the secret key as encrypted
-              setEncrypted(true);
-
-              console.log(
-                "Passkey registration successful, secret key encrypted.",
-              );
-            } catch (error) {
-              toast.error(
-                `Passkey registration failed ${JSON.stringify(error)}`,
-              );
-              console.error("Passkey registration failed:", error);
-              throw new Error("Passkey registration failed");
-            }
-          }}
-        >
-          TEST 8
-        </Button>
-      </p>
-      {encrypted && (
-        <>
-          <button onClick={signAndSubmitTransaction}>
-            Sign and Submit Transaction
-          </button>
-        </>
-      )}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-400 to-blue-100 p-4">
+      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
+        <CardHeader className="relative pb-2">
+          <CardTitle className="text-center text-2xl font-bold">
+            Stellar Wallet
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2"
+            aria-label="Scan QR Code"
+          >
+            <ScanIcon className="h-5 w-5" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6 text-center">
+            <p className="mb-1 text-sm text-gray-500">Your Balance</p>
+            <h2 className="text-4xl font-bold">1001.1234 XLM</h2>
+          </div>
+          <div className="mb-6 flex justify-between">
+            <Button variant="outline" className="w-[48%]">
+              <ArrowUpIcon className="mr-2 h-4 w-4" /> Send
+            </Button>
+            <Button variant="outline" className="w-[48%]">
+              <ArrowDownIcon className="mr-2 h-4 w-4" /> Receive
+            </Button>
+          </div>
+          <div className="mb-6 flex items-center justify-between rounded-lg bg-gray-100 p-3">
+            <span className="text-sm text-gray-600">{address}</span>
+            <Button variant="ghost" size="icon">
+              <CopyIcon className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="mb-6">
+            <h3 className="mb-2 font-semibold">Your Assets</h3>
+            <ul className="space-y-2">
+              {tokens.map((token) => (
+                <li
+                  key={token.id}
+                  className="flex items-center justify-between rounded-md bg-gray-50 p-2"
+                >
+                  <div className="flex items-center">
+                    <span className="mr-2 text-2xl">{token.icon}</span>
+                    <div>
+                      <p className="font-medium">{token.name}</p>
+                      <p className="text-sm text-gray-500">{token.symbol}</p>
+                    </div>
+                  </div>
+                  <span className="font-medium">{token.balance}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-semibold">Recent Transactions</h3>
+              <Button variant="ghost" size="icon">
+                <RefreshCwIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            <ul className="space-y-2">
+              {transactions.map((tx) => (
+                <li
+                  key={tx.id}
+                  className="flex items-center justify-between rounded-md bg-gray-50 p-2"
+                >
+                  <div className="flex items-center">
+                    {tx.type === "receive" ? (
+                      <ArrowDownIcon className="mr-2 h-4 w-4 text-green-500" />
+                    ) : (
+                      <ArrowUpIcon className="mr-2 h-4 w-4 text-red-500" />
+                    )}
+                    <span className="text-sm">
+                      {tx.type === "receive" ? "From" : "To"}
+                    </span>
+                    <span className="ml-1 text-sm text-gray-500">
+                      {tx.type === "receive" ? tx.from : tx.to}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-sm font-medium ${tx.type === "receive" ? "text-green-500" : "text-red-500"}`}
+                  >
+                    {tx.type === "receive" ? "+" : "-"}
+                    {tx.amount}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+      {/*<button*/}
+      {/*  onClick={async () => {*/}
+      {/*    // const { publicKey, secretKey } = await createOrImportStellarKey();*/}
+      {/*    // alert("Stellar key pair generated:\nPublic Key: " + publicKey);*/}
+      {/*    await registerPasskey("secretKey");*/}
+      {/*    alert("Secret Key encrypted and stored.");*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  Generate Stellar Key*/}
+      {/*</button>*/}
+
+      {/*{encrypted && (*/}
+      {/*  <>*/}
+      {/*    <button onClick={signAndSubmitTransaction}>*/}
+      {/*      Sign and Submit Transaction*/}
+      {/*    </button>*/}
+      {/*  </>*/}
+      {/*)}*/}
     </div>
   );
 };

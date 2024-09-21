@@ -120,6 +120,7 @@ export function ClientTRPCErrorHandler<T extends AnyClientTypes>(
 }
 
 export function handleHorizonServerError(error: unknown) {
+  console.log("hi:)");
   let message = "Failed to send transaction to blockchain";
   const axiosError = error as AxiosError<Horizon.HorizonApi.ErrorResponseData>;
   if (
@@ -162,6 +163,7 @@ function parsedTransactionFailedError(
   if (!extras) {
     return message;
   }
+  console.log(extras.result_codes.operations);
   if (
     extras.result_codes.transaction ===
     Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_AUTH
@@ -178,6 +180,8 @@ function parsedTransactionFailedError(
     )
   ) {
     message = "One of the operations failed (none were applied)";
+  } else if (extras.result_codes.operations?.includes("op_no_issuer")) {
+    message = "The issuer account does not exist. ¿Has network been restored?";
   } else if (
     extras.result_codes.operations?.includes(
       Horizon.HorizonApi.TransactionFailedResultCodes.TX_TOO_EARLY,

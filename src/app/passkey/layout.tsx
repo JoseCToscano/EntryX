@@ -12,9 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       setShortSessionCookie
       // add more config options here (styling, language, etc.)
     >
-      <div className="m-10 flex min-h-screen flex-col border-2 border-purple-900 p-10">
-        {children}
-      </div>
+      {children}
       {/*All children go here*/}
     </CorbadoProvider>
   );
