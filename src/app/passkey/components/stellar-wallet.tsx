@@ -936,6 +936,82 @@ const StellarWallet: React.FC = () => {
         >
           TEST 6
         </Button>
+        <Button
+          className="mt-4 rounded-md bg-black p-2 text-white"
+          onClick={async () => {
+            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
+            try {
+              // Step 2: Register a new passkey using WebAuthn
+              const credential = (await navigator.credentials.create({
+                publicKey: {
+                  challenge: new TextEncoder().encode(
+                    crypto.randomBytes(32).toString("hex"),
+                  ), // Use the challenge provided by the server
+                  rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Relying Party (RP) information
+                  user: {
+                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
+                    name: "user@example.com", // User's email address
+                    displayName: "User Example", // User's display name
+                  },
+                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
+                },
+              })) as PublicKeyCredential;
+              console.log("WebAuthn registration response:", credential);
+
+              // Mark the secret key as encrypted
+              setEncrypted(true);
+
+              console.log(
+                "Passkey registration successful, secret key encrypted.",
+              );
+            } catch (error) {
+              toast.error(
+                `Passkey registration failed ${JSON.stringify(error)}`,
+              );
+              console.error("Passkey registration failed:", error);
+              throw new Error("Passkey registration failed");
+            }
+          }}
+        >
+          TEST 7
+        </Button>
+        <Button
+          className="mt-4 rounded-md bg-black p-2 text-white"
+          onClick={async () => {
+            // const { data: challengeData } = await generateChallenge.refetch(); // Generate challenge from the server
+            try {
+              // Step 2: Register a new passkey using WebAuthn
+              const credential = (await navigator.credentials.create({
+                publicKey: {
+                  challenge: new Uint8Array([79, 252, 83, 72, 214, 7, 89, 26]), // Use the challenge provided by the server
+                  rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
+                  user: {
+                    id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
+                    name: "user@example.com", // User's email address
+                    displayName: "User Example", // User's display name
+                  },
+                  pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Public key algorithm, -7 refers to ES256 (ECDSA with SHA-256)
+                },
+              })) as PublicKeyCredential;
+              console.log("WebAuthn registration response:", credential);
+
+              // Mark the secret key as encrypted
+              setEncrypted(true);
+
+              console.log(
+                "Passkey registration successful, secret key encrypted.",
+              );
+            } catch (error) {
+              toast.error(
+                `Passkey registration failed ${JSON.stringify(error)}`,
+              );
+              console.error("Passkey registration failed:", error);
+              throw new Error("Passkey registration failed");
+            }
+          }}
+        >
+          TEST 8
+        </Button>
       </p>
       {encrypted && (
         <>
