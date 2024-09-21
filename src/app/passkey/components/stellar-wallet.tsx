@@ -54,7 +54,7 @@ const StellarWallet: React.FC = () => {
         const credential = await navigator.credentials.create({
           publicKey: {
             challenge: new TextEncoder().encode(challengeData.challenge),
-            rp: { name: "My Web3 Wallet", id: "yourdomain.com" }, // Explicit domain
+            rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Explicit domain
             user: {
               id: new TextEncoder().encode("unique-user-id-base64url"), // Stable user ID
               name: "user@example.com",
