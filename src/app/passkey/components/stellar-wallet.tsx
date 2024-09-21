@@ -225,6 +225,42 @@ const StellarWallet: React.FC = () => {
     });
   };
 
+  async function createBiometricCredential() {
+    const publicKeyOptions = {
+      challenge: new Uint8Array(32),
+      rp: {
+        name: "Your App Name",
+      },
+      user: {
+        id: new Uint8Array(16), // Must be a unique identifier
+        name: "username",
+        displayName: "User Name",
+      },
+      pubKeyCredParams: [
+        {
+          type: "public-key",
+          alg: -7, // "ES256" (Elliptic Curve algorithm)
+        },
+      ],
+      authenticatorSelection: {
+        authenticatorAttachment: "platform", // Use the built-in biometrics
+        userVerification: "required", // Require biometrics
+      },
+      timeout: 60000,
+      attestation: "none",
+    };
+
+    try {
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyOptions,
+      });
+      console.log("Credential created successfully", credential);
+      // Send this to your server to register the public key
+    } catch (err) {
+      console.error("Error creating credential:", err);
+    }
+  }
+
   return (
     <div>
       <h2>Stellar Web3 Wallet with tRPC</h2>
@@ -238,14 +274,14 @@ const StellarWallet: React.FC = () => {
       >
         Generate Stellar Key
       </button>
-      <Button
-        className="mt-4 rounded-md bg-black p-2 text-white"
-        onClick={() => authenticatePasskey()}
-      >
-        Test
-      </Button>
       <p>
         <strong>Console:</strong> {consoleResult}
+        <Button
+          className="mt-4 rounded-md bg-black p-2 text-white"
+          onClick={() => createBiometricCredential()}
+        >
+          Test
+        </Button>
       </p>
       {encrypted && (
         <>
