@@ -52,9 +52,9 @@ const StellarWallet: React.FC = () => {
           challenge: new TextEncoder().encode(
             crypto.randomBytes(32).toString("hex"),
           ), // Use the challenge provided by the server
-          rp: { name: "My Web3 Wallet", id: window.location.hostname }, // Relying Party (RP) information
+          rp: { name: "My Web3 Wallet", id: "entryx.me" }, // Relying Party (RP) information
           user: {
-            id: new Uint8Array(16), // Unique user ID (can be user ID from your backend or a randomly generated ID)
+            id: new TextEncoder().encode("unique-user-id-base64url"), // Unique user ID (can be user ID from your backend or a randomly generated ID)
             name: "user@example.com", // User's email address
             displayName: "User Example", // User's display name
           },
