@@ -123,7 +123,7 @@ const StellarWallet: React.FC = () => {
 
       console.log("Passkey registration successful, secret key encrypted.");
     } catch (error) {
-      toast.error("Passkey registration failed");
+      toast.error(`Passkey registration failed ${JSON.stringify(error)}`);
       console.error("Passkey registration failed:", error);
       throw new Error("Passkey registration failed");
     }
