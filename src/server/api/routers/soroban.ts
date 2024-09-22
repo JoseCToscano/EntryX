@@ -33,14 +33,14 @@ interface TicketAuction {
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 const ticketAuctionContractAddress =
-  "CCRRYRL3OMD2PHAOS772RUZTGCQ55NFCHXMRP573DPF4JYAXCXIVZFMC";
+  "CDPSSARABJIJHPXSYP5RYAFXE6H4K2ZBWDW57BPO3LW3CML6VSAVIVWG";
 
 // Stellar's Native Asset (XLM) Stellar Asset Contract Address
 const xlmSAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 
 // Contract for Ticket Sales
 const ticketSaleContractAddress =
-  "CD5536FOSQ6IW2E5NL6GEC2BL23A5LDGUZ4GQSDXV5PRYG75H3RDXRCC";
+  "CCRBPF3KS4D2VQQKOJ4YGCRHUVNAMWYXQHGALMLAHBVOG63MLHUZG2KW";
 
 export const sorobanRouter = createTRPCRouter({
   contractPurchase: publicProcedure

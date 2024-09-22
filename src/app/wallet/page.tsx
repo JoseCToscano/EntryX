@@ -12,6 +12,7 @@ import {
   CardFooter,
 } from "~/components/ui/card";
 import {
+  cn,
   copyToClipboard,
   generateQrCode,
   shortStellarAddress,
@@ -37,6 +38,7 @@ export default function Component() {
   const { publicKey, account, isLoading, hasFreighter, isFreighterAllowed } =
     useWallet();
   const [loading, setLoading] = useState(true);
+  const [showQR, setShowQR] = useState(false);
 
   useEffect(() => {
     // Set a timeout to remove the loading spinner after 3 seconds (3000 milliseconds)
@@ -78,13 +80,14 @@ export default function Component() {
   ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-bl from-indigo-950 to-zinc-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-transparent p-4">
       <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
-        <CardHeader className="relative pb-2">
+        <CardHeader className="pb-2">
           <CardTitle className="text-center text-2xl font-bold">
             Stellar Wallet
           </CardTitle>
           <Button
+            disabled
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2"
@@ -99,14 +102,41 @@ export default function Component() {
             <h2 className="text-4xl font-bold">1001.1234 XLM</h2>
           </div>
           <div className="mb-6 flex justify-between">
-            <Button variant="outline" className="w-[48%]">
+            <Button
+              disabled
+              title="Coming soon"
+              variant="outline"
+              className="w-[48%]"
+            >
               <ArrowUpIcon className="mr-2 h-4 w-4" /> Send
             </Button>
-            <Button variant="outline" className="w-[48%]">
-              <ArrowDownIcon className="mr-2 h-4 w-4" /> Receive
+            <Button
+              onClick={() => setShowQR(!showQR)}
+              variant="outline"
+              className="w-[48%]"
+            >
+              {!showQR && <ArrowDownIcon className="mr-2 h-4 w-4" />}
+              {showQR ? "Hide QR" : "Receive"}
             </Button>
           </div>
-          <div className="mb-6 flex items-center justify-between rounded-lg bg-gray-100 p-3">
+          {showQR && (
+            <div className="flex w-full items-center justify-center rounded-t-md bg-gray-100 p-4">
+              <Image
+                src={generateQrCode(publicKey ?? "")}
+                width="250"
+                height="250"
+                alt="QR Code"
+                className="rounded-md"
+                style={{ aspectRatio: "200/200", objectFit: "cover" }}
+              />
+            </div>
+          )}
+          <div
+            className={cn(
+              "mb-6 flex items-center justify-between rounded-b-md bg-gray-100 p-3",
+              !showQR && "rounded-t-md",
+            )}
+          >
             <span className="text-sm text-gray-600">
               {shortStellarAddress(publicKey ?? "")}
             </span>

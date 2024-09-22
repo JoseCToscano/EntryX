@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Keypair } from "@stellar/stellar-sdk";
-import { getKey, storeKey } from "~/lib/utils";
+import { storeKey } from "~/lib/utils";
 import toast from "react-hot-toast";
 import { Button } from "~/components/ui/button";
 import crypto from "crypto";
@@ -13,8 +13,6 @@ import {
   ScanIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Icons } from "~/components/icons";
-import Image from "next/image";
 
 const address = "0x1234...5678";
 const transactions = [
@@ -160,104 +158,8 @@ const StellarWallet: React.FC = () => {
     }
   };
 
-  // Authenticate using a passkey and decrypt the Stellar secret key
-  const authenticatePasskey = async (): Promise<string> => {
-    try {
-      // Step 1: Retrieve the stored credential ID
-      const credentialIdBase64 = localStorage.getItem("credentialId");
-      if (!credentialIdBase64) {
-        throw new Error(
-          "No registered credential ID found. Please register a passkey first.",
-        );
-      }
-      const credentialId = new Uint8Array(
-        Buffer.from(credentialIdBase64, "base64"),
-      );
-
-      // Step 2: Request a challenge from the server using tRPC
-      const { data: challengeData } = await generateChallenge.refetch(); // Fetch challenge from server
-      if (!challengeData?.challenge) {
-        throw new Error("Failed to retrieve challenge from server.");
-      }
-      const challenge = new TextEncoder().encode(challengeData.challenge); // Encode challenge
-
-      // Step 3: Authenticate using the existing passkey via WebAuthn
-      const credential = (await navigator.credentials.get({
-        publicKey: {
-          challenge: challenge,
-          rpId: window.location.hostname,
-          allowCredentials: [
-            {
-              type: "public-key",
-              id: credentialId,
-            },
-          ],
-          userVerification: "preferred",
-        },
-      })) as PublicKeyCredential;
-
-      // Step 4: Extract necessary components from the WebAuthn response
-      const authenticatorData = (
-        credential.response as AuthenticatorAssertionResponse
-      ).authenticatorData;
-      const clientDataJSON = credential.response.clientDataJSON;
-      const signature = (credential.response as AuthenticatorAssertionResponse)
-        .signature;
-
-      // Step 5: Send the authentication response to the server for verification
-      await verifyWebAuthn.mutateAsync({
-        credentialId: Buffer.from(credential.rawId).toString("base64"),
-        clientDataJSON: Buffer.from(clientDataJSON).toString("base64"),
-        authenticatorData: Buffer.from(authenticatorData).toString("base64"),
-        signature: Buffer.from(signature).toString("base64"),
-      });
-
-      // Retrieve the AES key from IndexedDB
-      const aesKey = await getKey("aes-key");
-
-      // Step 7: Retrieve the encrypted Stellar secret key and IV from local storage
-      const encryptedDataBase64 = localStorage.getItem(
-        "encryptedStellarSecretKey",
-      );
-      const ivBase64 = localStorage.getItem("encryptionIv");
-      if (!encryptedDataBase64 || !ivBase64) {
-        throw new Error("Encrypted data or IV not found.");
-      }
-      const encryptedData = Buffer.from(encryptedDataBase64, "base64");
-      const iv = Buffer.from(ivBase64, "base64");
-
-      // Step 8: Decrypt the Stellar secret key using the AES key
-      const decryptedData = await crypto.subtle.decrypt(
-        {
-          name: "AES-GCM",
-          iv: iv,
-        },
-        aesKey,
-        encryptedData,
-      );
-      const stellarSecretKey = new TextDecoder().decode(decryptedData);
-
-      // Step 9: Return the decrypted Stellar secret key
-      return stellarSecretKey;
-    } catch (error) {
-      console.error("Authentication failed:", error);
-      throw new Error("Authentication failed");
-    }
-  };
-
-  // Sign and submit a Stellar transaction
-  const signAndSubmitTransaction = async (): Promise<void> => {
-    const secretKey = await authenticatePasskey(); // Decrypt the Stellar secret key
-    const keypair = Keypair.fromSecret(secretKey);
-    console.log("Decrypted Stellar key pair:");
-    console.table({
-      publicKey: keypair.publicKey(),
-      secretKey: keypair.secret(),
-    });
-  };
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-400 to-blue-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-transparent p-4">
       <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
         <CardHeader className="relative pb-2">
           <CardTitle className="text-center text-2xl font-bold">
@@ -349,16 +251,14 @@ const StellarWallet: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      {/*<button*/}
-      {/*  onClick={async () => {*/}
-      {/*    // const { publicKey, secretKey } = await createOrImportStellarKey();*/}
-      {/*    // alert("Stellar key pair generated:\nPublic Key: " + publicKey);*/}
-      {/*    await registerPasskey("secretKey");*/}
-      {/*    alert("Secret Key encrypted and stored.");*/}
-      {/*  }}*/}
-      {/*>*/}
-      {/*  Generate Stellar Key*/}
-      {/*</button>*/}
+      <button
+        onClick={async () => {
+          console.table(await createOrImportStellarKey());
+          // await registerPasskey("secretKey");
+        }}
+      >
+        Generate Stellar Key
+      </button>
 
       {/*{encrypted && (*/}
       {/*  <>*/}

@@ -5,6 +5,7 @@ import {
   Horizon,
   Keypair,
   BASE_FEE,
+  Asset,
 } from "@stellar/stellar-sdk";
 import { postRouter } from "~/server/api/routers/post";
 import {
@@ -155,21 +156,21 @@ export const appRouter = createTRPCRouter({
       console.error("ERROR!", e);
     }
   }),
-  // fundAccount: publicProcedure.query(async () => {
-  //   try {
-  //     const response = await fetch(
-  //       `https://friendbot.stellar.org?addr=${encodeURIComponent(env.USER_PUBLIC_KEY)}`,
-  //     );
-  //     response
-  //       .json()
-  //       .then((responseJSON) => {
-  //         console.log("SUCCESS! You have a new account :)\n", responseJSON);
-  //       })
-  //       .catch(console.error);
-  //   } catch (e) {
-  //     console.error("ERROR!", e);
-  //   }
-  // }),
+  fundAccount: publicProcedure.query(async () => {
+    try {
+      const response = await fetch(
+        `https://friendbot.stellar.org?addr=${encodeURIComponent(env.ISSUER_PUBLIC_KEY)}`,
+      );
+      response
+        .json()
+        .then((responseJSON) => {
+          console.log("SUCCESS! You have a new account :)\n", responseJSON);
+        })
+        .catch(console.error);
+    } catch (e) {
+      console.error("ERROR!", e);
+    }
+  }),
   // getAccountDetails: publicProcedure.query(async () => {
   //   const server = new Horizon.Server("https://horizon-testnet.stellar.org");
   //
@@ -181,44 +182,44 @@ export const appRouter = createTRPCRouter({
   //     console.log("Type:", balance.asset_type, ", Balance:", balance.balance);
   //   });
   // }),
-  // createAsset: publicProcedure.query(async () => {
-  //   console.log("createAsset");
-  //   // Load Issuer Account from Horizon
-  //   const issuerKeypair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
-  //   const issuerAccount = await server.loadAccount(issuerKeypair.publicKey());
-  //   // Load Distributor Account from Horizon
-  //   const distributorKeypair = Keypair.fromSecret(env.DISTRIBUTOR_PRIVATE_KEY);
-  //
-  //   const asset = new Asset("XXX123", issuerKeypair.publicKey());
-  //   console.log(asset);
-  //   const transaction = new TransactionBuilder(issuerAccount, {
-  //     fee: BASE_FEE,
-  //     networkPassphrase: Networks.TESTNET,
-  //   })
-  //     // Establish trustline between distributor and asset
-  //     .addOperation(
-  //       Operation.changeTrust({
-  //         asset,
-  //         source: distributorKeypair.publicKey(),
-  //       }),
-  //     )
-  //     .addOperation(
-  //       Operation.payment({
-  //         destination: distributorKeypair.publicKey(),
-  //         asset,
-  //         amount: "1",
-  //       }),
-  //     )
-  //     .setTimeout(30)
-  //     .build();
-  //
-  //   transaction.sign(issuerKeypair);
-  //   const xdr = transaction.toXDR();
-  //   const tx = TransactionBuilder.fromXDR(xdr, Networks.TESTNET);
-  //   tx.sign(distributorKeypair);
-  //   const res = await server.submitTransaction(tx);
-  //   console.log(res);
-  // }),
+  createAsset: publicProcedure.query(async () => {
+    console.log("createAsset");
+    const server = new Horizon.Server("https://horizon-testnet.stellar.org");
+    // Load Issuer Account from Horizon
+    const issuerKeypair = Keypair.fromSecret(env.ISSUER_PRIVATE_KEY);
+    const issuerAccount = await server.loadAccount(issuerKeypair.publicKey());
+    // Load Distributor Account from Horizon
+
+    const asset = new Asset("TEST", issuerKeypair.publicKey());
+    console.log(asset);
+    const transaction = new TransactionBuilder(issuerAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    })
+      // Establish trustline between distributor and asset
+      .addOperation(
+        Operation.changeTrust({
+          asset,
+          source: "GCLQTRLPMITD76LYTZA23E747YO2PEROCUUKT7AJ4V6UDXQAQNOYRERU",
+        }),
+      )
+      .addOperation(
+        Operation.payment({
+          destination:
+            "GCLQTRLPMITD76LYTZA23E747YO2PEROCUUKT7AJ4V6UDXQAQNOYRERU",
+          asset,
+          amount: "1",
+        }),
+      )
+      .setTimeout(30)
+      .build();
+
+    transaction.sign(issuerKeypair);
+    const xdr = transaction.toXDR();
+    const tx = TransactionBuilder.fromXDR(xdr, Networks.TESTNET);
+    const res = await server.submitTransaction(tx);
+    console.log(res);
+  }),
   // sellAsset: publicProcedure.query(async () => {
   //   // Define the asset to sell
   //   const asset = new Asset("TIXALPHA", env.ISSUER_PUBLIC_KEY); // replace with your asset code and issuer public key

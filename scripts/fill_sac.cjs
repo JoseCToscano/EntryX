@@ -91,8 +91,8 @@ async function deployAssetContract(
 
 async function main() {
   try {
-    for (let eventSequence = 3; eventSequence <= 100; eventSequence++) {
-      for (let ticketSequence = 1; ticketSequence <= 5; ticketSequence++) {
+    for (let eventSequence = 0; eventSequence <= 100; eventSequence++) {
+      for (let ticketSequence = 0; ticketSequence <= 5; ticketSequence++) {
         console.log(`Deploying Asset Contract for Event: ${eventSequence}, Ticket: ${ticketSequence}`);
         const {code, issuer, address} = await deployAssetContract(
           eventSequence,

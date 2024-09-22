@@ -145,23 +145,25 @@ export const assetsRouter = createTRPCRouter({
       return transaction.toXDR();
     }),
   tokenize: publicProcedure
-    .input(z.object({ id: z.string(), xdr: z.string().min(1) }))
+    .input(z.object({ assetId: z.string(), xdr: z.string().min(1) }))
     .mutation(async ({ input, ctx }) => {
       try {
         const transaction = TransactionBuilder.fromXDR(
           input.xdr,
           Networks.TESTNET,
         );
-
+        transaction.signatures.forEach((signature) => {
+          console.log("Signature", signature);
+        });
         const transactionResult = await server.submitTransaction(transaction);
 
         if (transactionResult.successful) {
           const asset = await ctx.db.asset.findUniqueOrThrow({
-            where: { id: input.id },
+            where: { id: input.assetId },
           });
 
           await ctx.db.asset.update({
-            where: { id: input.id },
+            where: { id: input.assetId },
             data: {
               address: transactionResult.hash,
               availableUnits: asset.totalUnits,

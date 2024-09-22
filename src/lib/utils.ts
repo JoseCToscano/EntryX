@@ -206,6 +206,11 @@ function parsedTransactionFailedError(
   ) {
     message = "The sequence number does not match source account";
   } else if (
+    extras.result_codes.transaction ===
+    Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_SEQ
+  ) {
+    message = "The sequence number does not match source account";
+  } else if (
     extras.result_codes.operations?.includes(
       Horizon.HorizonApi.TransactionFailedResultCodes.TX_BAD_AUTH,
     )

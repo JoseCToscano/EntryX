@@ -30,8 +30,8 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div>
-      <TelegramMock />
-      {/*<StellarWallet />*/}
+      <StellarWallet />
+      {/*<TelegramMock />*/}
     </div>
   );
 };

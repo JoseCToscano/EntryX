@@ -159,7 +159,7 @@ export const TicketTypeToAssetForm: React.FC<{
       // Submit signed XDR to the server
       await tokenize.mutateAsync({
         xdr: signedXDR,
-        id: asset.id,
+        assetId: asset.id,
       });
     } catch (e) {
       console.error(e);
@@ -337,10 +337,7 @@ export const TicketTypeToAssetForm: React.FC<{
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>
-                  Mints Assets in Stellar Blockchain. New Assets will be
-                  transferred to your Wallet
-                </p>
+                <p>New (minted) Assets will be transferred to your Wallet</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
