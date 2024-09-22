@@ -192,7 +192,13 @@ export default function Component() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="font-semibold">Recent Transactions</h3>
-              <Button variant="ghost" size="icon">
+              <Button
+                onClick={() => {
+                  void recentOperations.refetch();
+                }}
+                variant="ghost"
+                size="icon"
+              >
                 <RefreshCwIcon className="h-4 w-4" />
               </Button>
             </div>
@@ -205,41 +211,29 @@ export default function Component() {
                   <div className="flex w-full items-center justify-center">
                     <div className="flex w-full items-center gap-2">
                       <Icons.StellarIcon width={15} height={15} />
-                      <span className="text-sm">{op.label}</span>
-                      <span className="ml-1 text-sm text-gray-500">
-                        {op.asset_code && (
-                          <Badge className="border-0 bg-gradient-to-br from-black to-gray-400 text-xs">
-                            {op.asset_code}
-                          </Badge>
-                        )}
+                      <span className="flex-grow text-sm">
+                        {op.label}
+                        {/*<div className="text-gray-500">
+                          {op.asset_code && (
+                            <Badge className="border-0 bg-gradient-to-br from-black to-gray-400 text-xs">
+                              {op.asset_code}
+                            </Badge>
+                          )}
+                        </div>*/}
+                        <div className="ml-0.5 w-full">
+                          {op.desc.split(",").map((d, i) => (
+                            <div
+                              key={i}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {d}
+                            </div>
+                          ))}
+                        </div>
                       </span>
-                      {/*<div className="w-full">*/}
-                      {/*  <div className="flex w-full items-center justify-between text-sm font-medium">*/}
-                      {/*    <span className="flex items-center gap-1">*/}
-                      {/*      <Icons.StellarIcon/>*/}
-                      {/*      {op.label}*/}
-                      {/*    </span>*/}
-                      {/*    {op.asset_code && (*/}
-                      {/*        <Badge className="border-0 bg-gradient-to-br from-black to-gray-400 text-xs">*/}
-                      {/*          {op.asset_code}*/}
-                      {/*        </Badge>*/}
-                      {/*    )}*/}
-                      {/*  </div>*/}
-                      {/*  <span className="text-xs font-normal text-muted-foreground">*/}
-                      {/*    {dayjs(op.created_at).format("MMM D, YYYY - h:mm A")}*/}
-                      {/*  </span>*/}
-
-                      {/*  {op.desc.split(",").map((d, i) => (*/}
-                      {/*      <div*/}
-                      {/*          key={i}*/}
-                      {/*          className="text-xs text-muted-foreground"*/}
-                      {/*      >*/}
-                      {/*        • {d}*/}
-                      {/*      </div>*/}
-                      {/*  ))}*/}
-                      {/*</div>*/}
                     </div>
-                    <div className="flex-end w-full items-end justify-end text-right">
+
+                    <div className="flex-end w-40 items-end justify-end text-right">
                       <span className={`mr-1 text-right text-xs font-medium`}>
                         {dayjs(op.created_at).format("MMM D")}
                       </span>
