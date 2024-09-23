@@ -161,7 +161,9 @@ export default function Component() {
                   className="flex items-center justify-between rounded-md bg-gray-50 p-2"
                 >
                   <div className="flex items-center">
-                    <span className="mr-2 text-2xl">{tokens[id]!.icon}</span>
+                    <span className="mr-2 text-2xl">
+                      {tokens[id % tokens.length]!.icon}
+                    </span>
                     <div>
                       <p className="font-medium">{asset.asset_code}</p>
                       <p className="text-sm text-gray-500">
